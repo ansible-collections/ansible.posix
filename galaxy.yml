@@ -1,0 +1,14 @@
+namespace: ansible
+name: posix
+version: 0.1.0
+readme: README.md
+authors: null
+description: null
+license: GPL-3.0-or-later
+license_file: COPYING
+tags: null
+dependencies: {}
+repository: git@github.com:ansible-collection-migration/ansible.posix.git
+documentation: https://github.com/ansible-collection-migration/ansible.posix/tree/master/docs
+homepage: https://github.com/ansible-collection-migration/ansible.posix
+issues: https://github.com/ansible-collection-migration/ansible.posix/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc
