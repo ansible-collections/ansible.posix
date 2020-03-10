@@ -76,7 +76,8 @@ set -ux
 #pip install ansible==2.9.0 --disable-pip-version-check
 pip install git+https://github.com/ansible-collection-migration/ansible-base.git --disable-pip-version-check
 
-TEST_DIR="${HOME}/.ansible/ansible_collections/ansible/posix"
+COLLECTION_DIR="${HOME}/.ansible/ansible_collections/"
+TEST_DIR="${COLLECTION_DIR}/posix"
 mkdir -p "${TEST_DIR}"
 cp -aT "${SHIPPABLE_BUILD_DIR}" "${TEST_DIR}"
 cd "${TEST_DIR}"
@@ -125,7 +126,7 @@ mkdir /tmp/collection_deps
 git clone https://github.com/ansible-collections/community.general.git /tmp/collection_deps/community.general
 cd /tmp/collection_deps/community.general
 ansible-galaxy collection build
-ansible-galaxy collection install community-general*
+ansible-galaxy collection install community-general* -p ${COLLECTION_DIR}
 )
 # END: HACK
 
