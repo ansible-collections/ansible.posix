@@ -4,7 +4,7 @@
 - name: attempt to add mapping without 'seuser'
   register: selogin_error
   ignore_errors: true
-  community.general.selogin:
+  community.general.system.selogin:
     login: seuser
 - name: verify failure
   assert:
@@ -18,7 +18,7 @@
   - false
   - true
   - false
-  community.general.selogin:
+  community.general.system.selogin:
     login: seuser
     seuser: staff_u
 - name: new mapping- verify functionality and check_mode
@@ -36,7 +36,7 @@
   - false
   - true
   - false
-  community.general.selogin:
+  community.general.system.selogin:
     login: seuser
     seuser: user_u
 - name: changed mapping- verify functionality and check_mode
@@ -54,7 +54,7 @@
   - false
   - true
   - false
-  community.general.selogin:
+  community.general.system.selogin:
     login: seuser
     state: absent
 - name: delete mapping- verify functionality and check_mode
