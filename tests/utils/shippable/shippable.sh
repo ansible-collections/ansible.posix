@@ -122,7 +122,7 @@ fi
 # STAR: HACK install dependencies
 (
 mkdir /tmp/collection_deps
-git clone https://github.com/ansible-collection-migration/community.general.git /tmp/collection_deps/community.general
+git clone https://github.com/ansible-collections/community.general.git /tmp/collection_deps/community.general
 cd /tmp/collection_deps/community.general
 ansible-galaxy collection build
 ansible-galaxy collection install community-general*

@@ -8,6 +8,23 @@ matrix:
   exclude:
     - env: T=none
   include:
+      # FIXME Move integration tests after units
+    - env: T=aix/7.2/1
+    - env: T=osx/10.11/1
+    - env: T=rhel/7.6/1
+    - env: T=rhel/8.1/1
+    - env: T=freebsd/11.1/1
+    - env: T=freebsd/12.1/1
+    - env: T=linux/centos6/1
+    - env: T=linux/centos7/1
+    - env: T=linux/centos8/1
+    - env: T=linux/fedora30/1
+    - env: T=linux/fedora31/1
+    - env: T=linux/opensuse15py2/1
+    - env: T=linux/opensuse15/1
+    - env: T=linux/ubuntu1604/1
+    - env: T=linux/ubuntu1804/1
+
     - env: T=sanity/1
     - env: T=sanity/2
     - env: T=sanity/3
@@ -38,21 +55,6 @@ matrix:
     - env: T=units/3.8/3
     - env: T=units/3.9/3
 
-    - env: T=aix/7.2/1
-    - env: T=osx/10.11/1
-    - env: T=rhel/7.6/1
-    - env: T=rhel/8.1/1
-    - env: T=freebsd/11.1/1
-    - env: T=freebsd/12.1/1
-    - env: T=linux/centos6/1
-    - env: T=linux/centos7/1
-    - env: T=linux/centos8/1
-    - env: T=linux/fedora30/1
-    - env: T=linux/fedora31/1
-    - env: T=linux/opensuse15py2/1
-    - env: T=linux/opensuse15/1
-    - env: T=linux/ubuntu1604/1
-    - env: T=linux/ubuntu1804/1
 
     - env: T=fallaxy/2.7/1
     - env: T=fallaxy/3.6/1
