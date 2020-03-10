@@ -9,7 +9,7 @@ license: GPL-3.0-or-later
 license_file: COPYING
 tags: null
 dependencies: {}
-repository: https://github.com:ansible-collections/ansible.posix
+repository: https://github.com/ansible-collections/ansible.posix
 documentation: https://github.com/ansible-collections/ansible.posix/tree/master/docs
-homepage: https://github.com:ansible-collections/ansible.posix
-issues: https://github.com:ansible-collections/ansible.posix
+homepage: https://github.com/ansible-collections/ansible.posix
+issues: https://github.com/ansible-collections/ansible.posix
