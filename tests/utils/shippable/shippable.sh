@@ -119,6 +119,16 @@ else
     timeout=45
 fi
 
+# STAR: HACK install dependencies
+(
+mkdir /tmp/collection_deps
+git clone https://github.com/ansible-collection-migration/community.general.git /tmp/collection_deps/community.general
+cd /tmp/collection_deps/community.general
+ansible-galaxy collection build
+ansible-galaxy collection install community-general*
+)
+# END: HACK
+
 ansible-test env --dump --show --timeout "${timeout}" --color -v
 
 "tests/utils/shippable/check_matrix.py"
