@@ -77,7 +77,7 @@ set -ux
 pip install git+https://github.com/ansible-collection-migration/ansible-base.git --disable-pip-version-check
 
 COLLECTION_DIR="${HOME}/.ansible/ansible_collections/"
-TEST_DIR="${COLLECTION_DIR}/posix"
+TEST_DIR="${COLLECTION_DIR}/ansible/posix"
 mkdir -p "${TEST_DIR}"
 cp -aT "${SHIPPABLE_BUILD_DIR}" "${TEST_DIR}"
 cd "${TEST_DIR}"
