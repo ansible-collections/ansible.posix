@@ -30,3 +30,5 @@ tests/unit/modules/utils.py future-import-boilerplate
 tests/unit/modules/utils.py metaclass-boilerplate
 tests/unit/plugins/action/test_synchronize.py future-import-boilerplate
 tests/unit/plugins/action/test_synchronize.py metaclass-boilerplate
+tests/utils/shippable/check_matrix.py replace-urlopen
+tests/utils/shippable/timing.py shebang
