@@ -22,9 +22,6 @@ tests/unit/mock/yaml_helper.py future-import-boilerplate
 tests/unit/mock/yaml_helper.py metaclass-boilerplate
 tests/unit/modules/conftest.py future-import-boilerplate
 tests/unit/modules/conftest.py metaclass-boilerplate
-tests/unit/modules/system/interfaces_file/test_interfaces_file.py future-import-boilerplate
-tests/unit/modules/system/interfaces_file/test_interfaces_file.py metaclass-boilerplate
-tests/unit/modules/system/interfaces_file/test_interfaces_file.py pylint:blacklisted-name
 tests/unit/modules/system/test_mount.py future-import-boilerplate
 tests/unit/modules/system/test_mount.py metaclass-boilerplate
 tests/unit/modules/utils.py future-import-boilerplate
