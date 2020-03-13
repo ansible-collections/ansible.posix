@@ -19,7 +19,7 @@
 - name: patch the origin file in check mode
   check_mode: true
   register: result
-  community.general.patch:
+  patch:
     src: result.patch
     dest: '{{ output_dir }}/patch/workfile.txt'
 - name: verify patch the origin file in check mode
@@ -28,7 +28,7 @@
     - result is changed
 - name: patch the origin file
   register: result
-  community.general.patch:
+  patch:
     src: result.patch
     dest: '{{ output_dir }}/patch/workfile.txt'
 - name: verify patch the origin file
@@ -37,7 +37,7 @@
     - result is changed
 - name: test patch the origin file idempotency
   register: result
-  community.general.patch:
+  patch:
     src: result.patch
     dest: '{{ output_dir }}/patch/workfile.txt'
 - name: verify test patch the origin file idempotency
@@ -53,7 +53,7 @@
 - name: patch the workfile file in check mode state absent
   check_mode: true
   register: result
-  community.general.patch:
+  patch:
     src: result.patch
     dest: '{{ output_dir }}/patch/workfile.txt'
     state: absent
@@ -63,7 +63,7 @@
     - result is changed
 - name: patch the workfile file state absent
   register: result
-  community.general.patch:
+  patch:
     src: result.patch
     dest: '{{ output_dir }}/patch/workfile.txt'
     state: absent
@@ -73,7 +73,7 @@
     - result is changed
 - name: patch the workfile file state absent idempotency
   register: result
-  community.general.patch:
+  patch:
     src: result.patch
     dest: '{{ output_dir }}/patch/workfile.txt'
     state: absent

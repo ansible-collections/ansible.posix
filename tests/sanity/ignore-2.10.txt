@@ -1,6 +1,7 @@
 plugins/module_utils/ismount.py future-import-boilerplate
 plugins/module_utils/ismount.py metaclass-boilerplate
 plugins/modules/acl.py validate-modules:parameter-type-not-in-doc
+plugins/modules/patch.py pylint:blacklisted-name
 plugins/modules/synchronize.py pylint:blacklisted-name
 plugins/modules/synchronize.py use-argspec-type-path
 plugins/modules/synchronize.py validate-modules:doc-default-does-not-match-spec
@@ -30,3 +31,5 @@ tests/unit/modules/utils.py future-import-boilerplate
 tests/unit/modules/utils.py metaclass-boilerplate
 tests/unit/plugins/action/test_synchronize.py future-import-boilerplate
 tests/unit/plugins/action/test_synchronize.py metaclass-boilerplate
+tests/utils/shippable/check_matrix.py replace-urlopen
+tests/utils/shippable/timing.py shebang
