@@ -20,10 +20,11 @@
     msg: >-
       Skipping {{ ansible_distribution }} as ansible-base does not contain
       the packaging module ({{ ansible_pkg_mgr }}) for this operating system
+  when: ansible_pkg_mgr not in ['apt', 'dnf', 'yum'] or ansible_distribution in ['AIX']
 
 - name: stop executing on hosts that we don't have package manager modules for
   meta: end_host
-  when: ansible_pkg_mgr not in ['apt', 'dnf', 'yum']
+  when: ansible_pkg_mgr not in ['apt', 'dnf', 'yum'] or ansible_distribution in ['AIX']
 
 - set_fact: output_dir_test={{output_dir}}/at
 
