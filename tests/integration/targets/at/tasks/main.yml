@@ -16,34 +16,36 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- debug:
+    msg: >-
+      Skipping {{ ansible_distribution }} as ansible-base does not contain
+      the packaging module ({{ ansible_pkg_mgr }}) for this operating system
+
+- name: stop executing on hosts that we don't have package manager modules for
+  meta: end_host
+  when: ansible_pkg_mgr not in ['apt', 'dnf', 'yum']
+
 - set_fact: output_dir_test={{output_dir}}/at
 
 - name: make sure our testing sub-directory does not exist
-  file: path="{{ output_dir_test }}" state=absent
+  file:
+    path: "{{ output_dir_test }}"
+    state: absent
 
 - name: create our testing sub-directory
-  file: path="{{ output_dir_test }}" state=directory
+  file:
+    path: "{{ output_dir_test }}"
+    state: directory
 
 ##
 ## at
 ##
 
-- name: define distros to attempt installing at on 
-  set_fact:
-    package_distros:
-        - RedHat
-        - CentOS
-        - ScientificLinux
-        - Fedora
-        - Ubuntu
-        - Debian
-        - openSUSE Leap
-
 - name: ensure at is installed
   package:
     name: at
     state: present
-  when: ansible_distribution in package_distros
+  when: ansible_pkg_mgr in ['apt', 'dnf', 'yum']
 
 - name: run the first example
   at:

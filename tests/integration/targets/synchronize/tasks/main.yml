@@ -1,7 +1,8 @@
 - name: install rsync
   package:
     name: rsync
-  when: ansible_distribution != "MacOSX"
+  when: ansible_pkg_mgr in ['apt', 'dnf', 'yum']
+
 - name: cleanup old files
   shell: rm -rf {{output_dir}}/*
 - name: create test new files
