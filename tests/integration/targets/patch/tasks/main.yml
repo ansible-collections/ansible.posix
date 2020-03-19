@@ -1,12 +1,3 @@
-# - debug:
-#     msg: >-
-#       Skipping {{ ansible_distribution }} as ansible-base does not contain
-#       the packaging module ({{ ansible_pkg_mgr }}) for this operating system
-# 
-# - name: stop executing on hosts that we don't have package manager modules for
-#   meta: end_host
-#   when: ansible_pkg_mgr not in ['apt', 'dnf', 'yum']
-
 - name: ensure idempotency installed
   package:
     name: patch
