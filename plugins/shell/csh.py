@@ -4,6 +4,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.module_utils.six import text_type
+from ansible.module_utils.six.moves import shlex_quote
 from ansible.plugins.shell import ShellBase
 
 DOCUMENTATION = '''
@@ -35,4 +37,8 @@ class ShellModule(ShellBase):
     _SHELL_GROUP_RIGHT = ')'
 
     def env_prefix(self, **kwargs):
-        return 'env %s' % super(ShellModule, self).env_prefix(**kwargs)
+        ret = []
+        # All the -u options must be first, so we process them first
+        ret += ['-u %s' % k for k, v in kwargs.items() if v is None]
+        ret += ['%s=%s' % (k, shlex_quote(text_type(v))) for k, v in kwargs.items() if v is not None]
+        return 'env %s' % ' '.join(ret)
