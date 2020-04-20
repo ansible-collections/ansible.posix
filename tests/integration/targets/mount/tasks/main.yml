@@ -262,6 +262,22 @@
     fail:
       msg: Filesytem was not remounted, testing of the module failed!
     when: last_write is defined and last_write_time2 is defined and last_write_time.stdout == last_write_time2.stdout and ansible_system in ('Linux')
+  - name: Remount filesystem with different opts using remounted option (Linux only)
+    mount:
+      path: /tmp/myfs
+      state: remounted
+      opts: rw,noexec
+    when: ansible_system == 'Linux'
+  - name: Get remounted options (Linux only)
+    shell: mount | grep myfs | grep -E -w 'noexec' | wc -l
+    register: remounted_options
+    when: ansible_system == 'Linux'
+  - name: Make sure the filesystem now has the new opts after using remounted (Linux only)
+    assert:
+      that:
+        - "'1' in remounted_options.stdout"
+        - "1 == remounted_options.stdout_lines | length"
+    when: ansible_system == 'Linux'
   always:
   - name: Umount the test FS
     mount:

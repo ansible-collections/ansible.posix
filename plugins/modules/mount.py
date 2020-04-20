@@ -75,7 +75,11 @@ options:
         point.
       - C(remounted) specifies that the device will be remounted for when you
         want to force a refresh on the mount itself (added in 2.9). This will
-        always return changed=true.
+        always return changed=true. If I(opts) is set, the options will be
+        applied to the remount, but will not change I(fstab).  Additionally,
+        if I(opts) is set, and the remount command fails, the module will
+        error to prevent unexpected mount changes.  Try using C(mounted)
+        instead to work around this issue.
     type: str
     required: true
     choices: [ absent, mounted, present, unmounted, remounted ]
@@ -103,6 +107,9 @@ options:
 notes:
   - As of Ansible 2.3, the I(name) option has been changed to I(path) as
     default, but I(name) still works as well.
+  - Using C(remounted) with I(opts) set may create unexpected results based on
+    the existing options already defined on mount, so care should be taken to
+    ensure that conflicting options are not present before hand.
 '''
 
 EXAMPLES = r'''
@@ -134,6 +141,20 @@ EXAMPLES = r'''
   mount:
     path: /tmp/mnt-pnt
     state: unmounted
+
+- name: Remount a mounted volume
+  mount:
+    path: /tmp/mnt-pnt
+    state: remounted
+
+# The following will not save changes to fstab, and only be temporary until
+# a reboot, or until calling "state: unmounted" followed by "state: mounted"
+# on the same "path"
+- name: Remount a mounted volume and append exec to the existing options
+  mount:
+    path: /tmp
+    state: remounted
+    opts: exec
 
 - name: Mount and bind a volume
   mount:
@@ -426,9 +447,15 @@ def remount(module, args):
 
     # Multiplatform remount opts
     if platform.system().lower().endswith('bsd'):
-        cmd += ['-u']
+        if module.params['state'] == 'remounted' and args['opts'] != 'defaults':
+            cmd += ['-u', '-o', args['opts']]
+        else:
+            cmd += ['-u']
     else:
-        cmd += ['-o', 'remount']
+        if module.params['state'] == 'remounted' and args['opts'] != 'defaults':
+            cmd += ['-o', 'remount,' + args['opts']]
+        else:
+            cmd += ['-o', 'remount']
 
     if platform.system().lower() == 'openbsd':
         # Use module.params['fstab'] here as args['fstab'] has been set to the
@@ -461,6 +488,16 @@ def remount(module, args):
 
     if rc != 0:
         msg = out + err
+
+        if module.params['state'] == 'remounted' and args['opts'] != 'defaults':
+            module.fail_json(
+                msg=(
+                    'Options were specified with remounted, but the remount '
+                    'command failed. Failing in order to prevent an '
+                    'unexpected mount result. Try replacing this command with '
+                    'a "state: unmounted" followed by a "state: mounted" '
+                    'using the full desired mount options instead.'))
+
         rc, msg = umount(module, args['name'])
 
         if rc == 0:
