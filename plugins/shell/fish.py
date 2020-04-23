@@ -38,7 +38,13 @@ class ShellModule(ShModule):
     def env_prefix(self, **kwargs):
         env = self.env.copy()
         env.update(kwargs)
-        return ' '.join(['set -lx %s %s;' % (k, shlex_quote(text_type(v))) for k, v in env.items()])
+        ret = []
+        for k, v in kwargs.items():
+            if v is None:
+                ret.append('set -e %s;' % k)
+            else:
+                ret.append('set -lx %s %s;' % (k, shlex_quote(text_type(v))))
+        return ' '.join(ret)
 
     def build_module_command(self, env_string, shebang, cmd, arg_path=None):
         # don't quote the cmd if it's an empty string, because this will break pipelining mode
