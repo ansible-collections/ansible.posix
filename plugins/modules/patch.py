@@ -82,18 +82,18 @@ notes:
 
 EXAMPLES = r'''
 - name: Apply patch to one file
-  patch:
+  ansible.posix.patch:
     src: /tmp/index.html.patch
     dest: /var/www/index.html
 
 - name: Apply patch to multiple files under basedir
-  patch:
+  ansible.posix.patch:
     src: /tmp/customize.patch
     basedir: /var/www
     strip: 1
 
 - name: Revert patch to one file
-  patch:
+  ansible.posix.patch:
     src: /tmp/index.html.patch
     dest: /var/www/index.html
     state: absent

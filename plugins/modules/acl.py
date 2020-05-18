@@ -88,7 +88,7 @@ notes:
 
 EXAMPLES = r'''
 - name: Grant user Joe read access to a file
-  acl:
+  ansible.posix.acl:
     path: /etc/foo.conf
     entity: joe
     etype: user
@@ -96,14 +96,14 @@ EXAMPLES = r'''
     state: present
 
 - name: Removes the ACL for Joe on a specific file
-  acl:
+  ansible.posix.acl:
     path: /etc/foo.conf
     entity: joe
     etype: user
     state: absent
 
 - name: Sets default ACL for joe on /etc/foo.d/
-  acl:
+  ansible.posix.acl:
     path: /etc/foo.d/
     entity: joe
     etype: user
@@ -112,13 +112,13 @@ EXAMPLES = r'''
     state: present
 
 - name: Same as previous but using entry shorthand
-  acl:
+  ansible.posix.acl:
     path: /etc/foo.d/
     entry: default:user:joe:rw-
     state: present
 
 - name: Obtain the ACL for a specific file
-  acl:
+  ansible.posix.acl:
     path: /etc/foo.conf
   register: acl_info
 '''
