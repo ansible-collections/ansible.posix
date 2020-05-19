@@ -394,6 +394,7 @@ def parsekey(module, raw_key, rank=None):
         'ecdsa-sha2-nistp521',
         'ssh-dss',
         'ssh-rsa',
+        'sk-ecdsa-sha2-nistp256@openssh.com ',
     ]
 
     options = None   # connection options
