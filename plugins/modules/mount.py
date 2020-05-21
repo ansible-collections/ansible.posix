@@ -115,7 +115,7 @@ notes:
 EXAMPLES = r'''
 # Before 2.3, option 'name' was used instead of 'path'
 - name: Mount DVD read-only
-  mount:
+  ansible.posix.mount:
     path: /mnt/dvd
     src: /dev/sr0
     fstype: iso9660
@@ -123,14 +123,14 @@ EXAMPLES = r'''
     state: present
 
 - name: Mount up device by label
-  mount:
+  ansible.posix.mount:
     path: /srv/disk
     src: LABEL=SOME_LABEL
     fstype: ext4
     state: present
 
 - name: Mount up device by UUID
-  mount:
+  ansible.posix.mount:
     path: /home
     src: UUID=b3e48f45-f933-4c8e-a700-22a159ec9077
     fstype: xfs
@@ -138,12 +138,12 @@ EXAMPLES = r'''
     state: present
 
 - name: Unmount a mounted volume
-  mount:
+  ansible.posix.mount:
     path: /tmp/mnt-pnt
     state: unmounted
 
 - name: Remount a mounted volume
-  mount:
+  ansible.posix.mount:
     path: /tmp/mnt-pnt
     state: remounted
 
@@ -151,13 +151,13 @@ EXAMPLES = r'''
 # a reboot, or until calling "state: unmounted" followed by "state: mounted"
 # on the same "path"
 - name: Remount a mounted volume and append exec to the existing options
-  mount:
+  ansible.posix.mount:
     path: /tmp
     state: remounted
     opts: exec
 
 - name: Mount and bind a volume
-  mount:
+  ansible.posix.mount:
     path: /system/new_volume/boot
     src: /boot
     opts: bind
@@ -165,7 +165,7 @@ EXAMPLES = r'''
     fstype: none
 
 - name: Mount an NFS volume
-  mount:
+  ansible.posix.mount:
     src: 192.168.1.100:/nfs/ssd/shared_data
     path: /mnt/shared_data
     opts: rw,sync,hard,intr

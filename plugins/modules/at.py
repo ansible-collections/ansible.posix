@@ -55,20 +55,20 @@ author:
 - Richard Isaacson (@risaacson)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Schedule a command to execute in 20 minutes as root
-  at:
+  ansible.posix.at:
     command: ls -d / >/dev/null
     count: 20
     units: minutes
 
 - name: Match a command to an existing job and delete the job
-  at:
+  ansible.posix.at:
     command: ls -d / >/dev/null
     state: absent
 
 - name: Schedule a command to execute in 20 minutes making sure it is unique in the queue
-  at:
+  ansible.posix.at:
     command: ls -d / >/dev/null
     count: 20
     units: minutes

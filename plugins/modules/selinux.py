@@ -42,17 +42,17 @@ author:
 
 EXAMPLES = r'''
 - name: Enable SELinux
-  selinux:
+  ansible.posix.selinux:
     policy: targeted
     state: enforcing
 
 - name: Put SELinux in permissive mode, logging actions that would be blocked.
-  selinux:
+  ansible.posix.selinux:
     policy: targeted
     state: permissive
 
 - name: Disable SELinux
-  selinux:
+  ansible.posix.selinux:
     state: disabled
 '''
 

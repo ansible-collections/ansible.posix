@@ -45,9 +45,9 @@ author:
 - Stephen Fromm (@sfromm)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Set httpd_can_network_connect flag on and keep it persistent across reboots
-  seboolean:
+  ansible.posix.seboolean:
     name: httpd_can_network_connect
     state: yes
     persistent: yes

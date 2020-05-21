@@ -199,88 +199,88 @@ author:
 - Timothy Appnel (@tima)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Synchronization of src on the control machine to dest on the remote hosts
-  synchronize:
+  ansible.posix.synchronize:
     src: some/relative/path
     dest: /some/absolute/path
 
 - name: Synchronization using rsync protocol (push)
-  synchronize:
+  ansible.posix.synchronize:
     src: some/relative/path/
     dest: rsync://somehost.com/path/
 
 - name: Synchronization using rsync protocol (pull)
-  synchronize:
+  ansible.posix.synchronize:
     mode: pull
     src: rsync://somehost.com/path/
     dest: /some/absolute/path/
 
 - name:  Synchronization using rsync protocol on delegate host (push)
-  synchronize:
+  ansible.posix.synchronize:
     src: /some/absolute/path/
     dest: rsync://somehost.com/path/
   delegate_to: delegate.host
 
 - name: Synchronization using rsync protocol on delegate host (pull)
-  synchronize:
+  ansible.posix.synchronize:
     mode: pull
     src: rsync://somehost.com/path/
     dest: /some/absolute/path/
   delegate_to: delegate.host
 
 - name: Synchronization without any --archive options enabled
-  synchronize:
+  ansible.posix.synchronize:
     src: some/relative/path
     dest: /some/absolute/path
     archive: no
 
 - name: Synchronization with --archive options enabled except for --recursive
-  synchronize:
+  ansible.posix.synchronize:
     src: some/relative/path
     dest: /some/absolute/path
     recursive: no
 
 - name: Synchronization with --archive options enabled except for --times, with --checksum option enabled
-  synchronize:
+  ansible.posix.synchronize:
     src: some/relative/path
     dest: /some/absolute/path
     checksum: yes
     times: no
 
 - name: Synchronization without --archive options enabled except use --links
-  synchronize:
+  ansible.posix.synchronize:
     src: some/relative/path
     dest: /some/absolute/path
     archive: no
     links: yes
 
 - name: Synchronization of two paths both on the control machine
-  synchronize:
+  ansible.posix.synchronize:
     src: some/relative/path
     dest: /some/absolute/path
   delegate_to: localhost
 
 - name: Synchronization of src on the inventory host to the dest on the localhost in pull mode
-  synchronize:
+  ansible.posix.synchronize:
     mode: pull
     src: some/relative/path
     dest: /some/absolute/path
 
 - name: Synchronization of src on delegate host to dest on the current inventory host.
-  synchronize:
+  ansible.posix.synchronize:
     src: /first/absolute/path
     dest: /second/absolute/path
   delegate_to: delegate.host
 
 - name: Synchronize two directories on one remote host.
-  synchronize:
+  ansible.posix.synchronize:
     src: /first/absolute/path
     dest: /second/absolute/path
   delegate_to: "{{ inventory_hostname }}"
 
 - name: Synchronize and delete files in dest on the remote host that are not found in src of localhost.
-  synchronize:
+  ansible.posix.synchronize:
     src: some/relative/path
     dest: /some/absolute/path
     delete: yes
@@ -288,7 +288,7 @@ EXAMPLES = '''
 
 # This specific command is granted su privileges on the destination
 - name: Synchronize using an alternate rsync command
-  synchronize:
+  ansible.posix.synchronize:
     src: some/relative/path
     dest: /some/absolute/path
     rsync_path: su -c rsync
@@ -299,7 +299,7 @@ EXAMPLES = '''
 # + /var/conf # include /var/conf even though it was previously excluded
 
 - name: Synchronize passing in extra rsync options
-  synchronize:
+  ansible.posix.synchronize:
     src: /tmp/helloworld
     dest: /var/www/helloworld
     rsync_opts:
@@ -308,7 +308,7 @@ EXAMPLES = '''
 
 # Hardlink files if they didn't change
 - name: Use hardlinks when synchronizing filesystems
-  synchronize:
+  ansible.posix.synchronize:
     src: /tmp/path_a/foo.txt
     dest: /tmp/path_b/foo.txt
     link_dest: /tmp/path_a/
@@ -320,7 +320,7 @@ EXAMPLES = '''
 
   tasks:
     - name: copy /tmp/localpath/ to remote location /tmp/remotepath
-      synchronize:
+      ansible.posix.synchronize:
         src: /tmp/localpath/
         dest: /tmp/remotepath
         rsync_path: /usr/gnu/bin/rsync
