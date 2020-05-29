@@ -2,4 +2,3 @@ needs/privileged
 needs/root
 shippable/posix/group1
 skip/aix
-disabled # fixme
