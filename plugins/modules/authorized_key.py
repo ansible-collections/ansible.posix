@@ -386,13 +386,14 @@ def parsekey(module, raw_key, rank=None):
     '''
 
     VALID_SSH2_KEY_TYPES = [
-        'ssh-ed25519',
+        'sk-ecdsa-sha2-nistp256@openssh.com',
         'ecdsa-sha2-nistp256',
         'ecdsa-sha2-nistp384',
         'ecdsa-sha2-nistp521',
+        'sk-ssh-ed25519@openssh.com',
+        'ssh-ed25519',
         'ssh-dss',
         'ssh-rsa',
-        'sk-ecdsa-sha2-nistp256@openssh.com',
     ]
 
     options = None   # connection options
