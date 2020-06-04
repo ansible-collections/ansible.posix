@@ -1,18 +1,7 @@
-- debug:
-    msg: >-
-      Skipping {{ ansible_distribution }} as ansible-base does not contain
-      the packaging module ({{ ansible_pkg_mgr }}) for this operating system
-  when: ansible_pkg_mgr not in ['apt', 'dnf', 'yum']
-
-- name: stop executing on hosts that we don't have package manager modules for
-  meta: end_host
-  when: ansible_pkg_mgr not in ['apt', 'dnf', 'yum']
-
 - name: install rsync
   package:
     name: rsync
-  when: ansible_pkg_mgr in ['apt', 'dnf', 'yum']
-
+  when: ansible_distribution != "MacOSX"
 - name: cleanup old files
   shell: rm -rf {{output_dir}}/*
 - name: create test new files
