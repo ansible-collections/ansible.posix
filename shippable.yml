@@ -8,12 +8,6 @@ matrix:
   exclude:
     - env: T=none
   include:
-    - env: T=sanity/1
-    - env: T=sanity/2
-    - env: T=sanity/3
-    - env: T=sanity/4
-    - env: T=sanity/5
-
     - env: T=units/2.6/1
     - env: T=units/2.7/1
     - env: T=units/3.5/1

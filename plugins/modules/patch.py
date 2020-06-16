@@ -127,7 +127,7 @@ def is_already_applied(patch_func, patch_file, basedir, dest_file=None, binary=F
     if state == 'present':
         opts.append('--reverse')
 
-    (rc, _, _) = patch_func(opts)
+    (rc, var1, var2) = patch_func(opts)
     return rc == 0
 
 
