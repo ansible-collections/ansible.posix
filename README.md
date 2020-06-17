@@ -1,6 +1,6 @@
 # ansible.posix
 <!-- Add CI and code coverage badges here. Samples included below. -->
-[![Run Status](https://api.shippable.com/projects/5e669aaf8b17a60007e4d18d/badge?branch=master)]() [![Codecov](https://img.shields.io/codecov/c/github/ansible-collections/ansible.posix)](https://codecov.io/gh/ansible-collections/ansible.posix)
+[![Run Status](https://api.shippable.com/projects/5e669aaf8b17a60007e4d18d/badge?branch=master)]() <!--[![Codecov](https://img.shields.io/codecov/c/github/ansible-collections/ansible.posix)](https://codecov.io/gh/ansible-collections/ansible.posix)-->
 
 <!-- Describe the collection and why a user would want to use it. What does the collection do? -->
 
@@ -18,19 +18,42 @@ None
 
 <!-- Galaxy will eventually list the module docs within the UI, but until that is ready, you may need to either describe your plugins etc here, or point to an external docsite to cover that information. -->
 
+## Installing this collection
+
+You can install the ``ansible.posix`` collection with the Ansible Galaxy CLI:
+
+    ansible-galaxy collection install ansible.posix
+
+You can also include it in a `requirements.yml` file and install it with `ansible-galaxy collection install -r requirements.yml`, using the format:
+
+```yaml
+---
+collections:
+  - name: ansible.posix
+```
+
 ## Using this collection
 
 <!--Include some quick examples that cover the most common use cases for your collection content. -->
 
 See [Ansible Using collections](https://docs.ansible.com/ansible/latest/user_guide/collections_using.html) for more details.
 
+**NOTE**: For Ansible 2.9, you may not see deprecation warnings when you run your playbooks with this collection. Use this documentation to track when a module is deprecated.
+
 ## Contributing to this collection
 
 <!--Describe how the community can contribute to your collection. At a minimum, include how and where users can create issues to report problems or request features for this collection.  List contribution requirements, including preferred workflows and necessary testing, so you can benefit from community PRs. If you are following general Ansible contributor guidelines, you can link to - [Ansible Community Guide](https://docs.ansible.com/ansible/latest/community/index.html). -->
 
+We welcome community contributions to this collection. See [Contributing to Ansible-maintained collections](https://docs.ansible.com/ansible/devel/community/contributing_maintained_collections.html#contributing-maintained-collections) for complete details.
+
 * [Issues](https://github.com/ansible-collections/ansible.posix/issues)
 * [Pull Requests](https://github.com/ansible-collections/ansible.posix/pulls)
 * [Ansible Community Guide](https://docs.ansible.com/ansible/latest/community/index.html)
+
+### Code of Conduct
+This collection follows the Ansible project's
+[Code of Conduct](https://docs.ansible.com/ansible/devel/community/code_of_conduct.html).
+Please read and familiarize yourself with this document.
 
 ## Release notes
 
@@ -54,5 +77,4 @@ See [Ansible Using collections](https://docs.ansible.com/ansible/latest/user_gui
 
 GNU General Public License v3.0 or later.
 
-See [LICENCE](https://www.gnu.org/licenses/gpl-3.0.txt) to see the full text.
-
+See [COPYING](https://www.gnu.org/licenses/gpl-3.0.txt) to see the full text.
