@@ -1,0 +1,2 @@
+minor_changes:
+- Enable tests for at, patch and synchronize modules (https://github.com/ansible-collections/ansible.posix/pull/5).

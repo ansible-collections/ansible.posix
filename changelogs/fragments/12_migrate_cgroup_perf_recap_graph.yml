@@ -1,0 +1,2 @@
+minor_changes:
+- Migrate hacking/cgroup_perf_recap_graph.py to this collection, since the cgroup_perf_recap callback lives here.

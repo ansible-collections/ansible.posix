@@ -1,0 +1,2 @@
+bugfixes:
+- Profile_tasks - result was a odict_items which is not subscriptable, so the slicing was failing (https://github.com/ansible/ansible/issues/59059).

@@ -1,0 +1,2 @@
+bugfixes:
+- Revert "mount - Check if src exists before mounted (ansible/ansible#61752)".
