@@ -16,7 +16,20 @@ None
 
 ## Included content
 
-<!-- Galaxy will eventually list the module docs within the UI, but until that is ready, you may need to either describe your plugins etc here, or point to an external docsite to cover that information. -->
+<!--start collection content-->
+### Modules
+Name | Description
+--- | ---
+[ansible.posix.acl](https://github.com/ansible-collections/ansible.posix/blob/master/docs/ansible.posix.acl.rst)|Set and retrieve file ACL information.
+[ansible.posix.at](https://github.com/ansible-collections/ansible.posix/blob/master/docs/ansible.posix.at.rst)|Schedule the execution of a command or script file via the at command
+[ansible.posix.authorized_key](https://github.com/ansible-collections/ansible.posix/blob/master/docs/ansible.posix.authorized_key.rst)|Adds or removes an SSH authorized key
+[ansible.posix.mount](https://github.com/ansible-collections/ansible.posix/blob/master/docs/ansible.posix.mount.rst)|Control active and configured mount points
+[ansible.posix.patch](https://github.com/ansible-collections/ansible.posix/blob/master/docs/ansible.posix.patch.rst)|Apply patch files using the GNU patch tool
+[ansible.posix.seboolean](https://github.com/ansible-collections/ansible.posix/blob/master/docs/ansible.posix.seboolean.rst)|Toggles SELinux booleans
+[ansible.posix.selinux](https://github.com/ansible-collections/ansible.posix/blob/master/docs/ansible.posix.selinux.rst)|Change policy and state of SELinux
+[ansible.posix.synchronize](https://github.com/ansible-collections/ansible.posix/blob/master/docs/ansible.posix.synchronize.rst)|A wrapper around rsync to make common tasks in your playbooks quick and easy
+[ansible.posix.sysctl](https://github.com/ansible-collections/ansible.posix/blob/master/docs/ansible.posix.sysctl.rst)|Manage entries in sysctl.conf.
+<!--end collection content-->
 
 ## Using this collection
 
@@ -55,4 +68,3 @@ See [Ansible Using collections](https://docs.ansible.com/ansible/latest/user_gui
 GNU General Public License v3.0 or later.
 
 See [LICENCE](https://www.gnu.org/licenses/gpl-3.0.txt) to see the full text.
-
