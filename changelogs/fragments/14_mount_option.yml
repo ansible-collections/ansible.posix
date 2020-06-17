@@ -1,0 +1,2 @@
+bugfixes:
+- Mount - Handle remount with new options (https://github.com/ansible/ansible/issues/59460).

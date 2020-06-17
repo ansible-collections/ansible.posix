@@ -1,0 +1,2 @@
+minor_changes:
+- Revert "Enable at, patch and synchronize tests (https://github.com/ansible-collections/ansible.posix/pull/5)".
