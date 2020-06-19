@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - authorized_keys - fix inconsistent return value for check mode (https://github.com/ansible-collections/ansible.posix/issues/37)
