@@ -2,8 +2,6 @@
 <!-- Add CI and code coverage badges here. Samples included below. -->
 [![Run Status](https://api.shippable.com/projects/5e669aaf8b17a60007e4d18d/badge?branch=master)]() <!--[![Codecov](https://img.shields.io/codecov/c/github/ansible-collections/ansible.posix)](https://codecov.io/gh/ansible-collections/ansible.posix)-->
 
-<!-- Describe the collection and why a user would want to use it. What does the collection do? -->
-
 ## Tested with Ansible
 
 <!-- List the versions of Ansible the collection has been tested with. Must match what is in galaxy.yml. -->
