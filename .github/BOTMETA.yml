@@ -1,7 +1,7 @@
 automerge: false
 files:
-  $module_utils/ismount.py:
-    labels: ismount
+  $module_utils/mount.py:
+    labels: mount
   $modules/acl.py:
     authors: astorije bcoca
     labels: acl
