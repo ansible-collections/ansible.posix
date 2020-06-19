@@ -362,3 +362,79 @@
       - (_check_mode_test5.warnings | length ) >= 1
       - ansible_selinux.config_mode == 'disabled'
       - ansible_selinux.type == 'targeted'
+
+# Fifth Test
+# ##############################################################################
+# Remove SELINUX and SELINUXTYPE keys from /etc/selinux/config and make
+# sure the module re-adds the expected lines
+
+- name: TEST 5 | Remove SELINUX key from /etc/selinux/config
+  lineinfile:
+    path: /etc/selinux/config
+    regexp: '^SELINUX='
+    state: absent
+    backup: yes
+  register: _lineinfile_out1
+
+- debug:
+    var: _lineinfile_out1
+    verbosity: 1
+
+- name: TEST 5 | Set SELinux to enforcing 
+  selinux:
+    state: enforcing
+    policy: targeted
+  register: _set_enforcing1
+
+- name: TEST 5 | Re-gather facts
+  setup:
+
+- debug:
+    var: ansible_selinux
+    verbosity: 1
+
+- name: TEST 5 | Assert that SELINUX key is populated
+  assert:
+    that:
+      - _set_enforcing1 is success
+      - _set_enforcing1 is changed
+      - _set_enforcing1.state == 'enforcing'
+      - ansible_selinux.config_mode == 'enforcing'
+
+- name: TEST 5 | Remove SELINUXTYPE key from /etc/selinux/config
+  lineinfile:
+    path: /etc/selinux/config
+    regexp: '^SELINUXTYPE='
+    state: absent
+  register: _lineinfile_out2
+
+- debug:
+    var: _lineinfile_out2
+    verbosity: 1
+
+- name: TEST 5 | Set SELinux Policy to targeted
+  selinux:
+    state: enforcing
+    policy: targeted
+  register: _set_policy2
+
+- name: TEST 5 | Re-gather facts
+  setup:
+
+- debug:
+    var: ansible_selinux
+    verbosity: 1
+
+- name: TEST 5 | Assert that SELINUXTYPE key is populated
+  assert:
+    that:
+      - _set_policy2 is success
+      - _set_policy2 is changed
+      - _set_policy2.policy == 'targeted'
+      - ansible_selinux.type == 'targeted'
+
+- name: TEST 5 | Restore original SELinux config file /etc/selinux/config
+  copy:
+    dest: /etc/selinux/config
+    src: "{{ _lineinfile_out1['backup'] }}"
+    remote_src: yes
