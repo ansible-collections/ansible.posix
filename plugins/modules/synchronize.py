@@ -20,6 +20,7 @@ description:
       boilerplate options and host facts.
     - This module is not intended to provide access to the full power of rsync, but does make the most common
       invocations easier to implement. You `still` may need to call rsync directly via C(command) or C(shell) depending on your use case.
+version_added: "1.0.0"
 options:
   src:
     description:

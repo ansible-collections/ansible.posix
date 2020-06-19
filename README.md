@@ -3,20 +3,36 @@
 [![Run Status](https://api.shippable.com/projects/5e669aaf8b17a60007e4d18d/badge?branch=master)]() <!--[![Codecov](https://img.shields.io/codecov/c/github/ansible-collections/ansible.posix)](https://codecov.io/gh/ansible-collections/ansible.posix)-->
 
 <!-- Describe the collection and why a user would want to use it. What does the collection do? -->
+An Ansible Collection of modules and plugins that target POSIX UNIX/Linux and derivative Operating Systems.
+ 
+## Supported Versions of Ansible
+<!--start requires_ansible-->
+## Ansible version compatibility
 
-## Tested with Ansible
+This collection has been tested against following Ansible versions: **>=2.9,<2.11**.
 
-<!-- List the versions of Ansible the collection has been tested with. Must match what is in galaxy.yml. -->
-
-* ansible-base 2.10 (devel)
-
-## External requirements
-
-None
+Plugins and modules within a collection may be tested with only specific Ansible versions.
+A collection may contain metadata that identifies these versions.
+PEP440 is the schema used to describe the versions of Ansible.
+<!--end requires_ansible-->
 
 ## Included content
-
 <!-- Galaxy will eventually list the module docs within the UI, but until that is ready, you may need to either describe your plugins etc here, or point to an external docsite to cover that information. -->
+<!--start collection content-->
+### Modules
+Name | Description
+--- | ---
+[ansible.posix.acl](https://github.com/ansible-collections/ansible.posix/blob/master/docs/ansible.posix.acl_module.rst)|Set and retrieve file ACL information.
+[ansible.posix.at](https://github.com/ansible-collections/ansible.posix/blob/master/docs/ansible.posix.at_module.rst)|Schedule the execution of a command or script file via the at command
+[ansible.posix.authorized_key](https://github.com/ansible-collections/ansible.posix/blob/master/docs/ansible.posix.authorized_key_module.rst)|Adds or removes an SSH authorized key
+[ansible.posix.mount](https://github.com/ansible-collections/ansible.posix/blob/master/docs/ansible.posix.mount_module.rst)|Control active and configured mount points
+[ansible.posix.patch](https://github.com/ansible-collections/ansible.posix/blob/master/docs/ansible.posix.patch_module.rst)|Apply patch files using the GNU patch tool
+[ansible.posix.seboolean](https://github.com/ansible-collections/ansible.posix/blob/master/docs/ansible.posix.seboolean_module.rst)|Toggles SELinux booleans
+[ansible.posix.selinux](https://github.com/ansible-collections/ansible.posix/blob/master/docs/ansible.posix.selinux_module.rst)|Change policy and state of SELinux
+[ansible.posix.synchronize](https://github.com/ansible-collections/ansible.posix/blob/master/docs/ansible.posix.synchronize_module.rst)|A wrapper around rsync to make common tasks in your playbooks quick and easy
+[ansible.posix.sysctl](https://github.com/ansible-collections/ansible.posix/blob/master/docs/ansible.posix.sysctl_module.rst)|Manage entries in sysctl.conf.
+
+<!--end collection content-->
 
 ## Installing this collection
 
@@ -59,6 +75,18 @@ Please read and familiarize yourself with this document.
 
 * 0.1.1 Initial stable build
 * 0.1.0 Internal only build
+
+## External requirements
+
+None
+
+## Tested with Ansible
+
+<!-- List the versions of Ansible the collection has been tested with. Must match what is in galaxy.yml. -->
+
+* ansible-base 2.11 (devel)
+* ansible-base 2.10 (Beta)
+* ansible-base 2.9 (stable)
 
 ## Roadmap
 

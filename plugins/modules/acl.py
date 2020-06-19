@@ -14,6 +14,7 @@ module: acl
 short_description: Set and retrieve file ACL information.
 description:
 - Set and retrieve file ACL information.
+version_added: "1.0.0"
 options:
   path:
     description:

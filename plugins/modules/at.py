@@ -15,6 +15,7 @@ short_description: Schedule the execution of a command or script file via the at
 description:
  - Use this module to schedule a command or script file to run once in the future.
  - All jobs are executed in the 'a' queue.
+version_added: "1.0.0"
 options:
   command:
     description:

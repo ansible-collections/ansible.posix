@@ -1,6 +1,6 @@
 namespace: ansible
 name: posix
-version: 0.1.3
+version: 1.0.0
 readme: README.md
 authors:
   - Ansible (github.com/ansible)

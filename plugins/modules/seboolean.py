@@ -13,6 +13,7 @@ module: seboolean
 short_description: Toggles SELinux booleans
 description:
      - Toggles SELinux booleans.
+version_added: "1.0.0"
 options:
   name:
     description:
