@@ -8,7 +8,6 @@ matrix:
   exclude:
     - env: T=none
   include:
-    - env: T=2.9/aix/7.2/1
     - env: T=2.9/osx/10.11/1
     - env: T=2.9/rhel/7.6/1
     - env: T=2.9/rhel/8.1/1
