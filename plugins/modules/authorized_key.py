@@ -635,13 +635,9 @@ def enforce_state(module, params):
             }
             params['diff'] = diff
 
-        if module.check_mode:
-            module.exit_json(changed=True, diff=diff)
-        writefile(module, filename, new_content)
+        if not module.check_mode:
+            writefile(module, filename, new_content)
         params['changed'] = True
-    else:
-        if module.check_mode:
-            module.exit_json(changed=False)
 
     return params
 
