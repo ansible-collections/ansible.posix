@@ -67,6 +67,7 @@ cp -aT "${SHIPPABLE_BUILD_DIR}" "${TEST_DIR}"
 cd "${TEST_DIR}"
 
 # START: HACK install dependencies
+retry ansible-galaxy collection install community.general
 # END: HACK
 
 export PYTHONIOENCODING='utf-8'
