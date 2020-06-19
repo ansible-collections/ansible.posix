@@ -61,20 +61,12 @@ fi
 
 export ANSIBLE_COLLECTIONS_PATHS="${HOME}/.ansible"
 SHIPPABLE_RESULT_DIR="$(pwd)/shippable"
-TEST_DIR="${ANSIBLE_COLLECTIONS_PATHS}/ansible_collections/community/general"
+TEST_DIR="${ANSIBLE_COLLECTIONS_PATHS}/ansible_collections/ansible/posix"
 mkdir -p "${TEST_DIR}"
 cp -aT "${SHIPPABLE_BUILD_DIR}" "${TEST_DIR}"
 cd "${TEST_DIR}"
 
 # START: HACK install dependencies
-retry ansible-galaxy -vvv collection install ansible.netcommon
-retry ansible-galaxy -vvv collection install ansible.posix
-retry ansible-galaxy -vvv collection install community.crypto
-# retry ansible-galaxy -vvv collection install community.internal_test_tools - we need git checkout until 0.2.0 has been released
-retry git clone https://github.com/ansible-collections/community.internal_test_tools.git "${ANSIBLE_COLLECTIONS_PATHS}/ansible_collections/community/internal_test_tools"
-retry ansible-galaxy -vvv collection install community.kubernetes
-retry ansible-galaxy -vvv collection install google.cloud
-
 # END: HACK
 
 export PYTHONIOENCODING='utf-8'
