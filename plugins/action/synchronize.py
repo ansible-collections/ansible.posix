@@ -415,6 +415,6 @@ class ActionModule(ActionBase):
                 _tmp_args['rsync_opts'].append("--rsh=buildah run --")
 
         # run the module and store the result
-        result.update(self._execute_module('synchronize', module_args=_tmp_args, task_vars=task_vars))
+        result.update(self._execute_module('ansible.posix.synchronize', module_args=_tmp_args, task_vars=task_vars))
 
         return result
