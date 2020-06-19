@@ -159,7 +159,7 @@ function cleanup
                         -f "${file}" \
                         -F "${flags}" \
                         -n "${test}" \
-                        -t 20636cf5-4d6a-4b9a-8d2d-6f22ebbaa752 \
+                        -t 54c9aa8f-073c-47b2-87e5-b756f5123ccc \
                         -X coveragepy \
                         -X gcov \
                         -X fix \
