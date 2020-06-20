@@ -64,7 +64,7 @@ class ActionModule(ActionBase):
                 )
             )
 
-            result.update(self._execute_module('patch', module_args=new_module_args, task_vars=task_vars))
+            result.update(self._execute_module('ansible.posix.patch', module_args=new_module_args, task_vars=task_vars))
         except AnsibleAction as e:
             result.update(e.result)
         finally:
