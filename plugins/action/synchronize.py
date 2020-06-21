@@ -33,7 +33,7 @@ class ActionModule(ActionBase):
     def _get_absolute_path(self, path):
         original_path = path
 
-        if path.startswith('rsync://') or path.startswith('/') or ':' in path:
+        if path.startswith(('rsync://', '/')) or ':' in path:
             return path
 
         if self._task._role is not None:
