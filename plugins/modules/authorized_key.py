@@ -14,6 +14,7 @@ module: authorized_key
 short_description: Adds or removes an SSH authorized key
 description:
     - Adds or removes SSH authorized keys for particular user accounts.
+version_added: "1.0.0"
 options:
   user:
     description:

@@ -19,6 +19,7 @@ description:
 author:
   - Ansible Core Team
   - Seth Vidal (@skvidal)
+version_added: "1.0.0"
 options:
   path:
     description:

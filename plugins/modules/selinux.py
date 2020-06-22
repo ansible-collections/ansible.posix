@@ -16,6 +16,7 @@ description:
   - Configures the SELinux mode and policy.
   - A reboot may be required after usage.
   - Ansible will not issue this reboot but will let you know when it is required.
+version_added: "1.0.0"
 options:
   policy:
     description:

@@ -19,6 +19,7 @@ author:
 description:
     - Apply patch files using the GNU patch tool.
 short_description: Apply patch files using the GNU patch tool
+version_added: "1.0.0"
 options:
   basedir:
     description:
