@@ -50,7 +50,7 @@ options:
     default: present
   remote_src:
     description:
-      - If C(no), it will search for src at originating/master machine, if C(yes) it will
+      - If C(no), it will search for src at originating/controller machine, if C(yes) it will
         go to the remote/target machine for the C(src).
     type: bool
     default: no
