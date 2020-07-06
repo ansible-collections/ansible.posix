@@ -122,7 +122,7 @@ Parameters
                                                                                     </ul>
                                                                             </td>
                                                                 <td>
-                                            <div>If <code>no</code>, it will search for src at originating/master machine, if <code>yes</code> it will go to the remote/target machine for the <code>src</code>.</div>
+                                            <div>If <code>no</code>, it will search for src at originating/controller machine, if <code>yes</code> it will go to the remote/target machine for the <code>src</code>.</div>
                                                         </td>
             </tr>
                                 <tr>

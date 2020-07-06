@@ -9,6 +9,6 @@ license_file: COPYING
 tags: [posix, networking, shell, unix]
 dependencies: {}
 repository: https://github.com/ansible-collections/ansible.posix
-documentation: https://github.com/ansible-collections/ansible.posix/tree/master/docs
+documentation: https://github.com/ansible-collections/ansible.posix/tree/main/docs
 homepage: https://github.com/ansible-collections/ansible.posix
 issues: https://github.com/ansible-collections/ansible.posix
