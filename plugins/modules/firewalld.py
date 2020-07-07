@@ -171,7 +171,7 @@ EXAMPLES = r'''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.community.general.plugins.module_utils.firewalld import FirewallTransaction, fw_offline
+from ansible_collections.ansible.posix.plugins.module_utils.firewalld import FirewallTransaction, fw_offline
 
 try:
     from firewall.client import Rich_Rule
