@@ -4,7 +4,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Imports and info for sanity checking
-from __future__ import (absolute_import, division, print_function)
 from distutils.version import LooseVersion
 
 FW_VERSION = None
