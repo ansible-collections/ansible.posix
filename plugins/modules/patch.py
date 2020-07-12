@@ -207,7 +207,8 @@ def main():
     p.src = os.path.abspath(p.src)
 
     changed = False
-    if not is_already_applied(patch_func, p.src, p.basedir, dest_file=p.dest, binary=p.binary, ignore_whitespace=p.ignore_whitespace, strip=p.strip, state=p.state):
+    if not is_already_applied(patch_func, p.src, p.basedir, dest_file=p.dest, binary=p.binary,
+                              ignore_whitespace=p.ignore_whitespace, strip=p.strip, state=p.state):
         try:
             apply_patch(patch_func, p.src, p.basedir, dest_file=p.dest, binary=p.binary, ignore_whitespace=p.ignore_whitespace, strip=p.strip,
                         dry_run=module.check_mode, backup=p.backup, state=p.state)
