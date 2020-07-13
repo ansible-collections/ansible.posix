@@ -87,3 +87,38 @@
     dest: '{{ output_dir }}/patch/workfile.txt'
   register: result
   failed_when: result is changed
+
+- name: copy the origin file whitespace
+  copy:
+    src: ./origin.txt
+    dest: '{{ output_dir }}/patch/workfile_whitespace.txt'
+  register: result
+
+- name: patch the origin file
+  register: result
+  patch:
+    src: result_whitespace.patch
+    dest: '{{ output_dir }}/patch/workfile_whitespace.txt'
+    ignore_whitespace: yes
+- name: verify patch the origin file
+  assert:
+    that:
+    - result is changed
+
+- name: test patch the origin file idempotency
+  register: result
+  patch:
+    src: result_whitespace.patch
+    dest: '{{ output_dir }}/patch/workfile_whitespace.txt'
+    ignore_whitespace: yes
+- name: verify test patch the origin file idempotency
+  assert:
+    that:
+    - result is not changed
+
+- name: verify the resulted file matches expectations
+  copy:
+    src: ./result_whitespace.txt
+    dest: '{{ output_dir }}/patch/workfile_whitespace.txt'
+  register: result
+  failed_when: result is changed
