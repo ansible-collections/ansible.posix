@@ -101,68 +101,70 @@ author:
 '''
 
 EXAMPLES = r'''
-- firewalld:
+- name: permit traffic in default zone for https service
+  ansible.posix.firewalld:
     service: https
     permanent: yes
     state: enabled
 
-- firewalld:
+- name: do not permit traffic in default zone on port 8081/tcp
+  ansible.posix.firewalld:
     port: 8081/tcp
     permanent: yes
     state: disabled
 
-- firewalld:
+- ansible.posix.firewalld:
     port: 161-162/udp
     permanent: yes
     state: enabled
 
-- firewalld:
+- ansible.posix.firewalld:
     zone: dmz
     service: http
     permanent: yes
     state: enabled
 
-- firewalld:
+- ansible.posix.firewalld:
     rich_rule: rule service name="ftp" audit limit value="1/m" accept
     permanent: yes
     state: enabled
 
-- firewalld:
+- ansible.posix.firewalld:
     source: 192.0.2.0/24
     zone: internal
     state: enabled
 
-- firewalld:
+- ansible.posix.firewalld:
     zone: trusted
     interface: eth2
     permanent: yes
     state: enabled
 
-- firewalld:
+- ansible.posix.firewalld:
     masquerade: yes
     state: enabled
     permanent: yes
     zone: dmz
 
-- firewalld:
+- ansible.posix.firewalld:
     zone: custom
     state: present
     permanent: yes
 
-- firewalld:
+- ansible.posix.firewalld:
     zone: drop
     state: enabled
     permanent: yes
     icmp_block_inversion: yes
 
-- firewalld:
+- ansible.posix.firewalld:
     zone: drop
     state: enabled
     permanent: yes
     icmp_block: echo-request
 
 - name: Redirect port 443 to 8443 with Rich Rule
-  firewalld:
+  ansible.posix.firewalld:
     rich_rule: rule family=ipv4 forward-port port=443 protocol=tcp to-port=8443
     zone: public
     permanent: yes
