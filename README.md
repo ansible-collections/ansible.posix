@@ -22,15 +22,16 @@ PEP440 is the schema used to describe the versions of Ansible.
 ### Modules
 Name | Description
 --- | ---
-[ansible.posix.acl](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.acl_module.rst)|Set and retrieve file ACL information.
-[ansible.posix.at](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.at_module.rst)|Schedule the execution of a command or script file via the at command
-[ansible.posix.authorized_key](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.authorized_key_module.rst)|Adds or removes an SSH authorized key
-[ansible.posix.mount](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.mount_module.rst)|Control active and configured mount points
-[ansible.posix.patch](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.patch_module.rst)|Apply patch files using the GNU patch tool
-[ansible.posix.seboolean](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.seboolean_module.rst)|Toggles SELinux booleans
-[ansible.posix.selinux](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.selinux_module.rst)|Change policy and state of SELinux
-[ansible.posix.synchronize](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.synchronize_module.rst)|A wrapper around rsync to make common tasks in your playbooks quick and easy
-[ansible.posix.sysctl](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.sysctl_module.rst)|Manage entries in sysctl.conf.
+[ansible.posix.acl](https://github.com/ansible-collections/ansible.posix/blob/master/docs/ansible.posix.acl_module.rst)|Set and retrieve file ACL information.
+[ansible.posix.at](https://github.com/ansible-collections/ansible.posix/blob/master/docs/ansible.posix.at_module.rst)|Schedule the execution of a command or script file via the at command
+[ansible.posix.authorized_key](https://github.com/ansible-collections/ansible.posix/blob/master/docs/ansible.posix.authorized_key_module.rst)|Adds or removes an SSH authorized key
+[ansible.posix.firewalld](https://github.com/ansible-collections/ansible.posix/blob/master/docs/ansible.posix.firewalld_module.rst)|Manage arbitrary ports/services with firewalld
+[ansible.posix.mount](https://github.com/ansible-collections/ansible.posix/blob/master/docs/ansible.posix.mount_module.rst)|Control active and configured mount points
+[ansible.posix.patch](https://github.com/ansible-collections/ansible.posix/blob/master/docs/ansible.posix.patch_module.rst)|Apply patch files using the GNU patch tool
+[ansible.posix.seboolean](https://github.com/ansible-collections/ansible.posix/blob/master/docs/ansible.posix.seboolean_module.rst)|Toggles SELinux booleans
+[ansible.posix.selinux](https://github.com/ansible-collections/ansible.posix/blob/master/docs/ansible.posix.selinux_module.rst)|Change policy and state of SELinux
+[ansible.posix.synchronize](https://github.com/ansible-collections/ansible.posix/blob/master/docs/ansible.posix.synchronize_module.rst)|A wrapper around rsync to make common tasks in your playbooks quick and easy
+[ansible.posix.sysctl](https://github.com/ansible-collections/ansible.posix/blob/master/docs/ansible.posix.sysctl_module.rst)|Manage entries in sysctl.conf.
 
 <!--end collection content-->
 
