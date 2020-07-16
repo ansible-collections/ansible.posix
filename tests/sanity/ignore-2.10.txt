@@ -1,3 +1,5 @@
+plugins/module_utils/firewalld.py future-import-boilerplate
+plugins/module_utils/firewalld.py metaclass-boilerplate
 plugins/module_utils/mount.py future-import-boilerplate
 plugins/module_utils/mount.py metaclass-boilerplate
 plugins/modules/acl.py validate-modules:parameter-type-not-in-doc
