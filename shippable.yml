@@ -22,7 +22,7 @@ matrix:
     - env: T=2.9/linux/opensuse15/1
     - env: T=2.9/linux/ubuntu1604/1
     - env: T=2.9/linux/ubuntu1804/1
-    - env: T=2.10/aix/7.2/1
+#    - env: T=2.10/aix/7.2/1
     - env: T=2.10/osx/10.11/1
     - env: T=2.10/rhel/7.6/1
     - env: T=2.10/rhel/8.2/1
@@ -37,7 +37,7 @@ matrix:
     - env: T=2.10/linux/opensuse15/1
     - env: T=2.10/linux/ubuntu1604/1
     - env: T=2.10/linux/ubuntu1804/1
-    - env: T=devel/aix/7.2/1
+#    - env: T=devel/aix/7.2/1
     - env: T=devel/osx/10.11/1
     - env: T=devel/rhel/7.6/1
     - env: T=devel/rhel/8.1/1
