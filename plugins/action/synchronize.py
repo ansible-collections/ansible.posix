@@ -60,7 +60,7 @@ class ActionModule(ActionBase):
             return path
 
         # If using docker or buildah, do not add user information
-        if self._remote_transport not in ['docker', 'buildah'] and user:
+        if self._remote_transport not in ['docker', 'community.general.docker', 'buildah', 'containers.podman.buildah'] and user:
             user_prefix = '%s@' % (user, )
 
         if self._host_is_ipv6_address(host):
@@ -170,7 +170,7 @@ class ActionModule(ActionBase):
         self._remote_transport = self._connection.transport
 
         # Handle docker connection options
-        if self._remote_transport == 'docker':
+        if self._remote_transport in ['docker', 'community.general.docker']:
             self._docker_cmd = self._connection.docker_cmd
             if self._play_context.docker_extra_args:
                 self._docker_cmd = "%s %s" % (self._docker_cmd, self._play_context.docker_extra_args)
@@ -192,7 +192,7 @@ class ActionModule(ActionBase):
         # ssh paramiko docker buildah and local are fully supported transports.  Anything
         # else only works with delegate_to
         if delegate_to is None and self._connection.transport not in \
-                ('ssh', 'paramiko', 'local', 'docker', 'buildah'):
+                ('ssh', 'paramiko', 'local', 'docker', 'community.general.docker', 'buildah', 'containers.podman.buildah'):
             result['failed'] = True
             result['msg'] = (
                 "synchronize uses rsync to function. rsync needs to connect to the remote "
@@ -367,7 +367,7 @@ class ActionModule(ActionBase):
         if not dest_is_local:
             # don't escalate for docker. doing --rsync-path with docker exec fails
             # and we can switch directly to the user via docker arguments
-            if self._play_context.become and not rsync_path and self._remote_transport != 'docker':
+            if self._play_context.become and not rsync_path and self._remote_transport not in ['docker', 'community.general.docker']:
                 # If no rsync_path is set, become was originally set, and dest is
                 # remote then add privilege escalation here.
                 if self._play_context.become_method == 'sudo':
@@ -391,7 +391,7 @@ class ActionModule(ActionBase):
 
         # If launching synchronize against docker container
         # use rsync_opts to support container to override rsh options
-        if self._remote_transport in ['docker', 'buildah'] and not use_delegate:
+        if self._remote_transport in ['docker', 'community.general.docker', 'buildah', 'containers.podman.buildah'] and not use_delegate:
             # Replicate what we do in the module argumentspec handling for lists
             if not isinstance(_tmp_args.get('rsync_opts'), MutableSequence):
                 tmp_rsync_opts = _tmp_args.get('rsync_opts', [])
@@ -404,14 +404,14 @@ class ActionModule(ActionBase):
             if '--blocking-io' not in _tmp_args['rsync_opts']:
                 _tmp_args['rsync_opts'].append('--blocking-io')
 
-            if self._remote_transport in ['docker']:
+            if self._remote_transport in ['docker', 'community.general.docker']:
                 if become and self._play_context.become_user:
                     _tmp_args['rsync_opts'].append("--rsh=%s exec -u %s -i" % (self._docker_cmd, self._play_context.become_user))
                 elif user is not None:
                     _tmp_args['rsync_opts'].append("--rsh=%s exec -u %s -i" % (self._docker_cmd, user))
                 else:
                     _tmp_args['rsync_opts'].append("--rsh=%s exec -i" % self._docker_cmd)
-            elif self._remote_transport in ['buildah']:
+            elif self._remote_transport in ['buildah', 'containers.podman.buildah']:
                 _tmp_args['rsync_opts'].append("--rsh=buildah run --")
 
         # run the module and store the result
