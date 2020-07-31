@@ -1,0 +1,2 @@
+bugfixes:
+- Fix synchronize to work with renamed docker and buildah connection plugins.
