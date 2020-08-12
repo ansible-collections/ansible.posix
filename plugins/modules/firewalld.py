@@ -27,6 +27,7 @@ options:
   rich_rule:
     description:
       - Rich rule to add/remove to/from firewalld.
+      - See L(Syntax for firewalld rich language rules,https://firewalld.org/documentation/man-pages/firewalld.richlanguage.html).
     type: str
   source:
     description:
