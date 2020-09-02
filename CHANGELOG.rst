@@ -8,6 +8,11 @@ ansible.posix Release Notes
 v1.1.1
 ======
 
+Minor Changes
+-------------
+
+- skippy - fixed the deprecation warning (by date) for skippy callback plugin
+
 Bugfixes
 --------
 

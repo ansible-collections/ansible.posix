@@ -97,6 +97,9 @@ releases:
     changes:
       bugfixes:
       - Fix synchronize to work with renamed docker and buildah connection plugins.
+      minor_changes:
+      - skippy - fixed the deprecation warning (by date) for skippy callback plugin
     fragments:
     - 74_synchronize_docker.yml
+    - skippy_deprecation.yml
     release_date: '2020-09-02'
