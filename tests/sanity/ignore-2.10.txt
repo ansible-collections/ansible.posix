@@ -3,7 +3,6 @@ plugins/module_utils/firewalld.py metaclass-boilerplate
 plugins/module_utils/mount.py future-import-boilerplate
 plugins/module_utils/mount.py metaclass-boilerplate
 plugins/modules/acl.py validate-modules:parameter-type-not-in-doc
-plugins/modules/patch.py pylint:blacklisted-name
 plugins/modules/synchronize.py pylint:blacklisted-name
 plugins/modules/synchronize.py use-argspec-type-path
 plugins/modules/synchronize.py validate-modules:doc-default-does-not-match-spec
