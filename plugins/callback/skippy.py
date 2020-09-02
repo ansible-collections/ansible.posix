@@ -14,7 +14,7 @@ DOCUMENTATION = '''
     short_description: Ansible screen output that ignores skipped status
     deprecated:
         why: The 'default' callback plugin now supports this functionality
-        removed_in: '2.11'
+        removed_at_date: 2022-06-01
         alternative: "'default' callback plugin with 'display_skipped_hosts = no' option"
     extends_documentation_fragment:
       - default_callback
