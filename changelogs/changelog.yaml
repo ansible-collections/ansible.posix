@@ -1,0 +1,105 @@
+ancestor: null
+releases:
+  1.0.0:
+    changes:
+      bugfixes:
+      - Allow unsetting existing environment vars via environment by specifying a
+        null value (https://github.com/ansible/ansible/pull/68236).
+      - Mount - Handle remount with new options (https://github.com/ansible/ansible/issues/59460).
+      - Profile_tasks - result was a odict_items which is not subscriptable, so the
+        slicing was failing (https://github.com/ansible/ansible/issues/59059).
+      - Revert "mount - Check if src exists before mounted (ansible/ansible#61752)".
+      - Typecast results before use in profile_tasks callback (https://github.com/ansible/ansible/issues/69563).
+      - authorized_keys - Added FIDO2 security keys (https://github.com/ansible-collections/ansible.posix/issues/17).
+      - authorized_keys - fix inconsistent return value for check mode (https://github.com/ansible-collections/ansible.posix/issues/37)
+      - json callback - Fix host result to task references in the resultant JSON output
+        for non-lockstep strategy plugins such as free (https://github.com/ansible/ansible/issues/65931)
+      - mount - fix issues with ismount module_util pathing for Ansible 2.9 (fixes
+        https://github.com/ansible-collections/ansible.posix/issues/21)
+      - patch - fix FQCN usage for action plugin (https://github.com/ansible-collections/ansible.posix/issues/11)
+      - selinux - add missing configuration keys for /etc/selinux/config (https://github.com/ansible-collections/ansible.posix/issues/23)
+      - synchronize - fix FQCN usage for action plugin (https://github.com/ansible-collections/ansible.posix/issues/11)
+      major_changes:
+      - Bootstrap Collection (https://github.com/ansible-collections/ansible.posix/pull/1).
+      minor_changes:
+      - CI should use devel (https://github.com/ansible-collections/ansible.posix/pull/6).
+      - Enable tests for at, patch and synchronize modules (https://github.com/ansible-collections/ansible.posix/pull/5).
+      - Enabled tags in galaxy.yml (https://github.com/ansible-collections/ansible.posix/issues/18).
+      - Migrate hacking/cgroup_perf_recap_graph.py to this collection, since the cgroup_perf_recap
+        callback lives here.
+      - Remove license key from galaxy.yml.
+      - Remove sanity jobs from shippable (https://github.com/ansible-collections/ansible.posix/pull/43).
+      - Removed ANSIBLE_METADATA from all the modules.
+      - Revert "Enable at, patch and synchronize tests (https://github.com/ansible-collections/ansible.posix/pull/5)".
+      - Update EXAMPLES section in modules to use FQCN.
+      - Update README.md (https://github.com/ansible-collections/ansible.posix/pull/4/).
+    fragments:
+    - 11-action-plugins-use-fqcn.yml
+    - 12_migrate_cgroup_perf_recap_graph.yml
+    - 14_mount_option.yml
+    - 15_profile_tasks.yml
+    - 17_authorized_keys.yml
+    - 19_enable_tags.yml
+    - 21-mount-module_util-routing-issue.yml
+    - 23-selinux-doesnt-create-missing-config-keys.yml
+    - 25_ansible_metadata.yml
+    - 26_profile_tasks_doc.yml
+    - 27_update_examples.yml
+    - 33_mount.yml
+    - 35_disable_tests.yml
+    - 37-authorized_keys-inconsistent-check-mode-values.yml
+    - 39_remove_license.yml
+    - 43_remove_shippable.yml
+    - 4_update_readme.yml
+    - 5_enable_tests.yml
+    - 65931-json-callback-non-lockstep-output.yml
+    - 6_test_devel.yml
+    - 7_env.yml
+    - initial_commit.yaml
+    modules:
+    - description: Set and retrieve file ACL information.
+      name: acl
+      namespace: ''
+    - description: Schedule the execution of a command or script file via the at command
+      name: at
+      namespace: ''
+    - description: Adds or removes an SSH authorized key
+      name: authorized_key
+      namespace: ''
+    - description: Control active and configured mount points
+      name: mount
+      namespace: ''
+    - description: Apply patch files using the GNU patch tool
+      name: patch
+      namespace: ''
+    - description: Toggles SELinux booleans
+      name: seboolean
+      namespace: ''
+    - description: Change policy and state of SELinux
+      name: selinux
+      namespace: ''
+    - description: A wrapper around rsync to make common tasks in your playbooks quick
+        and easy
+      name: synchronize
+      namespace: ''
+    - description: Manage entries in sysctl.conf.
+      name: sysctl
+      namespace: ''
+    release_date: '2020-06-19'
+  1.1.0:
+    changes:
+      minor_changes:
+      - firewalld - add firewalld module to ansible.posix collection
+    fragments:
+    - firewalld_migration.yml
+    release_date: '2020-07-15'
+  1.1.1:
+    changes:
+      bugfixes:
+      - Fix synchronize to work with renamed docker and buildah connection plugins.
+      minor_changes:
+      - skippy - fixed the deprecation warning (by date) for skippy callback plugin
+    fragments:
+    - 74_synchronize_docker.yml
+    - skippy_deprecation.yml
+    release_date: '2020-09-02'

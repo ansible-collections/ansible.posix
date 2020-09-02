@@ -31,193 +31,195 @@ Parameters
         <tr>
             <th colspan="1">Parameter</th>
             <th>Choices/<font color="blue">Defaults</font></th>
-                        <th width="100%">Comments</th>
+            <th width="100%">Comments</th>
         </tr>
-                    <tr>
-                                                                <td colspan="1">
+            <tr>
+                <td colspan="1">
                     <div class="ansibleOptionAnchor" id="parameter-"></div>
                     <b>backup</b>
                     <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
                     <div style="font-size: small">
                         <span style="color: purple">boolean</span>
-                                                                    </div>
-                                    </td>
-                                <td>
-                                                                                                                                                                                                                    <ul style="margin: 0; padding: 0"><b>Choices:</b>
-                                                                                                                                                                <li><div style="color: blue"><b>no</b>&nbsp;&larr;</div></li>
-                                                                                                                                                                                                <li>yes</li>
-                                                                                    </ul>
-                                                                            </td>
-                                                                <td>
-                                            <div>Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.</div>
-                                                        </td>
+                    </div>
+                </td>
+                <td>
+                        <ul style="margin: 0; padding: 0"><b>Choices:</b>
+                                    <li><div style="color: blue"><b>no</b>&nbsp;&larr;</div></li>
+                                    <li>yes</li>
+                        </ul>
+                </td>
+                <td>
+                        <div>Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.</div>
+                </td>
             </tr>
-                                <tr>
-                                                                <td colspan="1">
+            <tr>
+                <td colspan="1">
                     <div class="ansibleOptionAnchor" id="parameter-"></div>
                     <b>boot</b>
                     <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
                     <div style="font-size: small">
                         <span style="color: purple">boolean</span>
-                                                                    </div>
-                                    </td>
-                                <td>
-                                                                                                                                                                                                                    <ul style="margin: 0; padding: 0"><b>Choices:</b>
-                                                                                                                                                                <li>no</li>
-                                                                                                                                                                                                <li><div style="color: blue"><b>yes</b>&nbsp;&larr;</div></li>
-                                                                                    </ul>
-                                                                            </td>
-                                                                <td>
-                                            <div>Determines if the filesystem should be mounted on boot.</div>
-                                            <div>Only applies to Solaris systems.</div>
-                                                        </td>
+                    </div>
+                </td>
+                <td>
+                        <ul style="margin: 0; padding: 0"><b>Choices:</b>
+                                    <li>no</li>
+                                    <li><div style="color: blue"><b>yes</b>&nbsp;&larr;</div></li>
+                        </ul>
+                </td>
+                <td>
+                        <div>Determines if the filesystem should be mounted on boot.</div>
+                        <div>Only applies to Solaris systems.</div>
+                </td>
             </tr>
-                                <tr>
-                                                                <td colspan="1">
+            <tr>
+                <td colspan="1">
                     <div class="ansibleOptionAnchor" id="parameter-"></div>
                     <b>dump</b>
                     <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
                     <div style="font-size: small">
                         <span style="color: purple">string</span>
-                                                                    </div>
-                                    </td>
-                                <td>
-                                                                                                                                                                    <b>Default:</b><br/><div style="color: blue">0</div>
-                                    </td>
-                                                                <td>
-                                            <div>Dump (see fstab(5)).</div>
-                                            <div>Note that if set to <code>null</code> and <em>state</em> set to <code>present</code>, it will cease to work and duplicate entries will be made with subsequent runs.</div>
-                                            <div>Has no effect on Solaris systems.</div>
-                                                        </td>
+                    </div>
+                </td>
+                <td>
+                        <b>Default:</b><br/><div style="color: blue">0</div>
+                </td>
+                <td>
+                        <div>Dump (see fstab(5)).</div>
+                        <div>Note that if set to <code>null</code> and <em>state</em> set to <code>present</code>, it will cease to work and duplicate entries will be made with subsequent runs.</div>
+                        <div>Has no effect on Solaris systems.</div>
+                </td>
             </tr>
-                                <tr>
-                                                                <td colspan="1">
+            <tr>
+                <td colspan="1">
                     <div class="ansibleOptionAnchor" id="parameter-"></div>
                     <b>fstab</b>
                     <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
                     <div style="font-size: small">
                         <span style="color: purple">string</span>
-                                                                    </div>
-                                    </td>
-                                <td>
-                                                                                                                                                            </td>
-                                                                <td>
-                                            <div>File to use instead of <code>/etc/fstab</code>.</div>
-                                            <div>You should not use this option unless you really know what you are doing.</div>
-                                            <div>This might be useful if you need to configure mountpoints in a chroot environment.</div>
-                                            <div>OpenBSD does not allow specifying alternate fstab files with mount so do not use this on OpenBSD with any state that operates on the live filesystem.</div>
-                                            <div>This parameter defaults to /etc/fstab or /etc/vfstab on Solaris.</div>
-                                                        </td>
+                    </div>
+                </td>
+                <td>
+                </td>
+                <td>
+                        <div>File to use instead of <code>/etc/fstab</code>.</div>
+                        <div>You should not use this option unless you really know what you are doing.</div>
+                        <div>This might be useful if you need to configure mountpoints in a chroot environment.</div>
+                        <div>OpenBSD does not allow specifying alternate fstab files with mount so do not use this on OpenBSD with any state that operates on the live filesystem.</div>
+                        <div>This parameter defaults to /etc/fstab or /etc/vfstab on Solaris.</div>
+                </td>
             </tr>
-                                <tr>
-                                                                <td colspan="1">
+            <tr>
+                <td colspan="1">
                     <div class="ansibleOptionAnchor" id="parameter-"></div>
                     <b>fstype</b>
                     <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
                     <div style="font-size: small">
                         <span style="color: purple">string</span>
-                                                                    </div>
-                                    </td>
-                                <td>
-                                                                                                                                                            </td>
-                                                                <td>
-                                            <div>Filesystem type.</div>
-                                            <div>Required when <em>state</em> is <code>present</code> or <code>mounted</code>.</div>
-                                                        </td>
+                    </div>
+                </td>
+                <td>
+                </td>
+                <td>
+                        <div>Filesystem type.</div>
+                        <div>Required when <em>state</em> is <code>present</code> or <code>mounted</code>.</div>
+                </td>
             </tr>
-                                <tr>
-                                                                <td colspan="1">
+            <tr>
+                <td colspan="1">
                     <div class="ansibleOptionAnchor" id="parameter-"></div>
                     <b>opts</b>
                     <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
                     <div style="font-size: small">
                         <span style="color: purple">string</span>
-                                                                    </div>
-                                    </td>
-                                <td>
-                                                                                                                                                            </td>
-                                                                <td>
-                                            <div>Mount options (see fstab(5), or vfstab(4) on Solaris).</div>
-                                                        </td>
+                    </div>
+                </td>
+                <td>
+                </td>
+                <td>
+                        <div>Mount options (see fstab(5), or vfstab(4) on Solaris).</div>
+                </td>
             </tr>
-                                <tr>
-                                                                <td colspan="1">
+            <tr>
+                <td colspan="1">
                     <div class="ansibleOptionAnchor" id="parameter-"></div>
                     <b>passno</b>
                     <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
                     <div style="font-size: small">
                         <span style="color: purple">string</span>
-                                                                    </div>
-                                    </td>
-                                <td>
-                                                                                                                                                                    <b>Default:</b><br/><div style="color: blue">0</div>
-                                    </td>
-                                                                <td>
-                                            <div>Passno (see fstab(5)).</div>
-                                            <div>Note that if set to <code>null</code> and <em>state</em> set to <code>present</code>, it will cease to work and duplicate entries will be made with subsequent runs.</div>
-                                            <div>Deprecated on Solaris systems.</div>
-                                                        </td>
+                    </div>
+                </td>
+                <td>
+                        <b>Default:</b><br/><div style="color: blue">0</div>
+                </td>
+                <td>
+                        <div>Passno (see fstab(5)).</div>
+                        <div>Note that if set to <code>null</code> and <em>state</em> set to <code>present</code>, it will cease to work and duplicate entries will be made with subsequent runs.</div>
+                        <div>Deprecated on Solaris systems.</div>
+                </td>
             </tr>
-                                <tr>
-                                                                <td colspan="1">
+            <tr>
+                <td colspan="1">
                     <div class="ansibleOptionAnchor" id="parameter-"></div>
                     <b>path</b>
                     <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
                     <div style="font-size: small">
                         <span style="color: purple">path</span>
-                                                 / <span style="color: red">required</span>                    </div>
-                                    </td>
-                                <td>
-                                                                                                                                                            </td>
-                                                                <td>
-                                            <div>Path to the mount point (e.g. <code>/mnt/files</code>).</div>
-                                            <div>Before Ansible 2.3 this option was only usable as <em>dest</em>, <em>destfile</em> and <em>name</em>.</div>
-                                                                <div style="font-size: small; color: darkgreen"><br/>aliases: name</div>
-                                    </td>
+                         / <span style="color: red">required</span>
+                    </div>
+                </td>
+                <td>
+                </td>
+                <td>
+                        <div>Path to the mount point (e.g. <code>/mnt/files</code>).</div>
+                        <div>Before Ansible 2.3 this option was only usable as <em>dest</em>, <em>destfile</em> and <em>name</em>.</div>
+                        <div style="font-size: small; color: darkgreen"><br/>aliases: name</div>
+                </td>
             </tr>
-                                <tr>
-                                                                <td colspan="1">
+            <tr>
+                <td colspan="1">
                     <div class="ansibleOptionAnchor" id="parameter-"></div>
                     <b>src</b>
                     <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
                     <div style="font-size: small">
                         <span style="color: purple">path</span>
-                                                                    </div>
-                                    </td>
-                                <td>
-                                                                                                                                                            </td>
-                                                                <td>
-                                            <div>Device (or NFS volume, or something else) to be mounted on <em>path</em>.</div>
-                                            <div>Required when <em>state</em> set to <code>present</code> or <code>mounted</code>.</div>
-                                                        </td>
+                    </div>
+                </td>
+                <td>
+                </td>
+                <td>
+                        <div>Device (or NFS volume, or something else) to be mounted on <em>path</em>.</div>
+                        <div>Required when <em>state</em> set to <code>present</code> or <code>mounted</code>.</div>
+                </td>
             </tr>
-                                <tr>
-                                                                <td colspan="1">
+            <tr>
+                <td colspan="1">
                     <div class="ansibleOptionAnchor" id="parameter-"></div>
                     <b>state</b>
                     <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
                     <div style="font-size: small">
                         <span style="color: purple">string</span>
-                                                 / <span style="color: red">required</span>                    </div>
-                                    </td>
-                                <td>
-                                                                                                                            <ul style="margin: 0; padding: 0"><b>Choices:</b>
-                                                                                                                                                                <li>absent</li>
-                                                                                                                                                                                                <li>mounted</li>
-                                                                                                                                                                                                <li>present</li>
-                                                                                                                                                                                                <li>unmounted</li>
-                                                                                                                                                                                                <li>remounted</li>
-                                                                                    </ul>
-                                                                            </td>
-                                                                <td>
-                                            <div>If <code>mounted</code>, the device will be actively mounted and appropriately configured in <em>fstab</em>. If the mount point is not present, the mount point will be created.</div>
-                                            <div>If <code>unmounted</code>, the device will be unmounted without changing <em>fstab</em>.</div>
-                                            <div><code>present</code> only specifies that the device is to be configured in <em>fstab</em> and does not trigger or require a mount.</div>
-                                            <div><code>absent</code> specifies that the device mount&#x27;s entry will be removed from <em>fstab</em> and will also unmount the device and remove the mount point.</div>
-                                            <div><code>remounted</code> specifies that the device will be remounted for when you want to force a refresh on the mount itself (added in 2.9). This will always return changed=true. If <em>opts</em> is set, the options will be applied to the remount, but will not change <em>fstab</em>.  Additionally, if <em>opts</em> is set, and the remount command fails, the module will error to prevent unexpected mount changes.  Try using <code>mounted</code> instead to work around this issue.</div>
-                                                        </td>
+                         / <span style="color: red">required</span>
+                    </div>
+                </td>
+                <td>
+                        <ul style="margin: 0; padding: 0"><b>Choices:</b>
+                                    <li>absent</li>
+                                    <li>mounted</li>
+                                    <li>present</li>
+                                    <li>unmounted</li>
+                                    <li>remounted</li>
+                        </ul>
+                </td>
+                <td>
+                        <div>If <code>mounted</code>, the device will be actively mounted and appropriately configured in <em>fstab</em>. If the mount point is not present, the mount point will be created.</div>
+                        <div>If <code>unmounted</code>, the device will be unmounted without changing <em>fstab</em>.</div>
+                        <div><code>present</code> only specifies that the device is to be configured in <em>fstab</em> and does not trigger or require a mount.</div>
+                        <div><code>absent</code> specifies that the device mount&#x27;s entry will be removed from <em>fstab</em> and will also unmount the device and remove the mount point.</div>
+                        <div><code>remounted</code> specifies that the device will be remounted for when you want to force a refresh on the mount itself (added in 2.9). This will always return changed=true. If <em>opts</em> is set, the options will be applied to the remount, but will not change <em>fstab</em>.  Additionally, if <em>opts</em> is set, and the remount command fails, the module will error to prevent unexpected mount changes.  Try using <code>mounted</code> instead to work around this issue.</div>
+                </td>
             </tr>
-                        </table>
+    </table>
     <br/>
 
 
@@ -235,7 +237,6 @@ Examples
 
 .. code-block:: yaml+jinja
 
-    
     # Before 2.3, option 'name' was used instead of 'path'
     - name: Mount DVD read-only
       ansible.posix.mount:
@@ -298,7 +299,6 @@ Examples
 
 
 
-
 Status
 ------
 
@@ -308,5 +308,3 @@ Authors
 
 - Ansible Core Team
 - Seth Vidal (@skvidal)
-
-
