@@ -138,7 +138,7 @@ options:
     default: yes
   use_ssh_args:
     description:
-      - Use the ssh_args specified in ansible.cfg.
+      - Use the ssh_args specified in ansible.cfg. Setting this to `yes` will also make `synchronize` use `ansible_ssh_common_args`.
     type: bool
     default: no
   rsync_opts:
