@@ -74,6 +74,7 @@ EXAMPLES = r'''
 '''
 
 import os
+import platform
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
@@ -89,7 +90,7 @@ def add_job(module, result, at_cmd, count, units, command, script_file):
 
 def delete_job(module, result, at_cmd, command, script_file):
     for matching_job in get_matching_jobs(module, at_cmd, script_file):
-        at_command = "%s -d %s" % (at_cmd, matching_job)
+        at_command = "%s -r %s" % (at_cmd, matching_job)
         rc, out, err = module.run_command(at_command, check_rc=True)
         result['changed'] = True
     if command:
@@ -117,7 +118,8 @@ def get_matching_jobs(module, at_cmd, script_file):
     #   If the script text is contained in a job add job number to list.
     for current_job in current_jobs:
         split_current_job = current_job.split()
-        at_command = "%s -c %s" % (at_cmd, split_current_job[0])
+        at_opt = '-c' if platform.system() != 'AIX' else '-lv'
+        at_command = "%s %s %s" % (at_cmd, at_opt, split_current_job[0])
         rc, out, err = module.run_command(at_command, check_rc=True)
         if script_file_string in out:
             matching_jobs.append(split_current_job[0])
