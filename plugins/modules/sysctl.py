@@ -182,12 +182,12 @@ class SysctlModule(object):
 
         # Do the work
         if not self.module.check_mode:
+            if self.set_proc:
+                self.set_token_value(self.args['name'], self.args['value'])
             if self.write_file:
                 self.write_sysctl()
             if self.changed and self.args['reload']:
                 self.reload_sysctl()
-            if self.set_proc:
-                self.set_token_value(self.args['name'], self.args['value'])
 
     def _values_is_equal(self, a, b):
         """Expects two string values. It will split the string by whitespace
