@@ -28,16 +28,16 @@
 ## at
 ##
 
-- name: define distros to attempt installing at on 
+- name: define distros to attempt installing at on
   set_fact:
     package_distros:
-        - RedHat
-        - CentOS
-        - ScientificLinux
-        - Fedora
-        - Ubuntu
-        - Debian
-        - openSUSE Leap
+      - RedHat
+      - CentOS
+      - ScientificLinux
+      - Fedora
+      - Ubuntu
+      - Debian
+      - openSUSE Leap
 
 - name: ensure at is installed
   package:
@@ -54,9 +54,34 @@
 - debug: var=at_test0
 - name: validate results
   assert:
-      that:
-          - 'at_test0.changed is defined'
-          - 'at_test0.count is defined'
-          - 'at_test0.script_file is defined'
-          - 'at_test0.state is defined'
-          - 'at_test0.units is defined'
+    that:
+      - 'at_test0.changed is defined'
+      - 'at_test0.count is defined'
+      - 'at_test0.script_file is defined'
+      - 'at_test0.state is defined'
+      - 'at_test0.units is defined'
+
+- name: add a at useless command
+  at:
+    command: /bin/logger 'AT task ran from Ansible'
+    count: 1
+    units: minutes
+    unique: yes
+  register: at_add
+
+- debug var=at_add
+
+- name: pause, giving the time the at runs once
+  pause:
+    minutes: 1
+
+- name: add a at useless command
+  at:
+    command: /bin/logger 'AT task ran from Ansible'
+    count: 1
+    units: minutes
+    unique: yes
+    state: absent
+  register: at_removal
+
+- debug var=at_removal
