@@ -289,3 +289,24 @@
           - sysctl_check_mode2 is changed
           - "'vm.swappiness=22' in sysctl_check_mode_conf_content.stdout_lines"
           - sysctl_check_mode_current_vm_swappiness.stdout == '22'
+
+    # Test sysctl: invalid value
+    - name: Set invalid sysctl property using module
+      sysctl:
+        name: vm.mmap_rnd_bits
+        value: '1024'
+        state: present
+        reload: yes
+        sysctl_set: True
+      ignore_errors: True
+      register: sysctl_invalid_set1
+
+    - name: Read /etc/sysctl.conf
+      command: 'cat /etc/sysctl.conf'
+      register: sysctl_invalid_conf_content
+
+    - name: Ensure changes were not made
+      assert:
+        that:
+          - sysctl_invalid_set1 is failed
+          - "'vm.mmap_rnd_bits' not in sysctl_invalid_conf_content.stdout"
