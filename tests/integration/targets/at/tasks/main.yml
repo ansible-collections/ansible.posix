@@ -69,7 +69,7 @@
     unique: yes
   register: at_add
 
-- debug var=at_add
+- debug: var=at_add
 
 - name: pause, giving the time the at runs once
   pause:
@@ -80,8 +80,29 @@
     command: /bin/logger 'AT task ran from Ansible'
     count: 1
     units: minutes
-    unique: yes
+    unique: true
     state: absent
   register: at_removal
+  ignore_errors: true
 
-- debug var=at_removal
+- debug: var=at_removal
+
+- name: create an at command with chdir with valid value
+  at:
+    command: /bin/logger 'AT task ran from Ansible with chdir'
+    count: 1
+    units: minutes
+    chdir: /tmp
+  register: at_chdir_valid
+- debug: var=at_chdir_valid
+
+- name: create an at command with chdir with invalid value
+  at:
+    command: /bin/logger 'AT task ran from Ansible with chdir'
+    count: 1
+    units: minutes
+    chdir: /invalid
+  register: at_chdir_invalid
+  ignore_errors: true
+
+- debug: var=at_chdir_invalid

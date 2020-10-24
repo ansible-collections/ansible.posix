@@ -17,6 +17,12 @@ description:
  - All jobs are executed in the 'a' queue.
 version_added: "1.0.0"
 options:
+  chdir:
+    description:
+    - An optional location from where to run the command at. Useful for intance
+      when running a playbook using ansible-pull with C(purge) option.
+    type: path
+    version_added: 1.1.2
   command:
     description:
      - A command to be executed in the future.
@@ -38,7 +44,7 @@ options:
     description:
      - The state dictates if the command or script file should be evaluated as present(added) or absent(deleted).
     type: str
-    choices: [ absent, present ]
+    choices: [absent, present]
     default: present
   unique:
     description:
@@ -78,32 +84,32 @@ import tempfile
 from ansible.module_utils.basic import AnsibleModule
 
 
-def add_job(module, result, at_cmd, count, units, command, script_file):
+def add_job(module, result, at_cmd, count, units, command, script_file, chdir=None):
     at_command = "%s -f %s now + %s %s" % (at_cmd, script_file, count, units)
-    rc, out, err = module.run_command(at_command, check_rc=True)
+    rc, out, err = module.run_command(at_command, cwd=chdir, check_rc=True)
     if command:
         os.unlink(script_file)
     result['changed'] = True
 
 
-def delete_job(module, result, at_cmd, command, script_file):
+def delete_job(module, result, at_cmd, command, script_file, chdir=None):
     for matching_job in get_matching_jobs(module, at_cmd, script_file):
         at_command = "%s -r %s" % (at_cmd, matching_job)
-        rc, out, err = module.run_command(at_command, check_rc=True)
+        rc, out, err = module.run_command(at_command, cwd=chdir, check_rc=True)
         result['changed'] = True
     if command:
         os.unlink(script_file)
     module.exit_json(**result)
 
 
-def get_matching_jobs(module, at_cmd, script_file):
+def get_matching_jobs(module, at_cmd, script_file, chdir=None):
     matching_jobs = []
 
     atq_cmd = module.get_bin_path('atq', True)
 
     # Get list of job numbers for the user.
     atq_command = "%s" % atq_cmd
-    rc, out, err = module.run_command(atq_command, check_rc=True)
+    rc, out, err = module.run_command(atq_command, cwd=chdir, check_rc=True)
     current_jobs = out.splitlines()
     if len(current_jobs) == 0:
         return matching_jobs
@@ -118,7 +124,7 @@ def get_matching_jobs(module, at_cmd, script_file):
         split_current_job = current_job.split()
         at_opt = '-c' if platform.system() != 'AIX' else '-lv'
         at_command = "%s %s %s" % (at_cmd, at_opt, split_current_job[0])
-        rc, out, err = module.run_command(at_command, check_rc=True)
+        rc, out, err = module.run_command(at_command, cwd=chdir, check_rc=True)
         if script_file_string in out:
             matching_jobs.append(split_current_job[0])
 
@@ -139,6 +145,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             command=dict(type='str'),
+            chdir=dict(type='path'),
             script_file=dict(type='str'),
             count=dict(type='int'),
             units=dict(type='str', choices=['minutes', 'hours', 'days', 'weeks']),
@@ -152,6 +159,7 @@ def main():
 
     at_cmd = module.get_bin_path('at', True)
 
+    chdir = module.params['chdir']
     command = module.params['command']
     script_file = module.params['script_file']
     count = module.params['count']
@@ -173,7 +181,7 @@ def main():
 
     # if absent remove existing and return
     if state == 'absent':
-        delete_job(module, result, at_cmd, command, script_file)
+        delete_job(module, result, at_cmd, command, script_file, chdir=chdir)
 
     # if unique if existing return unchanged
     if unique:
@@ -186,7 +194,8 @@ def main():
     result['count'] = count
     result['units'] = units
 
-    add_job(module, result, at_cmd, count, units, command, script_file)
+    add_job(module, result, at_cmd, count, units, command, script_file,
+            chdir=chdir)
 
     module.exit_json(**result)
 
