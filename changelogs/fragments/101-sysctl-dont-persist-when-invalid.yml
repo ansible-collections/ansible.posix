@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - sysctl - do not persist sysctl when value is invalid (https://github.com/ansible-collections/ansible.posix/pull/101)
