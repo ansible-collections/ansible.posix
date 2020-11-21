@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2012, Red Hat, inc
-# Written by Seth Vidal
-# based on the mount modules from salt and puppet
+# Copyright: (c) 2021, quidame <quidame@poivron.org>
+# Written by Seth Vidal, based on the mount modules from salt and puppet
+# Enhanced by quidame (swapon/swapoff support)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -15,15 +16,18 @@ DOCUMENTATION = r'''
 module: mount
 short_description: Control active and configured mount points
 description:
-  - This module controls active and configured mount points in C(/etc/fstab).
+  - This module controls active and configured mount points in C(/etc/fstab),
+    as well as active and configured swap spaces.
 author:
   - Ansible Core Team
   - Seth Vidal (@skvidal)
+  - quidame (@quidame)
 version_added: "1.0.0"
 options:
   path:
     description:
-      - Path to the mount point (e.g. C(/mnt/files)).
+      - Path to the mount point (e.g. C(/mnt/files)). Must be C(none) (or C(-)
+        on Solaris) for swap spaces.
       - Before Ansible 2.3 this option was only usable as I(dest), I(destfile) and I(name).
     type: path
     required: true
@@ -31,16 +35,18 @@ options:
   src:
     description:
       - Device (or NFS volume, or something else) to be mounted on I(path).
-      - Required when I(state) set to C(present) or C(mounted).
+      - Required when I(state) set to C(present) or C(mounted), or when I(fstype=swap).
     type: path
   fstype:
     description:
       - Filesystem type.
-      - Required when I(state) is C(present) or C(mounted).
+      - Required when I(state) is C(present) or C(mounted). Also required for
+        any I(state) to properly handle swap spaces (and then set to c(swap)).
     type: str
   opts:
     description:
-      - Mount options (see fstab(5), or vfstab(4) on Solaris).
+      - Mount options (see fstab(5), or vfstab(4) on Solaris) for mountable
+        filesystems, or swapon(8) options for C(swap) filesystems.
     type: str
   dump:
     description:
@@ -64,7 +70,7 @@ options:
     description:
       - If C(mounted), the device will be actively mounted and appropriately
         configured in I(fstab). If the mount point is not present, the mount
-        point will be created.
+        point will be created (unless I(fstype=swap)).
       - If C(unmounted), the device will be unmounted without changing I(fstab).
       - C(present) only specifies that the device is to be configured in
         I(fstab) and does not trigger or require a mount.
@@ -84,6 +90,9 @@ options:
   fstab:
     description:
       - File to use instead of C(/etc/fstab).
+      - The filename must not start with a dot, and must end with C(.fstab),
+        otherwise it is silently ignored. It is also ignored by mount helpers
+        (for filesystems not natively supported by the C(mount) command).
       - You should not use this option unless you really know what you are doing.
       - This might be useful if you need to configure mountpoints in a chroot environment.
       - OpenBSD does not allow specifying alternate fstab files with mount so do not
@@ -93,7 +102,7 @@ options:
   boot:
     description:
       - Determines if the filesystem should be mounted on boot.
-      - Only applies to Solaris systems.
+      - Only applies to Solaris systems. Defaults to C(true) unless I(fstype=swap).
     type: bool
     default: yes
   backup:
@@ -108,6 +117,11 @@ notes:
   - Using C(remounted) with I(opts) set may create unexpected results based on
     the existing options already defined on mount, so care should be taken to
     ensure that conflicting options are not present before hand.
+  - Support for swap spaces activation/deactivation as been added in version
+    1.2.0 of C(ansible.posix).
+  - Strictly speaking, swap filesystems can't be C(mounted), C(unmounted) or
+    C(remounted). The module internally calls C(swapon) and C(swapoff) commands
+    to enable or disable such filesystems and make them usable by the kernel.
 '''
 
 EXAMPLES = r'''
@@ -169,6 +183,29 @@ EXAMPLES = r'''
     opts: rw,sync,hard,intr
     state: mounted
     fstype: nfs
+
+- name: Enable swap device with priority=1 (Linux)
+  ansible.posix.mount:
+    src: /dev/mapper/vg0-swap
+    fstype: swap
+    path: none
+    opts: pri=1
+    state: mounted
+
+- name: Enable a swapfile (Linux, Solaris)
+  ansible.posix.mount:
+    src: /var/swapfile
+    fstype: swap
+    path: none
+    state: mounted
+
+- name: Enable a swapfile (FreeBSD)
+  ansible.posix.mount:
+    src: md99
+    fstype: swap
+    path: none
+    opts: file=/var/swapfile
+    state: mounted
 '''
 
 
@@ -180,6 +217,9 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.ansible.posix.plugins.module_utils.mount import ismount
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_bytes, to_native
+
+
+SYSTEM = platform.system().lower()
 
 
 def write_fstab(module, lines, path):
@@ -229,7 +269,7 @@ def _set_mount_save_old(module, args):
     escaped_args = dict([(k, _escape_fstab(v)) for k, v in iteritems(args)])
     new_line = '%(src)s %(name)s %(fstype)s %(opts)s %(dump)s %(passno)s\n'
 
-    if platform.system() == 'SunOS':
+    if SYSTEM == 'sunos':
         new_line = (
             '%(src)s - %(name)s %(fstype)s %(passno)s %(boot)s %(opts)s\n')
 
@@ -251,16 +291,16 @@ def _set_mount_save_old(module, args):
         # Check if we got a valid line for splitting
         # (on Linux the 5th and the 6th field is optional)
         if (
-                platform.system() == 'SunOS' and len(fields) != 7 or
-                platform.system() == 'Linux' and len(fields) not in [4, 5, 6] or
-                platform.system() not in ['SunOS', 'Linux'] and len(fields) != 6):
+                SYSTEM == 'sunos' and len(fields) != 7 or
+                SYSTEM == 'linux' and len(fields) not in [4, 5, 6] or
+                SYSTEM not in ['sunos', 'linux'] and len(fields) != 6):
             to_write.append(line)
 
             continue
 
         ld = {}
 
-        if platform.system() == 'SunOS':
+        if SYSTEM == 'sunos':
             (
                 ld['src'],
                 dash,
@@ -285,8 +325,6 @@ def _set_mount_save_old(module, args):
         if (
                 ld['name'] != escaped_args['name'] or (
                     # In the case of swap, check the src instead
-                    'src' in args and
-                    ld['name'] == 'none' and
                     ld['fstype'] == 'swap' and
                     ld['src'] != args['src'])):
             to_write.append(line)
@@ -298,7 +336,7 @@ def _set_mount_save_old(module, args):
         exists = True
         args_to_check = ('src', 'fstype', 'opts', 'dump', 'passno')
 
-        if platform.system() == 'SunOS':
+        if SYSTEM == 'sunos':
             args_to_check = ('src', 'fstype', 'passno', 'boot', 'opts')
 
         for t in args_to_check:
@@ -341,15 +379,15 @@ def unset_mount(module, args):
 
         # Check if we got a valid line for splitting
         if (
-                platform.system() == 'SunOS' and len(line.split()) != 7 or
-                platform.system() != 'SunOS' and len(line.split()) != 6):
+                SYSTEM == 'sunos' and len(line.split()) != 7 or
+                SYSTEM != 'sunos' and len(line.split()) != 6):
             to_write.append(line)
 
             continue
 
         ld = {}
 
-        if platform.system() == 'SunOS':
+        if SYSTEM == 'sunos':
             (
                 ld['src'],
                 dash,
@@ -372,8 +410,6 @@ def unset_mount(module, args):
         if (
                 ld['name'] != escaped_name or (
                     # In the case of swap, check the src instead
-                    'src' in args and
-                    ld['name'] == 'none' and
                     ld['fstype'] == 'swap' and
                     ld['src'] != args['src'])):
             to_write.append(line)
@@ -395,8 +431,8 @@ def _set_fstab_args(fstab_file):
     if (
             fstab_file and
             fstab_file != '/etc/fstab' and
-            platform.system().lower() != 'sunos'):
-        if platform.system().lower().endswith('bsd'):
+            SYSTEM != 'sunos'):
+        if SYSTEM.endswith('bsd'):
             result.append('-F')
         else:
             result.append('-T')
@@ -413,7 +449,7 @@ def mount(module, args):
     name = args['name']
     cmd = [mount_bin]
 
-    if platform.system().lower() == 'openbsd':
+    if SYSTEM == 'openbsd':
         # Use module.params['fstab'] here as args['fstab'] has been set to the
         # default value.
         if module.params['fstab'] is not None:
@@ -454,7 +490,7 @@ def remount(module, args):
     cmd = [mount_bin]
 
     # Multiplatform remount opts
-    if platform.system().lower().endswith('bsd'):
+    if SYSTEM.endswith('bsd'):
         if module.params['state'] == 'remounted' and args['opts'] != 'defaults':
             cmd += ['-u', '-o', args['opts']]
         else:
@@ -465,7 +501,7 @@ def remount(module, args):
         else:
             cmd += ['-o', 'remount']
 
-    if platform.system().lower() == 'openbsd':
+    if SYSTEM == 'openbsd':
         # Use module.params['fstab'] here as args['fstab'] has been set to the
         # default value.
         if module.params['fstab'] is not None:
@@ -480,7 +516,7 @@ def remount(module, args):
     out = err = ''
 
     try:
-        if platform.system().lower().endswith('bsd'):
+        if SYSTEM.endswith('bsd'):
             # Note: Forcing BSDs to do umount/mount due to BSD remount not
             # working as expected (suspect bug in the BSD mount command)
             # Interested contributor could rework this to use mount options on
@@ -534,7 +570,7 @@ def is_bind_mounted(module, linux_mounts, dest, src=None, fstype=None):
 
     is_mounted = False
 
-    if platform.system() == 'Linux' and linux_mounts is not None:
+    if SYSTEM == 'linux' and linux_mounts is not None:
         if src is None:
             # That's for unmounted/absent
             if dest in linux_mounts:
@@ -549,7 +585,7 @@ def is_bind_mounted(module, linux_mounts, dest, src=None, fstype=None):
         rc, out, err = module.run_command(cmd)
         mounts = []
 
-        if len(out):
+        if len(out) > 0:
             mounts = to_native(out).strip().split('\n')
 
         for mnt in mounts:
@@ -639,6 +675,123 @@ def get_linux_mounts(module, mntinfo_file="/proc/self/mountinfo"):
     return mounts
 
 
+def is_swap(module, args):
+    """Return True if the device/file is an active swap space, False otherwise."""
+
+    if module.params['fstype'] != 'swap':
+        return False
+
+    if SYSTEM == 'sunos':
+        swap_bin = module.get_bin_path('swap', required=True)
+        cmd = [swap_bin, '-l']
+    elif SYSTEM.endswith('bsd'):
+        swapctl_bin = module.get_bin_path('swapctl', required=True)
+        cmd = [swapctl_bin, '-l']
+    else:
+        # swapon is supposed to be the standard command
+        swapon_bin = module.get_bin_path('swapon', required=True)
+        cmd = [swapon_bin]
+
+    rc, out, err = module.run_command(cmd)
+
+    if rc:
+        module.fail_json(msg="Error while querying active swaps: %s" % err)
+
+    # Get the first field of each line but the header
+    devices = [x.split()[0] for x in out.splitlines()[1:]]
+    dev = os.path.realpath(args['src'])
+
+    if SYSTEM == 'linux':
+        if args['src'].startswith('UUID='):
+            uuid_path = os.path.join('/dev/disk/by-uuid', args['src'].split('=')[1])
+            dev = os.path.realpath(uuid_path)
+        elif args['src'].startswith('LABEL='):
+            label_path = os.path.join('/dev/disk/by-label', args['src'].split('=')[1])
+            dev = os.path.realpath(label_path)
+    elif SYSTEM == 'freebsd':
+        if args['src'].startswith('md'):
+            dev = os.path.join('/dev', args['src'])
+
+    return bool(dev in devices)
+
+
+def swapon(module, args):
+    """Activate a swap device/file with the proper options."""
+
+    if SYSTEM == 'sunos':
+        swap_bin = module.get_bin_path('swap', required=True)
+        cmd = [swap_bin, '-a']
+    elif SYSTEM.endswith('bsd'):
+        swapctl_bin = module.get_bin_path('swapctl', required=True)
+        cmd = [swapctl_bin, '-a']
+    else:
+        # swapon is supposed to be the standard command, isn't it ?
+        swapon_bin = module.get_bin_path('swapon', required=True)
+        cmd = [swapon_bin]
+
+    # Only 'swapon -a' applies options from fstab, otherwise they are ignored
+    # unless provided on command line with '-o opts'. But not all versions of
+    # swapon accept -o or --options. So we don't use it here, but at least we
+    # keep the 'priority' and 'discard' flags available on Linux.
+    if SYSTEM == 'linux':
+        for opt in args['opts'].split(','):
+            if opt.startswith('pri='):
+                cmd += ['-p', opt.split('=')[1]]
+            elif opt.startswith('discard'):
+                cmd += ['--%s' % opt]
+
+    if SYSTEM == 'freebsd' and args['src'].startswith('md'):
+        cmd += [os.path.join('/dev', args['src'])]
+    else:
+        cmd += [args['src']]
+
+    rc, out, err = module.run_command(cmd)
+
+    if rc:
+        return rc, out + err
+    return 0, ''
+
+
+def swapoff(module, args):
+    """Deactivate a swap device/file."""
+
+    if SYSTEM == 'sunos':
+        swap_bin = module.get_bin_path('swap', required=True)
+        cmd = [swap_bin, '-d']
+    elif SYSTEM.endswith('bsd'):
+        swapctl_bin = module.get_bin_path('swapctl', required=True)
+        cmd = [swapctl_bin, '-d']
+    else:
+        # swapoff is supposed to be the standard command, isn't it ?
+        swapoff_bin = module.get_bin_path('swapoff', required=True)
+        cmd = [swapoff_bin]
+
+    if SYSTEM == 'freebsd' and args['src'].startswith('md'):
+        cmd += [os.path.join('/dev', args['src'])]
+    else:
+        cmd += [args['src']]
+
+    rc, out, err = module.run_command(cmd)
+
+    if rc:
+        return rc, out + err
+    return 0, ''
+
+
+def reswap(module, args):
+    """Deactivate a swap device/file and reactivate it with new options."""
+
+    if is_swap(module, args):
+        rc, msg = swapoff(module, args)
+        if rc:
+            return rc, msg
+
+    rc, msg = swapon(module, args)
+    if rc:
+        return rc, msg
+    return 0, ''
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -651,14 +804,35 @@ def main():
             passno=dict(type='str', no_log=False),
             src=dict(type='path'),
             backup=dict(type='bool', default=False),
-            state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted', 'remounted']),
+            state=dict(type='str', required=True,
+                       choices=['absent', 'mounted', 'present', 'unmounted', 'remounted']),
         ),
         supports_check_mode=True,
         required_if=(
             ['state', 'mounted', ['src', 'fstype']],
             ['state', 'present', ['src', 'fstype']],
+            ['fstype', 'swap', ['src']],
         ),
     )
+
+    fstype = module.params['fstype']
+
+    # swapon/swapoff (and the likes) don't honor alternative fstab locations
+    # the same way the mount command does, that could make things very, very
+    # complicated...
+    if fstype == 'swap':
+        if SYSTEM == 'sunos':
+            swap_fstab_file = '/etc/vfstab'
+            swap_mountpoint = '-'
+        else:
+            swap_fstab_file = '/etc/fstab'
+            swap_mountpoint = 'none'
+
+        if module.params['fstab'] not in (None, swap_fstab_file):
+            module.fail_json(msg="option 'fstype=swap' does not support alternative fstab locations")
+        if module.params['path'] != swap_mountpoint:
+            module.fail_json(msg="swap filesystems can't be mounted, please set path to '%s'" %
+                             swap_mountpoint)
 
     # solaris args:
     #   name, src, fstype, opts, boot, passno, state, fstab=/etc/vfstab
@@ -666,7 +840,7 @@ def main():
     #   name, src, fstype, opts, dump, passno, state, fstab=/etc/fstab
     # Note: Do not modify module.params['fstab'] as we need to know if the user
     # explicitly specified it in mount() and remount()
-    if platform.system().lower() == 'sunos':
+    if SYSTEM == 'sunos':
         args = dict(
             name=module.params['path'],
             opts='-',
@@ -676,6 +850,10 @@ def main():
         )
         if args['fstab'] is None:
             args['fstab'] = '/etc/vfstab'
+
+        # swap spaces are used internally by kernels and have no mountpoint
+        if fstype == 'swap':
+            args['boot'] = 'no'
     else:
         args = dict(
             name=module.params['path'],
@@ -687,15 +865,18 @@ def main():
         if args['fstab'] is None:
             args['fstab'] = '/etc/fstab'
 
+        # Override default value of options field for swap filesystems
+        if fstype == 'swap':
+            args['opts'] = 'sw'
         # FreeBSD doesn't have any 'default' so set 'rw' instead
-        if platform.system() == 'FreeBSD':
+        elif SYSTEM == 'freebsd':
             args['opts'] = 'rw'
 
     linux_mounts = []
 
     # Cache all mounts here in order we have consistent results if we need to
     # call is_bind_mounted() multiple times
-    if platform.system() == 'Linux':
+    if SYSTEM == 'linux':
         linux_mounts = get_linux_mounts(module)
 
         if linux_mounts is None:
@@ -731,7 +912,7 @@ def main():
     #   changed in fstab then remount it.
 
     state = module.params['state']
-    name = module.params['path']
+    name = args['name']
     changed = False
 
     if state == 'absent':
@@ -744,6 +925,12 @@ def main():
                 if res:
                     module.fail_json(
                         msg="Error unmounting %s: %s" % (name, msg))
+            elif is_swap(module, args):
+                res, msg = swapoff(module, args)
+
+                if res:
+                    module.fail_json(
+                        msg="Error disabling swap space %s: %s" % (args['src'], msg))
 
             if os.path.exists(name):
                 try:
@@ -760,9 +947,18 @@ def main():
                         msg="Error unmounting %s: %s" % (name, msg))
 
             changed = True
+        elif is_swap(module, args):
+            if not module.check_mode:
+                res, msg = swapoff(module, args)
+
+                if res:
+                    module.fail_json(
+                        msg="Error disabling swap space %s: %s" % (args['src'], msg))
+
+            changed = True
     elif state == 'mounted':
         dirs_created = []
-        if not os.path.exists(name) and not module.check_mode:
+        if fstype != 'swap' and not os.path.exists(name) and not module.check_mode:
             try:
                 # Something like mkdir -p but with the possibility to undo.
                 # Based on some copy-paste from the "file" module.
@@ -798,11 +994,18 @@ def main():
             if changed and not module.check_mode:
                 res, msg = remount(module, args)
                 changed = True
+        elif is_swap(module, args):
+            if changed and not module.check_mode:
+                res, msg = reswap(module, args)
+                changed = True
         else:
             changed = True
 
             if not module.check_mode:
-                res, msg = mount(module, args)
+                if fstype == 'swap':
+                    res, msg = swapon(module, args)
+                else:
+                    res, msg = mount(module, args)
 
         if res:
             # Not restoring fstab after a failed mount was reported as a bug,
@@ -820,15 +1023,26 @@ def main():
             except Exception:
                 pass
 
-            module.fail_json(msg="Error mounting %s: %s" % (name, msg))
+            if fstype == 'swap':
+                error_msg = "Error enabling swap space %s: %s" % (args['src'], msg)
+            else:
+                error_msg = "Error mounting %s: %s" % (name, msg)
+
+            module.fail_json(msg=error_msg)
     elif state == 'present':
         name, changed = set_mount(module, args)
     elif state == 'remounted':
         if not module.check_mode:
-            res, msg = remount(module, args)
+            if fstype == 'swap':
+                res, msg = reswap(module, args)
 
-            if res:
-                module.fail_json(msg="Error remounting %s: %s" % (name, msg))
+                if res:
+                    module.fail_json(msg="Error re-enabling swap space %s: %s" % (args['src'], msg))
+            else:
+                res, msg = remount(module, args)
+
+                if res:
+                    module.fail_json(msg="Error remounting %s: %s" % (name, msg))
 
         changed = True
     else:

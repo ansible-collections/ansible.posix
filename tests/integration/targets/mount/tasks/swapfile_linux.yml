@@ -1,0 +1,154 @@
+---
+# Tasks to validate swapfile management (enabling/disabling its use) on Linux.
+# The swapfile COULD be associated to a loop device, that would become the 'src'.
+
+- name: Swap off all (try to cleanup previous erraneous tests)
+  command:
+    cmd: swapoff -a
+
+
+- name: Try to activate swapfile
+  vars:
+    swapfile: /var/swapfile0
+
+  block:
+    - name: Create a file to be used for memory swapping
+      command:
+        cmd: "dd if=/dev/zero of={{ swapfile }} bs=1M count=64"
+        creates: "{{ swapfile }}"
+
+    - name: Setup permissions suitable for swap usage
+      file:
+        path: "{{ swapfile }}"
+        mode: u=rw,go=
+        state: file
+
+    - name: Create a swap filesystem into the dedicated file
+      community.general.filesystem:
+        dev: "{{ swapfile }}"
+        fstype: swap
+
+
+    - name: Get swap info (0)
+      command: swapon --noheadings --show=name,prio
+      register: swap_info_0
+      changed_when: false
+
+    - name: Assert that swap file {{ swapfile }} is not used by swap
+      assert:
+        that:
+          - swap_info_0.stdout | length == 0
+
+
+    - name: Enable swap file with priority 1234
+      mount:
+        path: none
+        src: "{{ swapfile }}"
+        fstype: swap
+        opts: pri=1234
+        state: mounted
+      register: swap_enabled_1
+
+    - name: Get swap info (1)
+      command: swapon --noheadings --show=name,prio
+      register: swap_info_1
+      changed_when: false
+
+    - name: Assert that swap file is enabled with priority 1234
+      assert:
+        that:
+          - swap_enabled_1 is changed
+          - swap_info_1.stdout_lines[0].split()[1] | int == 1234
+
+
+    - name: Update swap priority to 10
+      mount:
+        path: none
+        src: "{{ swapfile }}"
+        fstype: swap
+        opts: pri=10
+        state: mounted
+      register: swap_enabled_2
+
+    - name: Get swap info (2)
+      command: swapon --noheadings --show=name,prio
+      register: swap_info_2
+      changed_when: false
+
+    - name: Assert that swap file is enabled with priority 10
+      assert:
+        that:
+          - swap_enabled_2 is changed
+          - swap_info_2.stdout_lines[0].split()[1] | int == 10
+
+
+    - name: Update swap priority to 10, again
+      mount:
+        path: none
+        src: "{{ swapfile }}"
+        fstype: swap
+        opts: pri=10
+        state: mounted
+      register: swap_enabled_3
+
+    - name: Get swap info (3)
+      command: swapon --noheadings --show=name,prio
+      register: swap_info_3
+      changed_when: false
+
+    - name: Assert that nothing changed
+      assert:
+        that:
+          - swap_enabled_3 is not changed
+          - swap_info_3.stdout_lines == swap_info_2.stdout_lines
+
+  always:
+    - name: Disable swap file
+      mount:
+        path: none
+        src: "{{ swapfile }}"
+        fstype: swap
+        state: absent
+      register: swap_disabled_1
+
+    - name: Get swap info (4)
+      command: swapon --noheadings --show=name,prio
+      register: swap_info_4
+      changed_when: false
+
+    - name: Assert that swap file is disabled
+      assert:
+        that:
+          - swap_disabled_1 is changed
+          - swap_info_4.stdout_lines == swap_info_0.stdout_lines
+
+
+    - name: Disable swap file, again
+      mount:
+        path: none
+        src: "{{ swapfile }}"
+        fstype: swap
+        state: absent
+      register: swap_disabled_2
+
+    - name: Get swap info (5)
+      command: swapon --noheadings --show=name,prio
+      register: swap_info_5
+      changed_when: false
+
+    - name: Assert that swap file is disabled and nothing changed
+      assert:
+        that:
+          - swap_disabled_2 is not changed
+          - swap_info_5.stdout_lines == swap_info_0.stdout_lines
+
+
+    - name: Remove swap file
+      file:
+        path: "{{ swapfile }}"
+        state: absent
+
+
+- name: Swap on all (try to restore pre-test state)
+  command:
+    cmd: swapon -a

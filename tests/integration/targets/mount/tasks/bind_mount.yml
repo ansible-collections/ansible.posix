@@ -1,0 +1,95 @@
+---
+# Tasks to validate bind mounts (i.e. mount of a directory to another one).
+# Linux and FreeBSD only.
+
+- name: Create the mount point (the target of the mount)
+  file:
+    state: directory
+    path: '{{ output_dir }}/mount_dest'
+
+- name: Create a directory to bind mount (the source of the mount)
+  file:
+    state: directory
+    path: '{{ output_dir }}/mount_source'
+
+- name: Put something in the directory so we see that it worked
+  copy:
+    content: 'Testing
+
+      '
+    dest: '{{ output_dir }}/mount_source/test_file'
+  register: orig_info
+
+- name: Bind mount a directory
+  mount:
+    src: '{{ output_dir }}/mount_source'
+    name: '{{ output_dir }}/mount_dest'
+    state: mounted
+    fstype: "{{ 'none' if ansible_system == 'Linux' else 'nullfs' }}"
+    opts:   "{{ 'bind' if ansible_system == 'Linux' else omit }}"
+  register: bind_result
+
+- name: get checksum for bind mounted file
+  stat:
+    path: '{{ output_dir }}/mount_dest/test_file'
+  when: ansible_system in ('FreeBSD', 'Linux')
+  register: dest_stat
+
+- name: assert the bind mount was successful
+  assert:
+    that:
+      - bind_result is changed
+      - dest_stat.stat.exists
+      - orig_info.checksum == dest_stat.stat.checksum
+
+- name: Bind mount a directory again
+  mount:
+    src: '{{ output_dir }}/mount_source'
+    name: '{{ output_dir }}/mount_dest'
+    state: mounted
+    fstype: "{{ 'none' if ansible_system == 'Linux' else 'nullfs' }}"
+    opts:   "{{ 'bind' if ansible_system == 'Linux' else omit }}"
+  register: bind_result
+
+- name: Make sure we didn't mount a second time
+  assert:
+    that:
+      - bind_result is not changed
+
+- name: Remount directory with different options
+  mount:
+    src: '{{ output_dir }}/mount_source'
+    name: '{{ output_dir }}/mount_dest'
+    state: mounted
+    fstype: "{{ 'none' if ansible_system == 'Linux' else 'nullfs' }}"
+    opts:  "{{ 'bind,' if ansible_system == 'Linux' else '' }}ro"
+  register: bind_result
+
+- name: Get mount options
+  shell:
+    cmd: "mount | grep mount_dest | grep -E -w '(ro|read-only)' | wc -l"
+  register: remount_options
+
+- name: Make sure the filesystem now has the new opts
+  assert:
+    that:
+      - bind_result is changed
+      - '''1'' in remount_options.stdout'
+      - 1 == remount_options.stdout_lines | length
+
+- name: Unmount the bind mount
+  mount:
+    name: '{{ output_dir }}/mount_dest'
+    state: absent
+  register: unmount_result
+
+- name: Check if the file still exists in dest
+  stat:
+    path: '{{ output_dir }}/mount_dest/test_file'
+  register: dest_stat
+
+- name: Assert that we unmounted
+  assert:
+    that:
+      - unmount_result is changed
+      - not dest_stat.stat.exists

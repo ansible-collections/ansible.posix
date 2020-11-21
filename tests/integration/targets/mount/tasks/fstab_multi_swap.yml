@@ -1,0 +1,93 @@
+---
+# Tasks to validate that adding a swap record in fstab doesn't replace another
+# one, unless the 'src' (not the 'path') is the same. For Linux and FreeBSD.
+
+- name: Create fstab record for the first swap device
+  mount:
+    name: none
+    src: /dev/swap1
+    opts: sw
+    fstype: swap
+    state: present
+  register: swap1_created
+
+- name: Try to create fstab record for the first swap device again
+  mount:
+    name: none
+    src: /dev/swap1
+    opts: sw
+    fstype: swap
+    state: present
+  register: swap1_created_again
+
+- name: Check that we created the swap1 record
+  assert:
+    that:
+    - swap1_created is changed
+    - swap1_created_again is not changed
+
+- name: Create fstab record for the second swap device
+  mount:
+    name: none
+    src: /dev/swap2
+    opts: sw
+    fstype: swap
+    state: present
+  register: swap2_created
+
+- name: Try to create fstab record for the second swap device again
+  mount:
+    name: none
+    src: /dev/swap1
+    opts: sw
+    fstype: swap
+    state: present
+  register: swap2_created_again
+
+- name: Check that we created the swap2 record
+  assert:
+    that:
+    - swap2_created is changed
+    - swap2_created_again is not changed
+
+
+
+- name: Remove the fstab record for the first swap device
+  mount:
+    name: none
+    src: /dev/swap1
+    state: absent
+  register: swap1_removed
+
+- name: Try to remove the fstab record for the first swap device again
+  mount:
+    name: none
+    src: /dev/swap1
+    state: absent
+  register: swap1_removed_again
+
+- name: Check that we removed the swap1 record
+  assert:
+    that:
+    - swap1_removed is changed
+    - swap1_removed_again is not changed
+
+- name: Remove the fstab record for the second swap device
+  mount:
+    name: none
+    src: /dev/swap2
+    state: absent
+  register: swap2_removed
+
+- name: Try to remove the fstab record for the second swap device again
+  mount:
+    name: none
+    src: /dev/swap2
+    state: absent
+  register: swap2_removed_again
+
+- name: Check that we removed the swap2 record
+  assert:
+    that:
+    - swap2_removed is changed
+    - swap2_removed_again is not changed
