@@ -314,7 +314,7 @@ EXAMPLES = r'''
 # Specify the rsync binary to use on remote host and on local host
 - hosts: groupofhosts
   vars:
-        ansible_rsync_path: /usr/gnu/bin/rsync
+    ansible_rsync_path: /usr/gnu/bin/rsync
 
   tasks:
     - name: copy /tmp/localpath/ to remote location /tmp/remotepath
