@@ -147,8 +147,8 @@ options:
         This is accomplished by setting the SSH C(ControlSocket) to C(none).
       - Set this option to C(yes) to allow multiplexing and reduce SSH connection overhead.
       - Note that simply setting this option to C(yes) is not enough;
-        You must also configure SSH connection multiplexing in your SSH client config by setting values for C(ControlMaster), 
-        C(ControlPersist) and C(ControlPath).
+        You must also configure SSH connection multiplexing in your SSH client config by setting values for
+        C(ControlMaster), C(ControlPersist) and C(ControlPath).
     type: bool
     default: no
   rsync_opts:
