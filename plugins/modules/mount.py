@@ -171,7 +171,6 @@ EXAMPLES = r'''
     fstype: nfs
 '''
 
-
 import errno
 import os
 import platform
@@ -184,8 +183,11 @@ from ansible.module_utils.parsing.convert_bool import boolean
 
 
 def write_fstab(module, lines, path):
+
     if module.params['backup']:
-        module.backup_local(path)
+        backup_file = module.backup_local(path)
+    else:
+        backup_file = ""
 
     fs_w = open(path, 'w')
 
@@ -194,6 +196,8 @@ def write_fstab(module, lines, path):
 
     fs_w.flush()
     fs_w.close()
+
+    return backup_file
 
 
 def _escape_fstab(v):
@@ -317,7 +321,7 @@ def _set_mount_save_old(module, args):
         changed = True
 
     if changed and not module.check_mode:
-        write_fstab(module, to_write, args['fstab'])
+        args['backup_file'] = write_fstab(module, to_write, args['fstab'])
 
     return (args['name'], old_lines, changed)
 
@@ -692,6 +696,7 @@ def main():
         if platform.system() == 'FreeBSD':
             args['opts'] = 'rw'
 
+    args['backup_file'] = ""
     linux_mounts = []
 
     # Cache all mounts here in order we have consistent results if we need to
