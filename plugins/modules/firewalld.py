@@ -24,6 +24,32 @@ options:
       - Name of a port or port range to add/remove to/from firewalld.
       - Must be in the form PORT/PROTOCOL or PORT-PORT/PROTOCOL for port ranges.
     type: str
+  port_forward:
+    description:
+      - Port and protocol to forward using firewalld.
+    type: list
+    elements: dict
+    suboptions:
+      port:
+        type: str
+        required: true
+        description:
+          - Source port to forward from
+      proto:
+        type: str
+        required: true
+        description:
+          - protocol to forward
+        choices: [udp, tcp]
+      toport:
+        type: str
+        required: true
+        description:
+          - destination port
+      toaddr:
+        type: str
+        description:
+          - Optional address to forward to
   rich_rule:
     description:
       - Rich rule to add/remove to/from firewalld.
@@ -678,6 +704,55 @@ class ZoneTransaction(FirewallTransaction):
         zone_obj.remove()
 
 
+class ForwardPortTransaction(FirewallTransaction):
+    """
+    ForwardPortTransaction
+    """
+
+    def __init__(self, module, action_args=None, zone=None, desired_state=None, permanent=False, immediate=False):
+        super(ForwardPortTransaction, self).__init__(
+            module, action_args=action_args, desired_state=desired_state, zone=zone, permanent=permanent, immediate=immediate
+        )
+
+    def get_enabled_immediate(self, port, proto, toport, toaddr, timeout):
+        forward_port = [port, proto, toport, toaddr]
+        if self.fw_offline:
+            fw_zone, fw_settings = self.get_fw_zone_settings()
+            forward_list = fw_settings.getForwardPorts()
+        else:
+            forward_list = self.fw.getForwardPorts(self.zone)
+
+        if forward_port in forward_list:
+            return True
+        else:
+            return False
+
+    def get_enabled_permanent(self, port, proto, toport, toaddr, timeout):
+        forward_port = (port, proto, toport, toaddr)
+        fw_zone, fw_settings = self.get_fw_zone_settings()
+
+        if forward_port in fw_settings.getForwardPorts():
+            return True
+        else:
+            return False
+
+    def set_enabled_immediate(self, port, proto, toport, toaddr, timeout):
+        self.fw.addForwardPort(self.zone, port, proto, toport, toaddr, timeout)
+
+    def set_enabled_permanent(self, port, proto, toport, toaddr, timeout):
+        fw_zone, fw_settings = self.get_fw_zone_settings()
+        fw_settings.addForwardPort(port, proto, toport, toaddr)
+        self.update_fw_settings(fw_zone, fw_settings)
+
+    def set_disabled_immediate(self, port, proto, toport, toaddr, timeout):
+        self.fw.removeForwardPort(self.zone, port, proto, toport, toaddr)
+
+    def set_disabled_permanent(self, port, proto, toport, toaddr, timeout):
+        fw_zone, fw_settings = self.get_fw_zone_settings()
+        fw_settings.removeForwardPort(port, proto, toport, toaddr)
+        self.update_fw_settings(fw_zone, fw_settings)
+
+
 def main():
 
     module = AnsibleModule(
@@ -686,6 +761,7 @@ def main():
             icmp_block_inversion=dict(type='str'),
             service=dict(type='str'),
             port=dict(type='str'),
+            port_forward=dict(type='list', elements='dict'),
             rich_rule=dict(type='str'),
             zone=dict(type='str'),
             immediate=dict(type='bool', default=False),
@@ -745,6 +821,21 @@ def main():
     else:
         port = None
 
+    port_forward_toaddr = ''
+    port_forward = None
+    if module.params['port_forward'] is not None:
+        if len(module.params['port_forward']) > 1:
+            module.fail_json(msg='Only one port forward supported at a time')
+        port_forward = module.params['port_forward'][0]
+        if 'port' not in port_forward:
+            module.fail_json(msg='port must be specified for port forward')
+        if 'proto' not in port_forward:
+            module.fail_json(msg='proto udp/tcp must be specified for port forward')
+        if 'toport' not in port_forward:
+            module.fail_json(msg='toport must be specified for port forward')
+        if 'toaddr' in port_forward:
+            port_forward_toaddr = port_forward['toaddr']
+
     modification_count = 0
     if icmp_block is not None:
         modification_count += 1
@@ -753,6 +844,8 @@ def main():
     if service is not None:
         modification_count += 1
     if port is not None:
+        modification_count += 1
+    if port_forward is not None:
         modification_count += 1
     if rich_rule is not None:
         modification_count += 1
@@ -853,6 +946,29 @@ def main():
             msgs.append(
                 "Changed port %s to %s" % (
                     "%s/%s" % (port, protocol), desired_state
+                )
+            )
+
+    if port_forward is not None:
+        transaction = ForwardPortTransaction(
+            module,
+            action_args=(str(port_forward['port']), port_forward['proto'],
+                         str(port_forward['toport']), port_forward_toaddr, timeout),
+            zone=zone,
+            desired_state=desired_state,
+            permanent=permanent,
+            immediate=immediate
+        )
+
+        changed, transaction_msgs = transaction.run()
+        msgs = msgs + transaction_msgs
+        if changed is True:
+            msgs.append(
+                "Changed port_forward %s to %s" % (
+                    "port=%s:proto=%s:toport=%s:toaddr=%s" % (
+                        port_forward['port'], port_forward['proto'],
+                        port_forward['toport'], port_forward_toaddr
+                    ), desired_state
                 )
             )
 

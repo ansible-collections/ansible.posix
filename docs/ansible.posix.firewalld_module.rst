@@ -176,6 +176,21 @@ Parameters
             <tr>
                 <td colspan="1">
                     <div class="ansibleOptionAnchor" id="parameter-"></div>
+                    <b>port_forward</b>
+                    <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
+                    <div style="font-size: small">
+                        <span style="color: purple">string</span>
+                    </div>
+                </td>
+                <td>
+                </td>
+                <td>
+                        <div>Port and protocol to forward using firewalld.</div>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="1">
+                    <div class="ansibleOptionAnchor" id="parameter-"></div>
                     <b>rich_rule</b>
                     <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
                     <div style="font-size: small">
@@ -360,14 +375,17 @@ Examples
         permanent: yes
         icmp_block: echo-request
 
-    - name: Redirect port 443 to 8443 with Rich Rule
+    - name: Redirect port 443 to 8443
+      become: yes
       ansible.posix.firewalld:
-        rich_rule: rule family=ipv4 forward-port port=443 protocol=tcp to-port=8443
+        port_forward:
+          - port: 443
+            proto: tcp
+            toport: 8443
         zone: public
         permanent: yes
         immediate: yes
         state: enabled
-
 
 
 
