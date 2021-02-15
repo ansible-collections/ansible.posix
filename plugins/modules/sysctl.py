@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: sysctl
 short_description: Manage entries in sysctl.conf.
@@ -19,18 +19,21 @@ version_added: "1.0.0"
 options:
     name:
         description:
-            - The dot-separated path (aka I(key)) specifying the sysctl variable.
+            - The dot-separated path (also known as I(key)) specifying the sysctl variable.
         required: true
         aliases: [ 'key' ]
+        type: str
     value:
         description:
             - Desired value of the sysctl key.
         aliases: [ 'val' ]
+        type: str
     state:
         description:
             - Whether the entry should be present or absent in the sysctl file.
         choices: [ "present", "absent" ]
         default: present
+        type: str
     ignoreerrors:
         description:
             - Use this option to ignore errors about unknown keys.
@@ -47,12 +50,14 @@ options:
         description:
             - Specifies the absolute path to C(sysctl.conf), if not C(/etc/sysctl.conf).
         default: /etc/sysctl.conf
+        type: path
     sysctl_set:
         description:
             - Verify token value with the sysctl command and set with -w if necessary
         type: bool
         default: 'no'
-author: "David CHANIAL (@davixx) <david.chanial@gmail.com>"
+author:
+- David CHANIAL (@davixx)
 '''
 
 EXAMPLES = r'''

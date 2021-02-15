@@ -50,6 +50,7 @@ options:
   key_options:
     description:
       - A string of ssh key options to be prepended to the key in the authorized_keys file.
+    type: str
   exclusive:
     description:
       - Whether to remove all other non-specified keys from the authorized_keys file.

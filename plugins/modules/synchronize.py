@@ -147,6 +147,7 @@ options:
       - Note that an empty string in C(rsync_opts) will end up transfer the current working directory.
     type: list
     default:
+    elements: str
   partial:
     description:
       - Tells rsync to keep the partial file which should make a subsequent transfer of the rest of the file much faster.
@@ -166,6 +167,8 @@ options:
       - Add a destination to hard link against during the rsync.
     type: list
     default:
+    elements: str
+
 notes:
    - rsync must be installed on both the local and remote host.
    - For the C(synchronize) module, the "local host" is the host `the synchronize task originates on`, and the "destination host" is the host
@@ -390,12 +393,12 @@ def main():
             group=dict(type='bool'),
             set_remote_user=dict(type='bool', default=True),
             rsync_timeout=dict(type='int', default=0),
-            rsync_opts=dict(type='list', default=[]),
+            rsync_opts=dict(type='list', default=[], elements='str'),
             ssh_args=dict(type='str'),
             partial=dict(type='bool', default=False),
             verify_host=dict(type='bool', default=False),
             mode=dict(type='str', default='push', choices=['pull', 'push']),
-            link_dest=dict(type='list')
+            link_dest=dict(type='list', elements='str'),
         ),
         supports_check_mode=True,
     )
