@@ -48,8 +48,16 @@
     var: _disable_test1
     verbosity: 1
 
+- name: Before gathering the fact
+  debug:
+    msg: "{{ ansible_selinux }}"
+
 - name: TEST 1 | Re-gather facts
   setup:
+
+- name: After gathering the fact
+  debug:
+    msg: "{{ ansible_selinux }}"
 
 - name: TEST 1 | Assert that status was changed, reboot_required is True, a warning was displayed, and SELinux is configured properly
   assert:
@@ -74,7 +82,7 @@
     var: _disable_test2
     verbosity: 1
 
-- name: TEST 1 | Assert that no change is reported, a warnking was dispalyed, and reboot_required is True
+- name: TEST 1 | Assert that no change is reported, a warning was displayed, and reboot_required is True
   assert:
     that:
       - _disable_test2 is not changed
@@ -147,7 +155,7 @@
     var: _state_test2
     verbosity: 1
 
-- name: TEST 2 | Assert that no change was reported, no warnings were dispalyed, and reboot_required is False
+- name: TEST 2 | Assert that no change was reported, no warnings were displayed, and reboot_required is False
   assert:
     that:
       - _state_test2 is not changed
@@ -380,7 +388,7 @@
     var: _lineinfile_out1
     verbosity: 1
 
-- name: TEST 5 | Set SELinux to enforcing 
+- name: TEST 5 | Set SELinux to enforcing
   selinux:
     state: enforcing
     policy: targeted

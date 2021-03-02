@@ -20,17 +20,20 @@ version_added: "1.0.0"
 options:
   policy:
     description:
-      - The name of the SELinux policy to use (e.g. C(targeted)) will be required if state is not C(disabled).
+      - The name of the SELinux policy to use (e.g. C(targeted)) will be required if I(state) is not C(disabled).
+    type: str
   state:
     description:
       - The SELinux mode.
     required: true
     choices: [ disabled, enforcing, permissive ]
+    type: str
   configfile:
     description:
       - The path to the SELinux configuration file, if non-standard.
     default: /etc/selinux/config
     aliases: [ conf, file ]
+    type: str
 requirements: [ libselinux-python ]
 author:
 - Derek Carter (@goozbach) <goozbach@friocorte.com>
@@ -178,7 +181,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             policy=dict(type='str'),
-            state=dict(type='str', required='True', choices=['enforcing', 'permissive', 'disabled']),
+            state=dict(type='str', required=True, choices=['enforcing', 'permissive', 'disabled']),
             configfile=dict(type='str', default='/etc/selinux/config', aliases=['conf', 'file']),
         ),
         supports_check_mode=True,

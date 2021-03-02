@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: seboolean
 short_description: Toggles SELinux booleans
@@ -19,6 +19,7 @@ options:
     description:
       - Name of the boolean to configure.
     required: true
+    type: str
   persistent:
     description:
       - Set to C(yes) if the boolean setting should survive a reboot.

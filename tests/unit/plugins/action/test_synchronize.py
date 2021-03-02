@@ -1,3 +1,7 @@
+from __future__ import absolute_import, division, print_function
+
+__metaclass__ = type
+
 '''
 (Epdb) pprint(DeepDiff(self.final_task_vars, out_task_vars), indent=2)
 { 'dic_item_added': set([u"root['ansible_python_interpreter']"]),
