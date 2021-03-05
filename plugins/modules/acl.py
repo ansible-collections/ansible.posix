@@ -28,6 +28,7 @@ options:
     - The C(query) state gets the current ACL without changing it, for use in C(register) operations.
     choices: [ absent, present, query ]
     default: query
+    type: str
   follow:
     description:
     - Whether to follow symlinks on the path if a symlink is encountered.
@@ -42,14 +43,17 @@ options:
   entity:
     description:
     - The actual user or group that the ACL applies to when matching entity types user or group are selected.
+    type: str
   etype:
     description:
     - The entity type of the ACL to apply, see C(setfacl) documentation for more info.
     choices: [ group, mask, other, user ]
+    type: str
   permissions:
     description:
     - The permissions to apply/remove can be any combination of C(r), C(w), C(x)
     - (read, write and execute respectively), and C(X) (execute permission if the file is a directory or already has execute permission for some user)
+    type: str
   entry:
     description:
     - DEPRECATED.
@@ -58,6 +62,7 @@ options:
     - The qualifier may be empty for some types, but the type and perms are always required.
     - C(-) can be used as placeholder when you do not care about permissions.
     - This is now superseded by entity, type and permissions fields.
+    type: str
   recursive:
     description:
     - Recursively sets the specified ACL.
@@ -76,6 +81,7 @@ options:
     - Incompatible with C(state=query).
     choices: [ default, mask, no_mask ]
     default: default
+    type: str
 author:
 - Brian Coca (@bcoca)
 - Jérémie Astori (@astorije)

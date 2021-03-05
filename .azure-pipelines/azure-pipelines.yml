@@ -36,7 +36,7 @@ variables:
 resources:
   containers:
     - container: default
-      image: quay.io/ansible/azure-pipelines-test-container:1.7.1
+      image: quay.io/ansible/azure-pipelines-test-container:1.8.0
 
 pool: Standard
 
@@ -57,18 +57,18 @@ stages:
               test: centos7
             - name: CentOS 8
               test: centos8
-            - name: Fedora 30
-              test: fedora30
-            - name: Fedora 31
-              test: fedora31
+            - name: Fedora 32
+              test: fedora32
+            - name: Fedora 33
+              test: fedora33
             - name: openSUSE 15 py2
               test: opensuse15py2
             - name: openSUSE 15 py3
               test: opensuse15
-            - name: Ubuntu 16.04
-              test: ubuntu1604
             - name: Ubuntu 18.04
               test: ubuntu1804
+            - name: Ubuntu 20.04
+              test: ubuntu2004
   - stage: Docker_2_10
     displayName: Docker 2.10
     dependsOn: []
@@ -131,16 +131,16 @@ stages:
         parameters:
           testFormat: devel/{0}/1
           targets:
-            - name: OS X 10.11
-              test: osx/10.11
-            - name: RHEL 7.6
-              test: rhel/7.6
-            - name: RHEL 8.1
-              test: rhel/8.1
-            - name: FreeBSD 11.1
-              test: freebsd/11.1
-            - name: FreeBSD 12.1
-              test: freebsd/12.1
+            - name: MacOS 11.1
+              test: macos/11.1
+            - name: RHEL 7.9
+              test: rhel/7.9
+            - name: RHEL 8.3
+              test: rhel/8.3
+            - name: FreeBSD 11.4
+              test: freebsd/11.4
+            - name: FreeBSD 12.2
+              test: freebsd/12.2
   - stage: Remote_2_10
     displayName: Remote 2.10
     dependsOn: []

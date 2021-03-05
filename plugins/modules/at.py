@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: at
 short_description: Schedule the execution of a command or script file via the at command
@@ -29,12 +29,10 @@ options:
     description:
      - The count of units in the future to execute the command or script file.
     type: int
-    required: true
   units:
     description:
      - The type of units in the future to execute the command or script file.
     type: str
-    required: true
     choices: [ minutes, hours, days, weeks ]
   state:
     description:
