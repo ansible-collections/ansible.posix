@@ -141,6 +141,16 @@ options:
       - Use the ssh_args specified in ansible.cfg. Setting this to `yes` will also make `synchronize` use `ansible_ssh_common_args`.
     type: bool
     default: no
+  ssh_connection_multiplexing:
+    description:
+      - SSH connection multiplexing for rsync is disabled by default to prevent misconfigured ControlSockets from resulting in failed SSH connections.
+        This is accomplished by setting the SSH C(ControlSocket) to C(none).
+      - Set this option to C(yes) to allow multiplexing and reduce SSH connection overhead.
+      - Note that simply setting this option to C(yes) is not enough;
+        You must also configure SSH connection multiplexing in your SSH client config by setting values for
+        C(ControlMaster), C(ControlPersist) and C(ControlPath).
+    type: bool
+    default: no
   rsync_opts:
     description:
       - Specify additional rsync options by passing in an array.
@@ -395,6 +405,7 @@ def main():
             rsync_timeout=dict(type='int', default=0),
             rsync_opts=dict(type='list', default=[], elements='str'),
             ssh_args=dict(type='str'),
+            ssh_connection_multiplexing=dict(type='bool', default=False),
             partial=dict(type='bool', default=False),
             verify_host=dict(type='bool', default=False),
             mode=dict(type='str', default='push', choices=['pull', 'push']),
@@ -435,6 +446,7 @@ def main():
     group = module.params['group']
     rsync_opts = module.params['rsync_opts']
     ssh_args = module.params['ssh_args']
+    ssh_connection_multiplexing = module.params['ssh_connection_multiplexing']
     verify_host = module.params['verify_host']
     link_dest = module.params['link_dest']
 
@@ -510,7 +522,9 @@ def main():
 
         # if the user has not supplied an --rsh option go ahead and add ours
         if not has_rsh:
-            ssh_cmd = [module.get_bin_path('ssh', required=True), '-S', 'none']
+            ssh_cmd = [module.get_bin_path('ssh', required=True)]
+            if not ssh_connection_multiplexing:
+                ssh_cmd.extend(['-S', 'none'])
             if private_key is not None:
                 ssh_cmd.extend(['-i', private_key])
             # If the user specified a port value
