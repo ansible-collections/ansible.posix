@@ -48,7 +48,8 @@ options:
     choices: [ group, mask, other, user ]
   permissions:
     description:
-    - The permissions to apply/remove can be any combination of C(r), C(w), C(x) (read, write and execute respectively), and C(X) (execute permission if the file is a directory or already has execute permission for some user)
+    - The permissions to apply/remove can be any combination of C(r), C(w), C(x)
+    - (read, write and execute respectively), and C(X) (execute permission if the file is a directory or already has execute permission for some user)
   entry:
     description:
     - DEPRECATED.
