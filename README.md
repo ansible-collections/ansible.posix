@@ -11,7 +11,7 @@ An Ansible Collection of modules and plugins that target POSIX UNIX/Linux and de
 <!--start requires_ansible-->
 ## Ansible version compatibility
 
-This collection has been tested against following Ansible versions: **>=2.9,<2.11**.
+This collection has been tested against following Ansible versions: **>=2.9**.
 
 Plugins and modules within a collection may be tested with only specific Ansible versions.
 A collection may contain metadata that identifies these versions.

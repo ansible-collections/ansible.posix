@@ -141,8 +141,6 @@ stages:
               test: freebsd/11.4
             - name: FreeBSD 12.2
               test: freebsd/12.2
-            - name: FreeBSD 12.1
-              test: freebsd/12.1
   - stage: Remote_2_10
     displayName: Remote 2.10
     dependsOn: []
