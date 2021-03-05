@@ -51,7 +51,8 @@ options:
     type: str
   permissions:
     description:
-    - The permissions to apply/remove can be any combination of C(r), C(w) and C(x) (read, write and execute respectively)
+    - The permissions to apply/remove can be any combination of C(r), C(w), C(x)
+    - (read, write and execute respectively), and C(X) (execute permission if the file is a directory or already has execute permission for some user)
     type: str
   entry:
     description:

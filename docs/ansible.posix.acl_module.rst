@@ -157,7 +157,7 @@ Parameters
                 <td>
                 </td>
                 <td>
-                        <div>The permissions to apply/remove can be any combination of <code>r</code>, <code>w</code> and <code>x</code> (read, write and execute respectively)</div>
+                        <div>The permissions to apply/remove can be any combination of <code>r</code>, <code>w</code>, <code>x</code> (read, write and execute respectively), and <code>X</code> (execute permission if the file is a directory or already has execute permission for some user)</div>
                 </td>
             </tr>
             <tr>
