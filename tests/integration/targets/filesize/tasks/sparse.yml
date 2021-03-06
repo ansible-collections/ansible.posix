@@ -1,0 +1,167 @@
+---
+# Test module with sparse files
+
+- name: Create a huge sparse file of 4TB (check mode)
+  filesize:
+    path: "{{ filesize_testfile }}"
+    size: "4TB"
+    sparse: yes
+  register: filesize_test_sparse_01
+  check_mode: yes
+
+- name: Create a huge sparse file of 4TB
+  filesize:
+    path: "{{ filesize_testfile }}"
+    size: "4TB"
+    sparse: yes
+  register: filesize_test_sparse_02
+
+- name: Create a huge sparse file of 4TB (4000GB) (check mode, idempotency)
+  filesize:
+    path: "{{ filesize_testfile }}"
+    size: "4000GB"
+    sparse: yes
+  register: filesize_test_sparse_03
+  check_mode: yes
+
+- name: Create a huge sparse file of 4TB (4000GB) (idempotency)
+  filesize:
+    path: "{{ filesize_testfile }}"
+    size: "4000GB"
+    sparse: yes
+  register: filesize_test_sparse_04
+
+- name: Create a huge sparse file of 4TB (4000000 × 1MB) (check mode, idempotency)
+  filesize:
+    path: "{{ filesize_testfile }}"
+    size: "4000000"
+    blocksize: 1MB
+    sparse: yes
+  register: filesize_test_sparse_05
+  check_mode: yes
+
+- name: Create a huge sparse file of 4TB (4000000 × 1MB) (idempotency)
+  filesize:
+    path: "{{ filesize_testfile }}"
+    size: "4000000"
+    blocksize: 1MB
+    sparse: yes
+  register: filesize_test_sparse_06
+
+- name: Assert that results are as expected
+  assert:
+    that:
+      - filesize_test_sparse_01 is changed
+      - filesize_test_sparse_02 is changed
+      - filesize_test_sparse_03 is not changed
+      - filesize_test_sparse_04 is not changed
+      - filesize_test_sparse_05 is not changed
+      - filesize_test_sparse_06 is not changed
+
+      - filesize_test_sparse_01.state is undefined
+      - filesize_test_sparse_02.state in ["file"]
+      - filesize_test_sparse_01.size is undefined
+      - filesize_test_sparse_02.size == 4000000000000
+      - filesize_test_sparse_03.size == 4000000000000
+      - filesize_test_sparse_04.size == 4000000000000
+      - filesize_test_sparse_05.size == 4000000000000
+      - filesize_test_sparse_06.size == 4000000000000
+
+
+
+- name: Change sparse file size to 4TiB (check mode)
+  filesize:
+    path: "{{ filesize_testfile }}"
+    size: 4TiB
+    sparse: yes
+  register: filesize_test_sparse_11
+  check_mode: yes
+
+- name: Change sparse file size to 4TiB
+  filesize:
+    path: "{{ filesize_testfile }}"
+    size: 4TiB
+    sparse: yes
+  register: filesize_test_sparse_12
+
+- name: Change sparse file size to 4TiB (4096GiB) (check mode, idempotency)
+  filesize:
+    path: "{{ filesize_testfile }}"
+    size: 4096GiB
+    sparse: yes
+  register: filesize_test_sparse_13
+  check_mode: yes
+
+- name: Change sparse file size to 4TiB (4096GiB) (idempotency)
+  filesize:
+    path: "{{ filesize_testfile }}"
+    size: 4096GiB
+    sparse: yes
+  register: filesize_test_sparse_14
+
+- name: Assert that results are as expected
+  assert:
+    that:
+      - filesize_test_sparse_11 is changed
+      - filesize_test_sparse_12 is changed
+      - filesize_test_sparse_13 is not changed
+      - filesize_test_sparse_14 is not changed
+
+      - filesize_test_sparse_11.size == 4000000000000
+      - filesize_test_sparse_12.size == 4398046511104
+      - filesize_test_sparse_13.size == 4398046511104
+      - filesize_test_sparse_14.size == 4398046511104
+
+
+
+- name: Change sparse file size to 4.321TB (check mode)
+  filesize:
+    path: "{{ filesize_testfile }}"
+    size: 4.321TB
+    sparse: yes
+  register: filesize_test_sparse_21
+  check_mode: yes
+
+- name: Change sparse file size to 3.211TB
+  filesize:
+    path: "{{ filesize_testfile }}"
+    size: 4.321TB
+    sparse: yes
+  register: filesize_test_sparse_22
+
+- name: Change sparse file size to 3211×1GB (check mode, idempotency)
+  filesize:
+    path: "{{ filesize_testfile }}"
+    size: "4321"
+    blocksize: 1GB
+    sparse: yes
+  register: filesize_test_sparse_23
+  check_mode: yes
+
+- name: Change sparse file size to 3211×1GB (idempotency)
+  filesize:
+    path: "{{ filesize_testfile }}"
+    size: "4321"
+    blocksize: 1GB
+    sparse: yes
+  register: filesize_test_sparse_24
+
+- name: Assert that results are as expected
+  assert:
+    that:
+      - filesize_test_sparse_21 is changed
+      - filesize_test_sparse_22 is changed
+      - filesize_test_sparse_23 is not changed
+      - filesize_test_sparse_24 is not changed
+
+      - filesize_test_sparse_21.size == 4398046511104
+      - filesize_test_sparse_22.size == 4321000000000
+      - filesize_test_sparse_23.size == 4321000000000
+      - filesize_test_sparse_24.size == 4321000000000
+
+
+
+- name: Remove test file
+  file:
+    path: "{{ filesize_testfile }}"
+    state: absent

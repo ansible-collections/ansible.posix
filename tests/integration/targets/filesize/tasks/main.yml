@@ -1,0 +1,35 @@
+---
+- name: Ensure the test dir is present
+  file:
+    path: "{{ filesize_testdir }}"
+    state: directory
+
+- name: Ensure the test file is absent
+  file:
+    path: "{{ filesize_testfile }}"
+    state: absent
+
+- name: Run all tests and remove the workspace anyway
+  block:
+    - name: Include tasks to test error handling
+      include_tasks: errors.yml
+
+    - name: Include tasks to test basic behaviours
+      include_tasks: basics.yml
+
+    - name: Include tasks to test playing with floating point numbers
+      include_tasks: floats.yml
+
+    - name: Include tasks to test playing with sparse files
+      include_tasks: sparse.yml
+      when:
+        - not (ansible_os_family == 'Darwin' and ansible_distribution_version is version('11', '<'))
+
+    - name: Include tasks to test playing with symlinks
+      include_tasks: symlinks.yml
+
+  always:
+    - name: Remove test dir
+      file:
+        path: "{{ filesize_testdir }}"
+        state: absent
