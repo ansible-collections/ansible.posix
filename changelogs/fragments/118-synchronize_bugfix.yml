@@ -1,0 +1,2 @@
+bugfixes:
+- "synchronize - do not prepend PWD when path is in form user@server:path or server:path (https://github.com/ansible-collections/ansible.posix/pull/118)."
