@@ -1,0 +1,4 @@
+release_summary: |-
+  This is the minor release of the ``ansible.posix`` collection.
+  This changelog contains all changes to the modules in this collection that
+  have been added after the release of ``ansible.posix`` 1.1.0.

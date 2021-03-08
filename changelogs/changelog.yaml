@@ -103,3 +103,34 @@ releases:
     - 74_synchronize_docker.yml
     - skippy_deprecation.yml
     release_date: '2020-09-02'
+  1.2.0:
+    changes:
+      bugfixes:
+      - at - add AIX support (https://github.com/ansible-collections/ansible.posix/pull/99).
+      - synchronize - fix for private_key overriding in synchronize module.
+      - synchronize - add ``community.docker.docker`` to the list of supported transports
+        (https://github.com/ansible-collections/ansible.posix/issues/132).
+      - synchronize - do not prepend PWD when path is in form user@server:path or
+        server:path (https://github.com/ansible-collections/ansible.posix/pull/118).
+      - sysctl - do not persist sysctl when value is invalid (https://github.com/ansible-collections/ansible.posix/pull/101).
+      minor_changes:
+      - firewalld - bring the ``target`` feature back (https://github.com/ansible-collections/ansible.posix/issues/112).
+      - fix sanity test for various modules.
+      - synchronize - add the ``ssh_connection_multiplexing`` option to allow SSH
+        connection multiplexing (https://github.com/ansible/ansible/issues/24365).
+      release_summary: 'This is the minor release of the ``ansible.posix`` collection.
+
+        This changelog contains all changes to the modules in this collection that
+
+        have been added after the release of ``ansible.posix`` 1.1.0.'
+    fragments:
+    - 1.2.0.yml
+    - 101-sysctl-dont-persist-when-invalid.yml
+    - 118-synchronize_bugfix.yml
+    - 120-synchronize_add_option.yml
+    - 144_add_community_docker_connection_plugin_alias.yml
+    - 82-private-key-override-fix.yml
+    - 99-at_add_aix_support.yml
+    - firewalld_zone_target.yml
+    - misc_fix.yml
+    release_date: '2021-03-08'
