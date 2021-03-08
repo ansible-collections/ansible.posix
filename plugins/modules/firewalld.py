@@ -132,6 +132,7 @@ requirements:
 - firewalld >= 0.2.11
 author:
 - Adam Miller (@maxamillion)
+- test add
 '''
 
 EXAMPLES = r'''
