@@ -5,6 +5,32 @@ ansible.posix Release Notes
 .. contents:: Topics
 
 
+v1.2.0
+======
+
+Release Summary
+---------------
+
+This is the minor release of the ``ansible.posix`` collection.
+This changelog contains all changes to the modules in this collection that
+have been added after the release of ``ansible.posix`` 1.1.0.
+
+Minor Changes
+-------------
+
+- firewalld - bring the ``target`` feature back (https://github.com/ansible-collections/ansible.posix/issues/112).
+- fix sanity test for various modules.
+- synchronize - add the ``ssh_connection_multiplexing`` option to allow SSH connection multiplexing (https://github.com/ansible/ansible/issues/24365).
+
+Bugfixes
+--------
+
+- at - add AIX support (https://github.com/ansible-collections/ansible.posix/pull/99).
+- synchronize - fix for private_key overriding in synchronize module.
+- synchronize - add ``community.docker.docker`` to the list of supported transports (https://github.com/ansible-collections/ansible.posix/issues/132).
+- synchronize - do not prepend PWD when path is in form user@server:path or server:path (https://github.com/ansible-collections/ansible.posix/pull/118).
+- sysctl - do not persist sysctl when value is invalid (https://github.com/ansible-collections/ansible.posix/pull/101).
+
 v1.1.1
 ======
 
