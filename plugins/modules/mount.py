@@ -648,7 +648,7 @@ def main():
             fstype=dict(type='str'),
             path=dict(type='path', required=True, aliases=['name']),
             opts=dict(type='str'),
-            passno=dict(type='str'),
+            passno=dict(type='str', no_log=False),
             src=dict(type='path'),
             backup=dict(type='bool', default=False),
             state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted', 'remounted']),
