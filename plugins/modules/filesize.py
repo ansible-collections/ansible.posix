@@ -145,7 +145,7 @@ cmd:
   description: Command executed to create or resize the file.
   type: str
   returned: when changed or failed
-  sample: dd if=/dev/zero of=/var/swapfile bs=1048576 seek=3072 count=1024 conv=fsync
+  sample: /usr/bin/dd if=/dev/zero of=/var/swapfile bs=1048576 seek=3072 count=1024
 
 filesize:
   description: Dictionary of sizes related to the file.
@@ -180,7 +180,7 @@ size_diff:
   returned: always
 
 path:
-  description: Realpath of the file if it is a symlink, otherwize the same than module's param.
+  description: Realpath of the file if it is a symlink, otherwise the same than module's param.
   type: str
   sample: /var/swap0
   returned: always
