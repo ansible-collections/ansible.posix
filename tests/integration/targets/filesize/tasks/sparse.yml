@@ -122,14 +122,14 @@
   register: filesize_test_sparse_21
   check_mode: yes
 
-- name: Change sparse file size to 3.211TB
+- name: Change sparse file size to 4.321TB
   filesize:
     path: "{{ filesize_testfile }}"
     size: 4.321TB
     sparse: yes
   register: filesize_test_sparse_22
 
-- name: Change sparse file size to 3211×1GB (check mode, idempotency)
+- name: Change sparse file size to 4321×1GB (check mode, idempotency)
   filesize:
     path: "{{ filesize_testfile }}"
     size: "4321"
@@ -138,7 +138,7 @@
   register: filesize_test_sparse_23
   check_mode: yes
 
-- name: Change sparse file size to 3211×1GB (idempotency)
+- name: Change sparse file size to 4321×1GB (idempotency)
   filesize:
     path: "{{ filesize_testfile }}"
     size: "4321"
