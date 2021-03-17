@@ -12,11 +12,23 @@
   register: filesize_test_float_01
   check_mode: yes
 
+- name: Stat the file (should not exist)
+  stat:
+    path: "{{ filesize_testfile }}"
+  register: filesize_stat_float_01
+
+
 - name: Create a file with a size of 512.512kB
   filesize:
     path: "{{ filesize_testfile }}"
     size: 512.512kB
   register: filesize_test_float_02
+
+- name: Stat the file (should exist now)
+  stat:
+    path: "{{ filesize_testfile }}"
+  register: filesize_stat_float_02
+
 
 - name: Create a file with a size of 0.512512MB (check mode, idempotency)
   filesize:
@@ -31,6 +43,12 @@
     size: 0.512512MB
   register: filesize_test_float_04
 
+- name: Stat the file (should still exist, unchanged)
+  stat:
+    path: "{{ filesize_testfile }}"
+  register: filesize_stat_float_04
+
+
 - name: Assert that results are as expected
   assert:
     that:
@@ -39,12 +57,32 @@
       - filesize_test_float_03 is not changed
       - filesize_test_float_04 is not changed
 
+      - filesize_test_float_02.cmd == filesize_test_float_01.cmd
+      - filesize_test_float_03.cmd is undefined
+      - filesize_test_float_04.cmd is undefined
+
+      - filesize_test_float_01.filesize.bytes == 512512
+      - filesize_test_float_02.filesize.bytes == 512512
+      - filesize_test_float_03.filesize.bytes == 512512
+      - filesize_test_float_04.filesize.bytes == 512512
+
+      - filesize_test_float_01.size_diff == 512512
+      - filesize_test_float_02.size_diff == 512512
+      - filesize_test_float_03.size_diff == 0
+      - filesize_test_float_04.size_diff == 0
+
       - filesize_test_float_01.state is undefined
       - filesize_test_float_02.state in ["file"]
       - filesize_test_float_01.size is undefined
       - filesize_test_float_02.size == 512512
       - filesize_test_float_03.size == 512512
       - filesize_test_float_04.size == 512512
+
+      - not filesize_stat_float_01.stat.exists
+      - filesize_stat_float_02.stat.exists
+      - filesize_stat_float_02.stat.isreg
+      - filesize_stat_float_02.stat.size == 512512
+      - filesize_stat_float_04.stat.size == 512512
 
 
 
@@ -55,11 +93,23 @@
   register: filesize_test_float_11
   check_mode: yes
 
+- name: Stat the file again (should remain the same)
+  stat:
+    path: "{{ filesize_testfile }}"
+  register: filesize_stat_float_11
+
+
 - name: Create a file with a size of 512.513kB
   filesize:
     path: "{{ filesize_testfile }}"
     size: 512.513kB
   register: filesize_test_float_12
+
+- name: Stat the file (should have grown of 1 byte)
+  stat:
+    path: "{{ filesize_testfile }}"
+  register: filesize_stat_float_12
+
 
 - name: Create a file with a size of 0.512513MB (check mode, idempotency)
   filesize:
@@ -74,6 +124,12 @@
     size: 0.512513MB
   register: filesize_test_float_14
 
+- name: Stat the file again (should remain the same)
+  stat:
+    path: "{{ filesize_testfile }}"
+  register: filesize_stat_float_14
+
+
 - name: Assert that results are as expected
   assert:
     that:
@@ -82,12 +138,28 @@
       - filesize_test_float_13 is not changed
       - filesize_test_float_14 is not changed
 
-      - filesize_test_float_11.size == 512512
+      - filesize_test_float_12.cmd == filesize_test_float_11.cmd
+      - filesize_test_float_13.cmd is undefined
+      - filesize_test_float_14.cmd is undefined
+
+      - filesize_test_float_11.filesize.bytes == 512513
+      - filesize_test_float_12.filesize.bytes == 512513
+      - filesize_test_float_13.filesize.bytes == 512513
+      - filesize_test_float_14.filesize.bytes == 512513
+
       - filesize_test_float_11.size_diff == 1
       - filesize_test_float_12.size_diff == 1
+      - filesize_test_float_13.size_diff == 0
+      - filesize_test_float_14.size_diff == 0
+
+      - filesize_test_float_11.size == 512512
       - filesize_test_float_12.size == 512513
       - filesize_test_float_13.size == 512513
       - filesize_test_float_14.size == 512513
+
+      - filesize_stat_float_11.stat.size == 512512
+      - filesize_stat_float_12.stat.size == 512513
+      - filesize_stat_float_14.stat.size == 512513
 
 
 
@@ -98,11 +170,23 @@
   register: filesize_test_float_21
   check_mode: yes
 
+- name: Stat the file again (should remain the same)
+  stat:
+    path: "{{ filesize_testfile }}"
+  register: filesize_stat_float_21
+
+
 - name: Create a file with a size of 4.004MB
   filesize:
     path: "{{ filesize_testfile }}"
     size: 4.004MB
   register: filesize_test_float_22
+
+- name: Stat the file (should have grown to 4.004MB)
+  stat:
+    path: "{{ filesize_testfile }}"
+  register: filesize_stat_float_22
+
 
 - name: Create a file with a size of 4.004MB (check mode, idempotency)
   filesize:
@@ -117,6 +201,12 @@
     size: 4.004MB
   register: filesize_test_float_24
 
+- name: Stat the file again (should remain the same)
+  stat:
+    path: "{{ filesize_testfile }}"
+  register: filesize_stat_float_24
+
+
 - name: Assert that results are as expected
   assert:
     that:
@@ -125,11 +215,28 @@
       - filesize_test_float_23 is not changed
       - filesize_test_float_24 is not changed
 
+      - filesize_test_float_22.cmd == filesize_test_float_21.cmd
+      - filesize_test_float_23.cmd is undefined
+      - filesize_test_float_24.cmd is undefined
+
+      - filesize_test_float_21.filesize.bytes == 4004000
+      - filesize_test_float_22.filesize.bytes == 4004000
+      - filesize_test_float_23.filesize.bytes == 4004000
+      - filesize_test_float_24.filesize.bytes == 4004000
+
+      - filesize_test_float_21.size_diff == 4004000 - 512513
+      - filesize_test_float_22.size_diff == 4004000 - 512513
+      - filesize_test_float_23.size_diff == 0
+      - filesize_test_float_24.size_diff == 0
+
       - filesize_test_float_21.size == 512513
       - filesize_test_float_22.size == 4004000
       - filesize_test_float_23.size == 4004000
       - filesize_test_float_24.size == 4004000
 
+      - filesize_stat_float_21.stat.size == 512513
+      - filesize_stat_float_22.stat.size == 4004000
+      - filesize_stat_float_24.stat.size == 4004000
 
 
 - name: Remove test file

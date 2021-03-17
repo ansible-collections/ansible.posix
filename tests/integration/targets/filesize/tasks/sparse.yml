@@ -9,12 +9,26 @@
   register: filesize_test_sparse_01
   check_mode: yes
 
+- name: Stat the file (should not exist)
+  stat:
+    path: "{{ filesize_testfile }}"
+    get_checksum: no
+  register: filesize_stat_sparse_01
+
+
 - name: Create a huge sparse file of 4TB
   filesize:
     path: "{{ filesize_testfile }}"
     size: "4TB"
     sparse: yes
   register: filesize_test_sparse_02
+
+- name: Stat the resulting file (should exist now)
+  stat:
+    path: "{{ filesize_testfile }}"
+    get_checksum: no
+  register: filesize_stat_sparse_02
+
 
 - name: Create a huge sparse file of 4TB (4000GB) (check mode, idempotency)
   filesize:
@@ -48,6 +62,13 @@
     sparse: yes
   register: filesize_test_sparse_06
 
+- name: Stat the file again (should remain the same)
+  stat:
+    path: "{{ filesize_testfile }}"
+    get_checksum: no
+  register: filesize_stat_sparse_06
+
+
 - name: Assert that results are as expected
   assert:
     that:
@@ -58,14 +79,40 @@
       - filesize_test_sparse_05 is not changed
       - filesize_test_sparse_06 is not changed
 
+      - filesize_test_sparse_02.cmd == filesize_test_sparse_01.cmd
+      - filesize_test_sparse_03.cmd is undefined
+      - filesize_test_sparse_04.cmd is undefined
+      - filesize_test_sparse_05.cmd is undefined
+      - filesize_test_sparse_06.cmd is undefined
+
+      - filesize_test_sparse_01.filesize.bytes == 4*1000**4
+      - filesize_test_sparse_02.filesize.bytes == 4*1000**4
+      - filesize_test_sparse_03.filesize.bytes == 4*1000**4
+      - filesize_test_sparse_04.filesize.bytes == 4*1000**4
+      - filesize_test_sparse_05.filesize.bytes == 4*1000**4
+      - filesize_test_sparse_06.filesize.bytes == 4*1000**4
+
+      - filesize_test_sparse_01.size_diff == 4*1000**4
+      - filesize_test_sparse_02.size_diff == 4*1000**4
+      - filesize_test_sparse_03.size_diff == 0
+      - filesize_test_sparse_04.size_diff == 0
+      - filesize_test_sparse_05.size_diff == 0
+      - filesize_test_sparse_06.size_diff == 0
+
       - filesize_test_sparse_01.state is undefined
       - filesize_test_sparse_02.state in ["file"]
       - filesize_test_sparse_01.size is undefined
-      - filesize_test_sparse_02.size == 4000000000000
-      - filesize_test_sparse_03.size == 4000000000000
-      - filesize_test_sparse_04.size == 4000000000000
-      - filesize_test_sparse_05.size == 4000000000000
-      - filesize_test_sparse_06.size == 4000000000000
+      - filesize_test_sparse_02.size == 4*1000**4
+      - filesize_test_sparse_03.size == 4*1000**4
+      - filesize_test_sparse_04.size == 4*1000**4
+      - filesize_test_sparse_05.size == 4*1000**4
+      - filesize_test_sparse_06.size == 4*1000**4
+
+      - not filesize_stat_sparse_01.stat.exists
+      - filesize_stat_sparse_02.stat.exists
+      - filesize_stat_sparse_02.stat.isreg
+      - filesize_stat_sparse_02.stat.size == 4*1000**4
+      - filesize_stat_sparse_06.stat.size == 4*1000**4
 
 
 
@@ -77,12 +124,26 @@
   register: filesize_test_sparse_11
   check_mode: yes
 
+- name: Stat the file again (should remain the same)
+  stat:
+    path: "{{ filesize_testfile }}"
+    get_checksum: no
+  register: filesize_stat_sparse_11
+
+
 - name: Change sparse file size to 4TiB
   filesize:
     path: "{{ filesize_testfile }}"
     size: 4TiB
     sparse: yes
   register: filesize_test_sparse_12
+
+- name: Stat the file again (should have grown)
+  stat:
+    path: "{{ filesize_testfile }}"
+    get_checksum: no
+  register: filesize_stat_sparse_12
+
 
 - name: Change sparse file size to 4TiB (4096GiB) (check mode, idempotency)
   filesize:
@@ -99,6 +160,13 @@
     sparse: yes
   register: filesize_test_sparse_14
 
+- name: Stat the file again (should remain the same)
+  stat:
+    path: "{{ filesize_testfile }}"
+    get_checksum: no
+  register: filesize_stat_sparse_14
+
+
 - name: Assert that results are as expected
   assert:
     that:
@@ -107,10 +175,23 @@
       - filesize_test_sparse_13 is not changed
       - filesize_test_sparse_14 is not changed
 
+      - filesize_test_sparse_12.cmd == filesize_test_sparse_11.cmd
+      - filesize_test_sparse_13.cmd is undefined
+      - filesize_test_sparse_14.cmd is undefined
+
+      - filesize_test_sparse_11.size_diff == 398046511104
+      - filesize_test_sparse_12.size_diff == 398046511104
+      - filesize_test_sparse_13.size_diff == 0
+      - filesize_test_sparse_14.size_diff == 0
+
       - filesize_test_sparse_11.size == 4000000000000
       - filesize_test_sparse_12.size == 4398046511104
       - filesize_test_sparse_13.size == 4398046511104
       - filesize_test_sparse_14.size == 4398046511104
+
+      - filesize_stat_sparse_11.stat.size == 4000000000000
+      - filesize_stat_sparse_12.stat.size == 4398046511104
+      - filesize_stat_sparse_14.stat.size == 4398046511104
 
 
 
@@ -122,12 +203,26 @@
   register: filesize_test_sparse_21
   check_mode: yes
 
+- name: Stat the file again (should remain the same)
+  stat:
+    path: "{{ filesize_testfile }}"
+    get_checksum: no
+  register: filesize_stat_sparse_21
+
+
 - name: Change sparse file size to 4.321TB
   filesize:
     path: "{{ filesize_testfile }}"
     size: 4.321TB
     sparse: yes
   register: filesize_test_sparse_22
+
+- name: Stat the file again (should have been reduced)
+  stat:
+    path: "{{ filesize_testfile }}"
+    get_checksum: no
+  register: filesize_stat_sparse_22
+
 
 - name: Change sparse file size to 4321×1GB (check mode, idempotency)
   filesize:
@@ -146,6 +241,13 @@
     sparse: yes
   register: filesize_test_sparse_24
 
+- name: Stat the file again (should remain the same)
+  stat:
+    path: "{{ filesize_testfile }}"
+    get_checksum: no
+  register: filesize_stat_sparse_24
+
+
 - name: Assert that results are as expected
   assert:
     that:
@@ -154,10 +256,23 @@
       - filesize_test_sparse_23 is not changed
       - filesize_test_sparse_24 is not changed
 
+      - filesize_test_sparse_22.cmd == filesize_test_sparse_21.cmd
+      - filesize_test_sparse_23.cmd is undefined
+      - filesize_test_sparse_24.cmd is undefined
+
+      - filesize_test_sparse_21.size_diff == 4321*1000**3 - 4*1024**4
+      - filesize_test_sparse_22.size_diff == 4321*1000**3 - 4*1024**4
+      - filesize_test_sparse_23.size_diff == 0
+      - filesize_test_sparse_24.size_diff == 0
+
       - filesize_test_sparse_21.size == 4398046511104
       - filesize_test_sparse_22.size == 4321000000000
       - filesize_test_sparse_23.size == 4321000000000
       - filesize_test_sparse_24.size == 4321000000000
+
+      - filesize_stat_sparse_21.stat.size == 4398046511104
+      - filesize_stat_sparse_22.stat.size == 4321000000000
+      - filesize_stat_sparse_24.stat.size == 4321000000000
 
 
 

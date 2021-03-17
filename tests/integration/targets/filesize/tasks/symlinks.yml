@@ -15,6 +15,8 @@
     force: yes
     follow: no
 
+
+
 - name: Create a file with a size of 512 kB (512000 bytes) (check mode)
   filesize:
     path: "{{ filesize_testlink }}"
@@ -27,6 +29,12 @@
     path: "{{ filesize_testlink }}"
     size: "512 kB"
   register: filesize_test_symlink_02
+
+- name: Stat the resulting file (not the symlink)
+  stat:
+    path: "{{ filesize_test_symlink_02.path }}"
+  register: filesize_stat_symlink_02
+
 
 - name: Create a file with a size of 500 KiB (512000 bytes) (check mode, idempotency)
   filesize:
@@ -41,6 +49,12 @@
     size: "500 KiB"
   register: filesize_test_symlink_04
 
+- name: Stat the file again (should remain the same)
+  stat:
+    path: "{{ filesize_test_symlink_04.path }}"
+  register: filesize_stat_symlink_04
+
+
 - name: Assert that results are as expected
   assert:
     that:
@@ -49,6 +63,10 @@
       - filesize_test_symlink_03 is not changed
       - filesize_test_symlink_04 is not changed
 
+      - filesize_test_symlink_02.cmd == filesize_test_symlink_01.cmd
+      - filesize_test_symlink_03.cmd is undefined
+      - filesize_test_symlink_04.cmd is undefined
+
       - filesize_test_symlink_01.state is undefined
       - filesize_test_symlink_02.state in ["file"]
       - filesize_test_symlink_01.size is undefined
@@ -56,6 +74,10 @@
       - filesize_test_symlink_03.size == 512000
       - filesize_test_symlink_04.size == 512000
 
+      - filesize_stat_symlink_02.stat.size == 512000
+      - filesize_stat_symlink_04.stat.size == 512000
+
+      - filesize_test_symlink_04.path == filesize_test_symlink_02.path
       - filesize_test_symlink_04.path != filesize_testlink
 
 

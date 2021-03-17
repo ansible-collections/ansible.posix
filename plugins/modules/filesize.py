@@ -41,13 +41,13 @@ options:
         (= 1024KiB); C(G), C(g), C(GiB) or C(giB) (= 1024MiB); and so on.
       - If the multiplicative suffix is not provided, the value is treated as
         an integer number of blocks of I(blocksize) bytes each (float values
-        will be rounded to the closest integer).
+        are rounded to the closest integer).
       - When the I(size) value is equal to the current file size, does nothing.
-      - When the I(size) value is bigger than the current file size, bytes will
-        be appended to the file without truncating it, i.e. without modifying
-        the existing bytes of the file.
-      - When the I(size) value is smaller than the current file size, it will
-        be truncated to the requested value without modifying bytes before this
+      - When the I(size) value is bigger than the current file size, bytes are
+        appended to the file without truncating it, in other words, without
+        modifying the existing bytes of the file.
+      - When the I(size) value is smaller than the current file size, it is
+        truncated to the requested value without modifying bytes before this
         value.
       - That means that a file of any arbitrary size can be grown to any other
         arbitrary size, and then resized down to its initial size without
@@ -59,8 +59,8 @@ options:
       - Size of blocks, in bytes if not followed by a multiplicative suffix.
       - The numeric value (before the unit) C(MUST) be an integer (or a C(float)
         if it equals an integer).
-      - If not set, the size of blocks will be guessed from the OS and commonly
-        result in C(512) or C(4096) bytes, that will be used internally by the
+      - If not set, the size of blocks is guessed from the OS and commonly
+        results in C(512) or C(4096) bytes, that is used internally by the
         module or when I(size) has no unit.
     type: str
   source:
@@ -71,8 +71,9 @@ options:
     default: /dev/zero
   force:
     description:
-      - Whether or not to overwrite the file if it exists, i.e. to truncate it
-        from 0. When C(true), the module is not idempotent.
+      - Whether or not to overwrite the file if it exists, in other words, to
+        truncate it from 0. When C(true), the module is not idempotent, that
+        means it always reports I(changed=true).
       - I(force=yes) and I(sparse=yes) are mutually exclusive.
     type: bool
     default: no
@@ -81,7 +82,7 @@ options:
       - Whether or not the file to create should be a sparse file.
       - This option is effective only on newly created files, or when growing a
         file, only for the bytes to append.
-      - This option is not supported on OpenBSD and Solaris.
+      - This option is not supported on OpenBSD, Solaris and AIX.
       - I(force=yes) and I(sparse=yes) are mutually exclusive.
     type: bool
     default: no
@@ -91,6 +92,35 @@ notes:
 
 requirements:
   - dd
+
+seealso:
+  - name: dd(1) manpage for Linux
+    description: Manual page of the GNU/Linux's dd implementation (from GNU coreutils).
+    link: https://man7.org/linux/man-pages/man1/dd.1.html
+
+  - name: dd(1) manpage for IBM AIX
+    description: Manual page of the IBM AIX's dd implementation.
+    link: https://www.ibm.com/support/knowledgecenter/ssw_aix_72/d_commands/dd.html
+
+  - name: dd(1) manpage for Mac OSX
+    description: Manual page of the Mac OSX's dd implementation.
+    link: https://www.unix.com/man-page/osx/1/dd/
+
+  - name: dd(1M) manpage for Solaris
+    description: Manual page of the Oracle Solaris's dd implementation.
+    link: https://docs.oracle.com/cd/E36784_01/html/E36871/dd-1m.html
+
+  - name: dd(1) manpage for FreeBSD
+    description: Manual page of the FreeBSD's dd implementation.
+    link: https://www.freebsd.org/cgi/man.cgi?dd(1)
+
+  - name: dd(1) manpage for OpenBSD
+    description: Manual page of the OpenBSD's dd implementation.
+    link: https://man.openbsd.org/dd
+
+  - name: dd(1) manpage for NetBSD
+    description: Manual page of the NetBSD's dd implementation.
+    link: https://man.netbsd.org/dd.1
 
 extends_documentation_fragment: files
 '''

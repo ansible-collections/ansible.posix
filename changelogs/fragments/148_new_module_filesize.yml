@@ -1,0 +1,3 @@
+---
+trivial:
+  - filesize - new module to create or resize a file (https://github.com/ansible-collections/ansible.posix/pull/148).
