@@ -12,7 +12,7 @@ DOCUMENTATION = r'''
 ---
 module: filesize
 
-short_description: Create a file with a given size, or resize it if it exists.
+short_description: Create a file with a given size, or resize it if it exists
 
 description:
   - This module is a simple wrapper around C(dd) to create, extend or truncate
@@ -22,7 +22,7 @@ description:
 author:
   - quidame (@quidame)
 
-version_added: "1.2.0"
+version_added: "1.3.0"
 
 options:
   path:
@@ -47,7 +47,7 @@ options:
         be appended to the file without truncating it, i.e. without modifying
         the existing bytes of the file.
       - When the I(size) value is smaller than the current file size, it will
-        be truncated to the requested value without modifyng bytes before this
+        be truncated to the requested value without modifying bytes before this
         value.
       - That means that a file of any arbitrary size can be grown to any other
         arbitrary size, and then resized down to its initial size without
@@ -65,7 +65,7 @@ options:
     type: str
   source:
     description:
-      - Device or file that will provide input data to provision the file.
+      - Device or file that provides input data to provision the file.
       - This parameter is ignored when I(sparse=yes).
     type: path
     default: /dev/zero
@@ -111,13 +111,13 @@ EXAMPLES = r'''
     path: /var/bigfile
     size: 2GB
 
-- name: Fill a file with random bytes for backing a luks device
+- name: Fill a file with random bytes for backing a LUKS device
   ansible.posix.filesize:
     path: ~/diskimage.luks
     size: 512.0 MiB
     source: /dev/urandom
 
-- name: Take a backup of MBR boot code into a file, overwritting it if it exists
+- name: Take a backup of MBR boot code into a file, overwriting it if it exists
   ansible.posix.filesize:
     path: /media/sdb1/mbr.bin
     size: 440B
