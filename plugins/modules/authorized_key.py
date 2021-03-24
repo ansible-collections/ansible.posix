@@ -648,11 +648,11 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             user=dict(type='str', required=True),
-            key=dict(type='str', required=True),
+            key=dict(type='str', required=True, no_log=False),
             path=dict(type='path'),
             manage_dir=dict(type='bool', default=True),
             state=dict(type='str', default='present', choices=['absent', 'present']),
-            key_options=dict(type='str'),
+            key_options=dict(type='str', no_log=False),
             exclusive=dict(type='bool', default=False),
             comment=dict(type='str'),
             validate_certs=dict(type='bool', default=True),
