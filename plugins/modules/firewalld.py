@@ -18,12 +18,16 @@ options:
     description:
       - Name of a service to add/remove to/from firewalld.
       - The service must be listed in output of firewall-cmd --get-services.
-    type: str
+      - Multiple values can be provided using a list or a comma separated list (space after comma is allowed).
+    type: list
+    elements: str
   port:
     description:
       - Name of a port or port range to add/remove to/from firewalld.
       - Must be in the form PORT/PROTOCOL or PORT-PORT/PROTOCOL for port ranges.
-    type: str
+      - Multiple values can be provided using a list or a comma separated list (space after comma is allowed).
+    type: list
+    elements: str
   port_forward:
     description:
       - Port and protocol to forward using firewalld.
@@ -54,19 +58,27 @@ options:
     description:
       - Rich rule to add/remove to/from firewalld.
       - See L(Syntax for firewalld rich language rules,https://firewalld.org/documentation/man-pages/firewalld.richlanguage.html).
-    type: str
+      - Multiple values can be provided using a list.
+    type: list
+    elements: str
   source:
     description:
       - The source/network you would like to add/remove to/from firewalld.
-    type: str
+      - Multiple values can be provided using a list or a comma separated list (space after comma is allowed).
+    type: list
+    elements: str
   interface:
     description:
       - The interface you would like to add/remove to/from a zone in firewalld.
-    type: str
+      - Multiple values can be provided using a list or a comma separated list (space after comma is allowed).
+    type: list
+    elements: str
   icmp_block:
     description:
       - The ICMP block you would like to add/remove to/from a zone in firewalld.
-    type: str
+      - Multiple values can be provided using a list or a comma separated list (space after comma is allowed).
+    type: list
+    elements: str
   icmp_block_inversion:
     description:
       - Enable/Disable inversion of ICMP blocks for a zone in firewalld.
@@ -757,19 +769,19 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            icmp_block=dict(type='str'),
+            icmp_block=dict(type='list', elements='str'),
             icmp_block_inversion=dict(type='str'),
-            service=dict(type='str'),
-            port=dict(type='str'),
+            service=dict(type='list', elements='str'),
+            port=dict(type='list', elements='str'),
             port_forward=dict(type='list', elements='dict'),
-            rich_rule=dict(type='str'),
+            rich_rule=dict(type='list', elements='str'),
             zone=dict(type='str'),
             immediate=dict(type='bool', default=False),
-            source=dict(type='str'),
+            source=dict(type='list', elements='str'),
             permanent=dict(type='bool'),
             state=dict(type='str', required=True, choices=['absent', 'disabled', 'enabled', 'present']),
             timeout=dict(type='int', default=0),
-            interface=dict(type='str'),
+            interface=dict(type='list', elements='str'),
             masquerade=dict(type='str'),
             offline=dict(type='bool'),
             target=dict(type='str', choices=['default', 'ACCEPT', 'DROP', 'REJECT']),
@@ -868,20 +880,21 @@ def main():
         )
 
     if icmp_block is not None:
+        for _icmp_block in icmp_block:
+            _icmp_block = _icmp_block.strip()
+            transaction = IcmpBlockTransaction(
+                module,
+                action_args=(_icmp_block, timeout),
+                zone=zone,
+                desired_state=desired_state,
+                permanent=permanent,
+                immediate=immediate,
+            )
 
-        transaction = IcmpBlockTransaction(
-            module,
-            action_args=(icmp_block, timeout),
-            zone=zone,
-            desired_state=desired_state,
-            permanent=permanent,
-            immediate=immediate,
-        )
-
-        changed, transaction_msgs = transaction.run()
-        msgs = msgs + transaction_msgs
-        if changed is True:
-            msgs.append("Changed icmp-block %s to %s" % (icmp_block, desired_state))
+            changed, transaction_msgs = transaction.run()
+            msgs = msgs + transaction_msgs
+            if changed is True:
+                msgs.append("Changed icmp-block %s to %s" % (_icmp_block, desired_state))
 
     if icmp_block_inversion is not None:
 
@@ -900,52 +913,55 @@ def main():
             msgs.append("Changed icmp-block-inversion %s to %s" % (icmp_block_inversion, desired_state))
 
     if service is not None:
+        for _service in service:
+            _service = _service.strip()
+            transaction = ServiceTransaction(
+                module,
+                action_args=(_service, timeout),
+                zone=zone,
+                desired_state=desired_state,
+                permanent=permanent,
+                immediate=immediate,
+            )
 
-        transaction = ServiceTransaction(
-            module,
-            action_args=(service, timeout),
-            zone=zone,
-            desired_state=desired_state,
-            permanent=permanent,
-            immediate=immediate,
-        )
-
-        changed, transaction_msgs = transaction.run()
-        msgs = msgs + transaction_msgs
-        if changed is True:
-            msgs.append("Changed service %s to %s" % (service, desired_state))
+            changed, transaction_msgs = transaction.run()
+            msgs = msgs + transaction_msgs
+            if changed is True:
+                msgs.append("Changed service %s to %s" % (_service, desired_state))
 
     if source is not None:
+        for _source in source:
+            _source = _source.strip()
+            transaction = SourceTransaction(
+                module,
+                action_args=(_source,),
+                zone=zone,
+                desired_state=desired_state,
+                permanent=permanent,
+                immediate=immediate,
+            )
 
-        transaction = SourceTransaction(
-            module,
-            action_args=(source,),
-            zone=zone,
-            desired_state=desired_state,
-            permanent=permanent,
-            immediate=immediate,
-        )
-
-        changed, transaction_msgs = transaction.run()
-        msgs = msgs + transaction_msgs
+            changed, transaction_msgs = transaction.run()
+            msgs = msgs + transaction_msgs
 
     if port is not None:
-
-        transaction = PortTransaction(
-            module,
-            action_args=(port, protocol, timeout),
-            zone=zone,
-            desired_state=desired_state,
-            permanent=permanent,
-            immediate=immediate,
-        )
+        for _port in port:
+            _port = _port.strip()
+            transaction = PortTransaction(
+                module,
+                action_args=(_port, protocol, timeout),
+                zone=zone,
+                desired_state=desired_state,
+                permanent=permanent,
+                immediate=immediate,
+            )
 
         changed, transaction_msgs = transaction.run()
         msgs = msgs + transaction_msgs
         if changed is True:
             msgs.append(
                 "Changed port %s to %s" % (
-                    "%s/%s" % (port, protocol), desired_state
+                    "%s/%s" % (_port, protocol), desired_state
                 )
             )
 
@@ -973,34 +989,37 @@ def main():
             )
 
     if rich_rule is not None:
+        for _rich_rule in rich_rule:
+            if _rich_rule == '':
+                continue
+            transaction = RichRuleTransaction(
+                module,
+                action_args=(_rich_rule, timeout),
+                zone=zone,
+                desired_state=desired_state,
+                permanent=permanent,
+                immediate=immediate,
+            )
 
-        transaction = RichRuleTransaction(
-            module,
-            action_args=(rich_rule, timeout),
-            zone=zone,
-            desired_state=desired_state,
-            permanent=permanent,
-            immediate=immediate,
-        )
-
-        changed, transaction_msgs = transaction.run()
-        msgs = msgs + transaction_msgs
-        if changed is True:
-            msgs.append("Changed rich_rule %s to %s" % (rich_rule, desired_state))
+            changed, transaction_msgs = transaction.run()
+            msgs = msgs + transaction_msgs
+            if changed is True:
+                msgs.append("Changed rich_rule %s to %s" % (_rich_rule, desired_state))
 
     if interface is not None:
+        for _interface in interface:
+            _interface = _interface.strip()
+            transaction = InterfaceTransaction(
+                module,
+                action_args=(_interface,),
+                zone=zone,
+                desired_state=desired_state,
+                permanent=permanent,
+                immediate=immediate,
+            )
 
-        transaction = InterfaceTransaction(
-            module,
-            action_args=(interface,),
-            zone=zone,
-            desired_state=desired_state,
-            permanent=permanent,
-            immediate=immediate,
-        )
-
-        changed, transaction_msgs = transaction.run()
-        msgs = msgs + transaction_msgs
+            changed, transaction_msgs = transaction.run()
+            msgs = msgs + transaction_msgs
 
     if masquerade is not None:
 
