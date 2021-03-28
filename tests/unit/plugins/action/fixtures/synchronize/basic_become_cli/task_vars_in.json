@@ -44,7 +44,7 @@
         "playbook_dir": "/home/jtanner/workspace/issues/AP-15905", 
         "omit": "__omit_place_holder__b3ac1e6ebeed06f4be0c1edca3dca34036cf7f57", 
         "inventory_dir": "/home/jtanner/workspace/issues/AP-15905", 
-        "ansible_ssh_user": "root", 
+        "ansible_user": "root", 
         "ansible_check_mode": false, 
         "ansible_version": {
           "major": 2, 
@@ -74,12 +74,12 @@
       "minor": 2, 
       "revision": 0
     }, 
-    "ansible_ssh_user": "root"
+    "ansible_user": "root"
   }, 
   "ansible_accelerate_port": 5099, 
   "roledir": null, 
   "ansible_ssh_extra_args": "", 
-  "ansible_ssh_host": "el6host", 
+  "ansible_host": "el6host", 
   "ansible_current_hosts": [
     "el6host"
   ], 
@@ -102,7 +102,7 @@
       "playbook_dir": "/home/jtanner/workspace/issues/AP-15905", 
       "omit": "__omit_place_holder__b3ac1e6ebeed06f4be0c1edca3dca34036cf7f57", 
       "inventory_dir": "/home/jtanner/workspace/issues/AP-15905", 
-      "ansible_ssh_user": "root", 
+      "ansible_user": "root", 
       "ansible_check_mode": false, 
       "ansible_version": {
         "major": 2, 
@@ -142,7 +142,7 @@
   "omit": "__omit_place_holder__b3ac1e6ebeed06f4be0c1edca3dca34036cf7f57", 
   "inventory_dir": "/home/jtanner/workspace/issues/AP-15905", 
   "playbook_dir": "/home/jtanner/workspace/issues/AP-15905", 
-  "ansible_ssh_user": "root", 
+  "ansible_user": "root", 
   "role_names": [], 
   "play_hosts": [
     "el6host"

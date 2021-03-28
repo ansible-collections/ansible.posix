@@ -219,14 +219,10 @@ class ActionModule(ActionBase):
         src_host = '127.0.0.1'
         inventory_hostname = task_vars.get('inventory_hostname')
         dest_host_inventory_vars = task_vars['hostvars'].get(inventory_hostname)
-        try:
-            dest_host = dest_host_inventory_vars['ansible_host']
-        except KeyError:
-            dest_host = dest_host_inventory_vars.get('ansible_ssh_host', inventory_hostname)
+        dest_host = dest_host_inventory_vars.get('ansible_host', inventory_hostname)
 
         dest_host_ids = [hostid for hostid in (dest_host_inventory_vars.get('inventory_hostname'),
-                                               dest_host_inventory_vars.get('ansible_host'),
-                                               dest_host_inventory_vars.get('ansible_ssh_host'))
+                                               dest_host_inventory_vars.get('ansible_host'))
                          if hostid is not None]
 
         localhost_ports = set()
@@ -250,7 +246,7 @@ class ActionModule(ActionBase):
             dest_is_local = True
 
         # CHECK FOR NON-DEFAULT SSH PORT
-        inv_port = task_vars.get('ansible_ssh_port', None) or C.DEFAULT_REMOTE_PORT
+        inv_port = task_vars.get('ansible_port', None) or C.DEFAULT_REMOTE_PORT
         if _tmp_args.get('dest_port', None) is None:
             if inv_port is not None:
                 _tmp_args['dest_port'] = inv_port
@@ -327,14 +323,14 @@ class ActionModule(ActionBase):
             # Src and dest rsync "path" handling
             if boolean(_tmp_args.get('set_remote_user', 'yes'), strict=False):
                 if use_delegate:
-                    user = task_vars.get('ansible_delegated_vars', dict()).get('ansible_ssh_user', None)
+                    user = task_vars.get('ansible_delegated_vars', dict()).get('ansible_user', None)
                     if not user:
-                        user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
+                        user = task_vars.get('ansible_user') or self._play_context.remote_user
                     if not user:
                         user = C.DEFAULT_REMOTE_USER
 
                 else:
-                    user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
+                    user = task_vars.get('ansible_user') or self._play_context.remote_user
 
             # Private key handling
             # Use the private_key parameter if passed else use context private_key_file
