@@ -1,0 +1,6 @@
+---
+bugfixes:
+  - mount - fix a race condition that might result in unknown/unexpected fstab
+    state when running the module on several inventory hostnames adressing the
+    same host. Lock it with ansible.module_utils.common.file.FileLock.lock_file()
+    (https://github.com/ansible-collections/ansible.posix/issues/115).

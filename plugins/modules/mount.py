@@ -193,6 +193,7 @@ from ansible_collections.ansible.posix.plugins.module_utils.mount import ismount
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.module_utils.common.file import FileLock, LockTimeout
 
 
 def write_fstab(module, lines, path):
@@ -763,105 +764,116 @@ def main():
     name = module.params['path']
     changed = False
 
-    if state == 'absent':
-        name, changed = unset_mount(module, args)
+    lock_timeout = 2
+    lock_tempdir = '/tmp'
+    lock_message = 'another instance of the module holds the %s lock' % os.path.basename(args['fstab'])
 
-        if changed and not module.check_mode:
-            if ismount(name) or is_bind_mounted(module, linux_mounts, name):
-                res, msg = umount(module, name)
+    _fstab = FileLock()
+    try:
+        with _fstab.lock_file(args['fstab'], lock_tempdir, lock_timeout):
 
-                if res:
-                    module.fail_json(
-                        msg="Error unmounting %s: %s" % (name, msg))
+            if state == 'absent':
+                name, changed = unset_mount(module, args)
 
-            if os.path.exists(name):
-                try:
-                    os.rmdir(name)
-                except (OSError, IOError) as e:
-                    module.fail_json(msg="Error rmdir %s: %s" % (name, to_native(e)))
-    elif state == 'unmounted':
-        if ismount(name) or is_bind_mounted(module, linux_mounts, name):
-            if not module.check_mode:
-                res, msg = umount(module, name)
+                if changed and not module.check_mode:
+                    if ismount(name) or is_bind_mounted(module, linux_mounts, name):
+                        res, msg = umount(module, name)
 
-                if res:
-                    module.fail_json(
-                        msg="Error unmounting %s: %s" % (name, msg))
+                        if res:
+                            module.fail_json(
+                                msg="Error unmounting %s: %s" % (name, msg))
 
-            changed = True
-    elif state == 'mounted':
-        dirs_created = []
-        if not os.path.exists(name) and not module.check_mode:
-            try:
-                # Something like mkdir -p but with the possibility to undo.
-                # Based on some copy-paste from the "file" module.
-                curpath = ''
-                for dirname in name.strip('/').split('/'):
-                    curpath = '/'.join([curpath, dirname])
-                    # Remove leading slash if we're creating a relative path
-                    if not os.path.isabs(name):
-                        curpath = curpath.lstrip('/')
-
-                    b_curpath = to_bytes(curpath, errors='surrogate_or_strict')
-                    if not os.path.exists(b_curpath):
+                    if os.path.exists(name):
                         try:
-                            os.mkdir(b_curpath)
-                            dirs_created.append(b_curpath)
-                        except OSError as ex:
-                            # Possibly something else created the dir since the os.path.exists
-                            # check above. As long as it's a dir, we don't need to error out.
-                            if not (ex.errno == errno.EEXIST and os.path.isdir(b_curpath)):
-                                raise
+                            os.rmdir(name)
+                        except (OSError, IOError) as e:
+                            module.fail_json(msg="Error rmdir %s: %s" % (name, to_native(e)))
+            elif state == 'unmounted':
+                if ismount(name) or is_bind_mounted(module, linux_mounts, name):
+                    if not module.check_mode:
+                        res, msg = umount(module, name)
 
-            except (OSError, IOError) as e:
-                module.fail_json(
-                    msg="Error making dir %s: %s" % (name, to_native(e)))
+                        if res:
+                            module.fail_json(
+                                msg="Error unmounting %s: %s" % (name, msg))
 
-        name, backup_lines, changed = _set_mount_save_old(module, args)
-        res = 0
+                    changed = True
+            elif state == 'mounted':
+                dirs_created = []
+                if not os.path.exists(name) and not module.check_mode:
+                    try:
+                        # Something like mkdir -p but with the possibility to undo.
+                        # Based on some copy-paste from the "file" module.
+                        curpath = ''
+                        for dirname in name.strip('/').split('/'):
+                            curpath = '/'.join([curpath, dirname])
+                            # Remove leading slash if we're creating a relative path
+                            if not os.path.isabs(name):
+                                curpath = curpath.lstrip('/')
 
-        if (
-                ismount(name) or
-                is_bind_mounted(
-                    module, linux_mounts, name, args['src'], args['fstype'])):
-            if changed and not module.check_mode:
-                res, msg = remount(module, args)
+                            b_curpath = to_bytes(curpath, errors='surrogate_or_strict')
+                            if not os.path.exists(b_curpath):
+                                try:
+                                    os.mkdir(b_curpath)
+                                    dirs_created.append(b_curpath)
+                                except OSError as ex:
+                                    # Possibly something else created the dir since the os.path.exists
+                                    # check above. As long as it's a dir, we don't need to error out.
+                                    if not (ex.errno == errno.EEXIST and os.path.isdir(b_curpath)):
+                                        raise
+
+                    except (OSError, IOError) as e:
+                        module.fail_json(
+                            msg="Error making dir %s: %s" % (name, to_native(e)))
+
+                name, backup_lines, changed = _set_mount_save_old(module, args)
+                res = 0
+
+                if (
+                        ismount(name) or
+                        is_bind_mounted(
+                            module, linux_mounts, name, args['src'], args['fstype'])):
+                    if changed and not module.check_mode:
+                        res, msg = remount(module, args)
+                        changed = True
+                else:
+                    changed = True
+
+                    if not module.check_mode:
+                        res, msg = mount(module, args)
+
+                if res:
+                    # Not restoring fstab after a failed mount was reported as a bug,
+                    # ansible/ansible#59183
+                    # A non-working fstab entry may break the system at the reboot,
+                    # so undo all the changes if possible.
+                    try:
+                        write_fstab(module, backup_lines, args['fstab'])
+                    except Exception:
+                        pass
+
+                    try:
+                        for dirname in dirs_created[::-1]:
+                            os.rmdir(dirname)
+                    except Exception:
+                        pass
+
+                    module.fail_json(msg="Error mounting %s: %s" % (name, msg))
+            elif state == 'present':
+                name, changed = set_mount(module, args)
+            elif state == 'remounted':
+                if not module.check_mode:
+                    res, msg = remount(module, args)
+
+                    if res:
+                        module.fail_json(msg="Error remounting %s: %s" % (name, msg))
+
                 changed = True
-        else:
-            changed = True
+            else:
+                module.fail_json(msg='Unexpected position reached')
 
-            if not module.check_mode:
-                res, msg = mount(module, args)
-
-        if res:
-            # Not restoring fstab after a failed mount was reported as a bug,
-            # ansible/ansible#59183
-            # A non-working fstab entry may break the system at the reboot,
-            # so undo all the changes if possible.
-            try:
-                write_fstab(module, backup_lines, args['fstab'])
-            except Exception:
-                pass
-
-            try:
-                for dirname in dirs_created[::-1]:
-                    os.rmdir(dirname)
-            except Exception:
-                pass
-
-            module.fail_json(msg="Error mounting %s: %s" % (name, msg))
-    elif state == 'present':
-        name, changed = set_mount(module, args)
-    elif state == 'remounted':
-        if not module.check_mode:
-            res, msg = remount(module, args)
-
-            if res:
-                module.fail_json(msg="Error remounting %s: %s" % (name, msg))
-
-        changed = True
-    else:
-        module.fail_json(msg='Unexpected position reached')
+    except LockTimeout:
+        module.fail_json(msg=lock_message)
 
     # If the managed node is Solaris, convert the boot value type to Boolean
     #  to match the type of return value with the module argument.
