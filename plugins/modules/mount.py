@@ -78,9 +78,12 @@ options:
         if I(opts) is set, and the remount command fails, the module will
         error to prevent unexpected mount changes.  Try using C(mounted)
         instead to work around this issue.
+      - C(absent_from_fstab) specifies that the device mount's entry will be
+        removed from I(fstab). This option does not unmount it or delete the
+        mountpoint.
     type: str
     required: true
-    choices: [ absent, mounted, present, unmounted, remounted ]
+    choices: [ absent, absent_from_fstab, mounted, present, unmounted, remounted ]
   fstab:
     description:
       - File to use instead of C(/etc/fstab).
@@ -651,7 +654,7 @@ def main():
             passno=dict(type='str', no_log=False),
             src=dict(type='path'),
             backup=dict(type='bool', default=False),
-            state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted', 'remounted']),
+            state=dict(type='str', required=True, choices=['absent', 'absent_from_fstab', 'mounted', 'present', 'unmounted', 'remounted']),
         ),
         supports_check_mode=True,
         required_if=(
@@ -734,7 +737,9 @@ def main():
     name = module.params['path']
     changed = False
 
-    if state == 'absent':
+    if state == 'absent_from_fstab':
+        name, changed = unset_mount(module, args)
+    elif state == 'absent':
         name, changed = unset_mount(module, args)
 
         if changed and not module.check_mode:
