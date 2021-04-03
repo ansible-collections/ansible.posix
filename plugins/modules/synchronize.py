@@ -178,6 +178,12 @@ options:
     type: list
     default:
     elements: str
+  delay_updates:
+    description:
+      - This option puts the temporary file from each updated file into a holding directory until the end of the transfer,
+        at which time all the files are renamed into place in rapid succession.
+    type: bool
+    default: yes
 
 notes:
    - rsync must be installed on both the local and remote host.
@@ -199,8 +205,8 @@ notes:
    - Inspect the verbose output to validate the destination user/host/path are what was expected.
    - To exclude files and directories from being synchronized, you may add C(.rsync-filter) files to the source directory.
    - rsync daemon must be up and running with correct permission when using rsync protocol in source or destination path.
-   - The C(synchronize) module forces `--delay-updates` to avoid leaving a destination in a broken in-between state if the underlying rsync process
-     encounters an error. Those synchronizing large numbers of files that are willing to trade safety for performance should call rsync directly.
+   - The C(synchronize) module enables `--delay-updates` by default to avoid leaving a destination in a broken in-between state if the underlying rsync process
+     encounters an error. Those synchronizing large numbers of files that are willing to trade safety for performance should disable this option.
    - link_destination is subject to the same limitations as the underlying rsync daemon. Hard links are only preserved if the relative subtrees
      of the source and destination are the same. Attempts to hardlink into a directory that is a subdirectory of the source will be prevented.
 seealso:
@@ -408,6 +414,7 @@ def main():
             ssh_connection_multiplexing=dict(type='bool', default=False),
             partial=dict(type='bool', default=False),
             verify_host=dict(type='bool', default=False),
+            delay_updates=dict(type='bool', default=True),
             mode=dict(type='str', default='push', choices=['pull', 'push']),
             link_dest=dict(type='list', elements='str'),
         ),
@@ -449,11 +456,15 @@ def main():
     ssh_connection_multiplexing = module.params['ssh_connection_multiplexing']
     verify_host = module.params['verify_host']
     link_dest = module.params['link_dest']
+    delay_updates = module.params['delay_updates']
 
     if '/' not in rsync:
         rsync = module.get_bin_path(rsync, required=True)
 
-    cmd = [rsync, '--delay-updates', '-F']
+    cmd = [rsync]
+    if delay_updates:
+        cmd.append('--delay_updates')
+        cmd.append('-F')
     _sshpass_pipe = None
     if rsync_password:
         try:
