@@ -129,7 +129,7 @@ def get_matching_jobs(module, at_cmd, script_file):
 def create_tempfile(command):
     filed, script_file = tempfile.mkstemp(prefix='at')
     fileh = os.fdopen(filed, 'w')
-    fileh.write(command)
+    fileh.write(command + os.linesep)
     fileh.close()
     return script_file
 
