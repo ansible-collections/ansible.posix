@@ -1,0 +1,2 @@
+trivial:
+- Add sanity test ignore file for ansible version 2.12
