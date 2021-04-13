@@ -1,0 +1,3 @@
+---
+trivial:
+  - Remove shippable files (https://github.com/ansible-collections/ansible.posix/pull/174).
