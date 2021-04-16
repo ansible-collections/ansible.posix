@@ -1,0 +1,2 @@
+minor_changes:
+- added 2.11 branch to test matrix, added ignore-2.12.txt.

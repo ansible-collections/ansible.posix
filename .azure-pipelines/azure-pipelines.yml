@@ -69,6 +69,32 @@ stages:
               test: ubuntu1804
             - name: Ubuntu 20.04
               test: ubuntu2004
+  - stage: Docker_2_11
+    displayName: Docker 2.11
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          testFormat: 2.11/linux/{0}/1
+          targets:
+            - name: CentOS 6
+              test: centos6
+            - name: CentOS 7
+              test: centos7
+            - name: CentOS 8
+              test: centos8
+            - name: Fedora 32
+              test: fedora32
+            - name: Fedora 33
+              test: fedora33
+            - name: openSUSE 15 py2
+              test: opensuse15py2
+            - name: openSUSE 15 py3
+              test: opensuse15
+            - name: Ubuntu 18.04
+              test: ubuntu1804
+            - name: Ubuntu 20.04
+              test: ubuntu2004
   - stage: Docker_2_10
     displayName: Docker 2.10
     dependsOn: []
@@ -141,6 +167,24 @@ stages:
               test: freebsd/11.4
             - name: FreeBSD 12.2
               test: freebsd/12.2
+  - stage: Remote_2_11
+    displayName: Remote 2.11
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          testFormat: 2.11/{0}/1
+          targets:
+            - name: MacOS 11.1
+              test: macos/11.1
+            - name: RHEL 7.9
+              test: rhel/7.9
+            - name: RHEL 8.3
+              test: rhel/8.3
+            - name: FreeBSD 11.4
+              test: freebsd/11.4
+            - name: FreeBSD 12.2
+              test: freebsd/12.2
   - stage: Remote_2_10
     displayName: Remote 2.10
     dependsOn: []
@@ -186,7 +230,9 @@ stages:
       - Remote_2_9
       - Docker_2_9
       - Remote_2_10
+      - Remote_2_11
       - Docker_2_10
+      - Docker_2_11
       - Remote_devel
       - Docker_devel
     jobs:
