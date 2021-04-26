@@ -462,9 +462,6 @@ def main():
         rsync = module.get_bin_path(rsync, required=True)
 
     cmd = [rsync]
-    if delay_updates:
-        cmd.append('--delay_updates')
-        cmd.append('-F')
     _sshpass_pipe = None
     if rsync_password:
         try:
@@ -475,6 +472,9 @@ def main():
             )
         _sshpass_pipe = os.pipe()
         cmd = ['sshpass', '-d' + to_native(_sshpass_pipe[0], errors='surrogate_or_strict')] + cmd
+    if delay_updates:
+        cmd.append('--delay_updates')
+        cmd.append('-F')
     if compress:
         cmd.append('--compress')
     if rsync_timeout:
