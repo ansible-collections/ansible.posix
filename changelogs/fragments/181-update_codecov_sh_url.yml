@@ -1,0 +1,3 @@
+---
+trivial:
+  - testing - update codecov.sh URL (https://github.com/ansible-collections/ansible.posix/pull/181).
