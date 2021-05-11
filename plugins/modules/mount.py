@@ -180,6 +180,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.ansible.posix.plugins.module_utils.mount import ismount
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils.parsing.convert_bool import boolean
 
 
 def write_fstab(module, lines, path):
@@ -672,7 +673,7 @@ def main():
             opts='-',
             passno='-',
             fstab=module.params['fstab'],
-            boot='yes'
+            boot='yes' if module.params['boot'] else 'no'
         )
         if args['fstab'] is None:
             args['fstab'] = '/etc/vfstab'
@@ -834,6 +835,10 @@ def main():
     else:
         module.fail_json(msg='Unexpected position reached')
 
+    # If the managed node is Solaris, convert the boot value type to Boolean
+    #  to match the type of return value with the module argument.
+    if platform.system().lower() == 'sunos':
+        args['boot'] = boolean(args['boot'])
     module.exit_json(changed=changed, **args)
 
 
