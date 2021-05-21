@@ -1,0 +1,4 @@
+- project:
+    check:
+      jobs:
+        - ansible-changelog-fragment2
