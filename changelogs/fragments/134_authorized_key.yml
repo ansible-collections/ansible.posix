@@ -1,0 +1,2 @@
+minor_changes:
+- authorized_key - add a list of valid key types (https://github.com/ansible-collections/ansible.posix/issues/134).
