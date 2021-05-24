@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - synchronize - replace removed ``ansible_ssh_user`` by ``ansible_user`` everywhere; do the same for
+    ``ansible_ssh_port`` and ``ansible_ssh_host`` (https://github.com/ansible-collections/ansible.posix/issues/60).

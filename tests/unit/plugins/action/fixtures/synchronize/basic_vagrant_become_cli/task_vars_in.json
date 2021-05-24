@@ -8,7 +8,7 @@
   ], 
   "ansible_connection": "ssh", 
   "ansible_ssh_common_args": "", 
-  "ansible_ssh_host": "127.0.0.1", 
+  "ansible_host": "127.0.0.1", 
   "inventory_hostname": "default", 
   "ansible_ssh_private_key_file": "/home/jtanner/workspace/issues/AP-15905/.vagrant/machines/default/virtualbox/private_key", 
   "vars": {
@@ -21,7 +21,7 @@
     "playbook_dir": "/home/jtanner/workspace/issues/AP-15905", 
     "role_names": [], 
     "inventory_dir": "/home/jtanner/workspace/issues/AP-15905/.vagrant/provisioners/ansible/inventory", 
-    "ansible_ssh_host": "127.0.0.1", 
+    "ansible_host": "127.0.0.1", 
     "play_hosts": [
       "default"
     ], 
@@ -40,15 +40,15 @@
             "default"
           ]
         }, 
-        "ansible_ssh_port": 2202, 
+        "ansible_port": 2202, 
         "inventory_hostname": "default", 
         "ansible_ssh_private_key_file": "/home/jtanner/workspace/issues/AP-15905/.vagrant/machines/default/virtualbox/private_key", 
         "inventory_hostname_short": "default", 
         "playbook_dir": "/home/jtanner/workspace/issues/AP-15905", 
         "omit": "__omit_place_holder__c360b80aa60ddd99087425dcd3a2094cdd5b8474", 
         "inventory_dir": "/home/jtanner/workspace/issues/AP-15905/.vagrant/provisioners/ansible/inventory", 
-        "ansible_ssh_host": "127.0.0.1", 
-        "ansible_ssh_user": "vagrant", 
+        "ansible_host": "127.0.0.1", 
+        "ansible_user": "vagrant", 
         "group_names": [
           "ungrouped"
         ], 
@@ -73,7 +73,7 @@
       "ungrouped"
     ], 
     "omit": "__omit_place_holder__c360b80aa60ddd99087425dcd3a2094cdd5b8474", 
-    "ansible_ssh_port": 2202, 
+    "ansible_port": 2202, 
     "ansible_version": {
       "major": 2, 
       "full": "2.2.0", 
@@ -81,7 +81,7 @@
       "minor": 2, 
       "revision": 0
     }, 
-    "ansible_ssh_user": "vagrant"
+    "ansible_user": "vagrant"
   }, 
   "ansible_accelerate_port": 5099, 
   "roledir": null, 
@@ -102,15 +102,15 @@
           "default"
         ]
       }, 
-      "ansible_ssh_port": 2202, 
+      "ansible_port": 2202, 
       "inventory_hostname": "default", 
       "ansible_ssh_private_key_file": "/home/jtanner/workspace/issues/AP-15905/.vagrant/machines/default/virtualbox/private_key", 
       "inventory_hostname_short": "default", 
       "playbook_dir": "/home/jtanner/workspace/issues/AP-15905", 
       "omit": "__omit_place_holder__c360b80aa60ddd99087425dcd3a2094cdd5b8474", 
       "inventory_dir": "/home/jtanner/workspace/issues/AP-15905/.vagrant/provisioners/ansible/inventory", 
-      "ansible_ssh_host": "127.0.0.1", 
-      "ansible_ssh_user": "vagrant", 
+      "ansible_host": "127.0.0.1", 
+      "ansible_user": "vagrant", 
       "group_names": [
         "ungrouped"
       ], 
@@ -148,14 +148,14 @@
       "default"
     ]
   }, 
-  "ansible_ssh_port": 2202, 
+  "ansible_port": 2202, 
   "ansible_host": "127.0.0.1", 
   "ansible_shell_executable": "/bin/sh", 
   "inventory_hostname_short": "default", 
   "omit": "__omit_place_holder__c360b80aa60ddd99087425dcd3a2094cdd5b8474", 
   "inventory_dir": "/home/jtanner/workspace/issues/AP-15905/.vagrant/provisioners/ansible/inventory", 
   "playbook_dir": "/home/jtanner/workspace/issues/AP-15905", 
-  "ansible_ssh_user": "vagrant", 
+  "ansible_user": "vagrant", 
   "role_names": [], 
   "play_hosts": [
     "default"
