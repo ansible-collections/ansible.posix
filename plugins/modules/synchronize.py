@@ -184,6 +184,7 @@ options:
         at which time all the files are renamed into place in rapid succession.
     type: bool
     default: yes
+    version_added: '1.3.0'
 
 notes:
    - rsync must be installed on both the local and remote host.
