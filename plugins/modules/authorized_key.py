@@ -389,13 +389,28 @@ def parsekey(module, raw_key, rank=None):
 
     VALID_SSH2_KEY_TYPES = [
         'sk-ecdsa-sha2-nistp256@openssh.com',
+        'sk-ecdsa-sha2-nistp256-cert-v01@openssh.com',
+        'webauthn-sk-ecdsa-sha2-nistp256@openssh.com',
         'ecdsa-sha2-nistp256',
+        'ecdsa-sha2-nistp256-cert-v01@openssh.com',
         'ecdsa-sha2-nistp384',
+        'ecdsa-sha2-nistp384-cert-v01@openssh.com',
         'ecdsa-sha2-nistp521',
+        'ecdsa-sha2-nistp521-cert-v01@openssh.com',
         'sk-ssh-ed25519@openssh.com',
+        'sk-ssh-ed25519-cert-v01@openssh.com',
         'ssh-ed25519',
+        'ssh-ed25519-cert-v01@openssh.com',
         'ssh-dss',
         'ssh-rsa',
+        'ssh-xmss@openssh.com',
+        'ssh-xmss-cert-v01@openssh.com',
+        'rsa-sha2-256',
+        'rsa-sha2-512',
+        'ssh-rsa-cert-v01@openssh.com',
+        'rsa-sha2-256-cert-v01@openssh.com',
+        'rsa-sha2-512-cert-v01@openssh.com',
+        'ssh-dss-cert-v01@openssh.com',
     ]
 
     options = None   # connection options
