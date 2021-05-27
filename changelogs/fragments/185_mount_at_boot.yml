@@ -1,0 +1,3 @@
+---
+bugfixes:
+- "mount - Handle ``boot`` option on Solaris correctly (https://github.com/ansible-collections/ansible.posix/issues/184)."
