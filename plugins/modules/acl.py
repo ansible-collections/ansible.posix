@@ -138,9 +138,13 @@ acl:
 
 import os
 import platform
+import fcntl
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
+from ansible.module_utils.compat import selectors
+from ansible.module_utils.common.text.converters import to_native, to_text, to_bytes
+from ansible.module_utils.six import b
 
 
 def split_entry(entry):
@@ -220,7 +224,7 @@ def build_command(module, mode, path, follow, default, recursive, recalculate_ma
     return cmd
 
 
-def acl_changed(module, cmd):
+def acl_changed(module, cmd, check_rc=True):
     '''Returns true if the provided command affects the existing ACLs, false otherwise.'''
     # FreeBSD do not have a --test flag, so by default, it is safer to always say "true"
     if platform.system().lower() == 'freebsd':
@@ -228,11 +232,87 @@ def acl_changed(module, cmd):
 
     cmd = cmd[:]  # lists are mutables so cmd would be overwritten without this
     cmd.insert(1, '--test')
-    lines = run_acl(module, cmd)
+    module._acl_changed = False
 
-    for line in lines:
-        if not line.endswith('*,*'):
-            return True
+    def _process_stdout_from_pipe(proc, _acl_module=module):
+        stdout = b''
+        try:
+            selector = selectors.DefaultSelector()
+        except (IOError, OSError):
+            # Failed to detect default selector for the given platform
+            # Select PollSelector which is supported by major platforms
+            selector = selectors.PollSelector()
+
+        selector.register(proc.stdout, selectors.EVENT_READ)
+        if os.name == 'posix':
+            fcntl.fcntl(proc.stdout.fileno(), fcntl.F_SETFL, fcntl.fcntl(proc.stdout.fileno(), fcntl.F_GETFL) | os.O_NONBLOCK)
+
+        while True:
+            events = selector.select(1)
+            for key, event in events:
+                b_chunk = key.fileobj.read()
+                if b_chunk == b(''):
+                    selector.unregister(key.fileobj)
+                if key.fileobj == proc.stdout:
+                    stdout = b_chunk
+            if _acl_module._acl_changed:
+                continue
+            lines = []
+            for l in stdout.splitlines():
+                lines.append(l.strip())
+            for line in lines:
+                if not line.endswith(b'*,*'):
+                    proc.terminate()
+                    _acl_module._acl_changed = True
+                    proc.returncode = 0
+
+            # only break out if no pipes are left to read or
+            # the pipes are completely read and
+            # the process is terminated
+            if (not events or not selector.get_map()) and proc.poll() is not None:
+                break
+            # No pipes are left to read but process is not yet terminated
+            # Only then it is safe to wait for the process to be finished
+            # NOTE: Actually proc.poll() is always None here if no selectors are left
+            elif not selector.get_map() and proc.poll() is None:
+                proc.wait()
+                # The process is terminated. Since no pipes to read from are
+                # left, there is no need to call select() again.
+                break
+
+#            proc.stdout.close()
+#            proc.stderr.close()
+#            selector.close()
+
+
+#        while True:
+#            output = proc.stdout.readline()
+#            if output == '' and proc.poll() is not None:
+#                break
+#            if _acl_module._acl_changed:
+#                continue
+#            lines = []
+#            for l in output.splitlines():
+#                    lines.append(l.strip())
+#            for line in lines:
+#                if not line.endswith(b'*,*'):
+#                    proc.terminate()
+#                    while True:
+#                        output = proc.stdout.readline()
+#                        if output == '' and proc.poll() is not None:
+#                            break
+#                    proc.returncode=0
+#                    _acl_module._acl_changed=True
+
+    try:
+        (rc, out, err) = module.run_command(
+            cmd, check_rc=check_rc,
+            before_communicate_callback=_process_stdout_from_pipe)
+    except Exception as e:
+        module.fail_json(msg=to_native(e))
+
+    if module._acl_changed:
+        return True
     return False
 
 
@@ -353,7 +433,10 @@ def main():
 
         if changed and not module.check_mode:
             run_acl(module, command)
-        msg = "%s is present" % entry
+        if recursive:
+            msg = "%s is present recursively" % entry
+        else:
+            msg = "%s is present" % entry
 
     elif state == 'absent':
         entry = build_entry(etype, entity, use_nfsv4_acls)
@@ -365,15 +448,23 @@ def main():
 
         if changed and not module.check_mode:
             run_acl(module, command, False)
-        msg = "%s is absent" % entry
+        if recursive:
+            msg = "%s is absent recursively" % entry
+        else:
+            msg = "%s is absent" % entry
 
     elif state == 'query':
         msg = "current acl"
 
-    acl = run_acl(
-        module,
-        build_command(module, 'get', path, follow, default, recursive, recalculate_mask)
-    )
+    if recursive:
+        acl = []
+        warn = "Not showing resulting acls in the recursive mode"
+        module.exit_json(changed=changed, msg=msg, acl=acl, warnings=warn)
+    else:
+        acl = run_acl(
+            module,
+            build_command(module, 'get', path, follow, default, recursive, recalculate_mask)
+        )
 
     module.exit_json(changed=changed, msg=msg, acl=acl)
 
