@@ -216,9 +216,15 @@
 
 - name: Test on RHEL VMs
   when:
-    - ansible_facts.virtualization_type != 'docker'
-    - ansible_facts.distribution == 'RedHat'
+    - ansible_facts.virtualization_type not in ['docker', 'containerd']
+    - ansible_system == 'Linux'
   block:
+    # Initialize parameter
+    - name: Remove sysctl property using module
+      sysctl:
+        name: vm.swappiness
+        state: absent
+
     # Test reload: yes
     - name: Set sysctl property using module
       sysctl:
@@ -310,3 +316,102 @@
         that:
           - sysctl_invalid_set1 is failed
           - "'vm.mmap_rnd_bits' not in sysctl_invalid_conf_content.stdout"
+
+# Test file permissions for sysctl_file
+- name: Test to set file system permissions
+  block:
+    - set_fact:
+        output_dir_test: "{{ output_dir }}/test_sysctl"
+
+    - name: make sure our testing sub-directory does not exist
+      file:
+        path: "{{ output_dir_test }}"
+        state: absent
+
+    - name: create our testing sub-directory
+      file:
+        path: "{{ output_dir_test }}"
+        state: directory
+
+    - name: copy the example conf to the test dir
+      copy:
+        src: sysctl.conf
+        dest: "{{ output_dir_test }}/permission_test.conf"
+
+    - name: Create permission test file with 0666(check_mode)
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: 1
+        mode: 0666
+        reload: no
+        sysctl_file: "{{ output_dir_test }}/permission_test.conf"
+      register: permission_test1_check_mode
+      check_mode: True
+
+    - name: Ensure permission test file has been created(check_mode)
+      assert:
+        that:
+          - permission_test1_check_mode is changed
+
+    - name: Create permission test file with 0666
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: 1
+        mode: 0666
+        reload: no
+        sysctl_file: "{{ output_dir_test }}/permission_test.conf"
+      register: permission_test1
+
+    - name: Ensure permission test file has been created
+      assert:
+        that:
+          - permission_test1 is changed
+
+    - name: Get permission test file stat
+      stat:
+        path: "{{ output_dir_test }}/permission_test.conf"
+      register: stat_permission_test1
+
+    - name: Ensure file permission has been set 0666
+      assert:
+        that:
+          - stat_permission_test1.stat.mode == '0666'
+
+    - name: Modify file permission of permission test file to 0600(check_mode)
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: 1
+        mode: u=rw,go=
+        reload: no
+        sysctl_file: "{{ output_dir_test }}/permission_test.conf"
+      register: permission_test2_check_mode
+      check_mode: True
+
+    - name: Ensure permission test file has been created(check_mode)
+      assert:
+        that:
+          - permission_test2_check_mode is changed
+
+    - name: Modify file permission of permission test file to 0600
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: 1
+        mode: u=rw,go=
+        reload: no
+        sysctl_file: "{{ output_dir_test }}/permission_test.conf"
+      register: permission_test2
+
+    - name: Ensure permission test file has been created
+      assert:
+        that:
+          - permission_test2 is changed
+
+    - name: Get permission test file stat
+      stat:
+        path: "{{ output_dir_test }}/permission_test.conf"
+      register: stat_permission_test2
+
+    - name: Ensure file permission has been set 0600
+      assert:
+        that:
+          - stat_permission_test2.stat.mode == '0600'
