@@ -255,8 +255,8 @@ def acl_changed(module, cmd, check_rc=True):
                     selector.unregister(key.fileobj)
                 if key.fileobj == proc.stdout:
                     stdout = b_chunk
-            if _acl_module._acl_changed:
-                continue
+                if _acl_module._acl_changed:
+                    continue
             lines = []
             for l in stdout.splitlines():
                 lines.append(l.strip())
