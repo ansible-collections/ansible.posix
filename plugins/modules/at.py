@@ -19,7 +19,7 @@ version_added: "1.0.0"
 options:
   chdir:
     description:
-    - An optional location from where to run the command at. Useful for intance
+    - An optional location from where to run the command C(at). Useful for intance
       when running a playbook using ansible-pull with C(purge) option.
     type: path
     version_added: 1.3.0
