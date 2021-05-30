@@ -22,7 +22,7 @@ options:
     - An optional location from where to run the command at. Useful for intance
       when running a playbook using ansible-pull with C(purge) option.
     type: path
-    version_added: 1.1.2
+    version_added: 1.3.0
   command:
     description:
      - A command to be executed in the future.
