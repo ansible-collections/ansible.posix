@@ -61,7 +61,7 @@
       - 'at_test0.state is defined'
       - 'at_test0.units is defined'
 
-- name: add a at useless command
+- name: Add a useless command using at
   at:
     command: /bin/logger 'AT task ran from Ansible'
     count: 1
@@ -71,11 +71,11 @@
 
 - debug: var=at_add
 
-- name: pause, giving the time the at runs once
+- name: Wait for at to run the previous command
   pause:
     minutes: 1
 
-- name: add a at useless command
+- name: Add a useless command
   at:
     command: /bin/logger 'AT task ran from Ansible'
     count: 1
@@ -83,11 +83,16 @@
     unique: true
     state: absent
   register: at_removal
-  ignore_errors: true
 
 - debug: var=at_removal
 
-- name: create an at command with chdir with valid value
+- name: Validate results
+  assert:
+    that:
+      - at_add is changed
+      - at_removal is changed
+
+- name: Create an at command with chdir with valid value
   at:
     command: /bin/logger 'AT task ran from Ansible with chdir'
     count: 1
@@ -96,7 +101,7 @@
   register: at_chdir_valid
 - debug: var=at_chdir_valid
 
-- name: create an at command with chdir with invalid value
+- name: Create an at command with chdir with invalid value
   at:
     command: /bin/logger 'AT task ran from Ansible with chdir'
     count: 1
@@ -106,3 +111,9 @@
   ignore_errors: true
 
 - debug: var=at_chdir_invalid
+
+- name: Validate results
+  assert:
+    that:
+      - at_chdir_valid is changed
+      - not at_chdir_valid is changed

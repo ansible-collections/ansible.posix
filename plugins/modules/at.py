@@ -19,8 +19,8 @@ version_added: "1.0.0"
 options:
   chdir:
     description:
-    - An optional location from where to run the command C(at). Useful for intance
-      when running a playbook using ansible-pull with C(purge) option.
+    - An optional location from where to run the command C(at).
+    - Useful for intance when running a playbook using ansible-pull with C(purge) option.
     type: path
     version_added: 1.3.0
   command:
@@ -194,8 +194,7 @@ def main():
     result['count'] = count
     result['units'] = units
 
-    add_job(module, result, at_cmd, count, units, command, script_file,
-            chdir=chdir)
+    add_job(module, result, at_cmd, count, units, command, script_file, chdir=chdir)
 
     module.exit_json(**result)
 

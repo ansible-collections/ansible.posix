@@ -1,2 +1,2 @@
 minor_changes:
-  - module at - add option ``chdir`` to permit to launch the at command from a specific directory (https://github.com/ansible-collections/ansible.posix/pull/102).
+  - at - add option ``chdir`` to permit to launch the ``at`` command from a specific directory (https://github.com/ansible-collections/ansible.posix/issues/13).
