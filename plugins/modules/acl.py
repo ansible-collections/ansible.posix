@@ -280,30 +280,6 @@ def acl_changed(module, cmd, check_rc=True):
                 # left, there is no need to call select() again.
                 break
 
-#            proc.stdout.close()
-#            proc.stderr.close()
-#            selector.close()
-
-
-#        while True:
-#            output = proc.stdout.readline()
-#            if output == '' and proc.poll() is not None:
-#                break
-#            if _acl_module._acl_changed:
-#                continue
-#            lines = []
-#            for l in output.splitlines():
-#                    lines.append(l.strip())
-#            for line in lines:
-#                if not line.endswith(b'*,*'):
-#                    proc.terminate()
-#                    while True:
-#                        output = proc.stdout.readline()
-#                        if output == '' and proc.poll() is not None:
-#                            break
-#                    proc.returncode=0
-#                    _acl_module._acl_changed=True
-
     try:
         (rc, out, err) = module.run_command(
             cmd, check_rc=check_rc,
