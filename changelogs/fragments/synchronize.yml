@@ -1,0 +1,3 @@
+---
+minor_changes:
+- synchronize - fix typo (https://github.com/ansible-collections/ansible.posix/pull/198).
