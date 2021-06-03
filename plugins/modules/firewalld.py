@@ -393,26 +393,14 @@ class PortTransaction(FirewallTransaction):
         )
 
     def get_enabled_immediate(self, port, protocol, timeout):
-        port_proto = [port, protocol]
         if self.fw_offline:
-            fw_zone, fw_settings = self.get_fw_zone_settings()
-            ports_list = fw_settings.getPorts()
-        else:
-            ports_list = self.fw.getPorts(self.zone)
-
-        if port_proto in ports_list:
-            return True
-        else:
-            return False
+            dummy, fw_settings = self.get_fw_zone_settings()
+            return fw_settings.queryPort(port=port, protocol=protocol)
+        return self.fw.queryPort(zone=self.zone, port=port, protocol=protocol)
 
     def get_enabled_permanent(self, port, protocol, timeout):
-        port_proto = (port, protocol)
-        fw_zone, fw_settings = self.get_fw_zone_settings()
-
-        if port_proto in fw_settings.getPorts():
-            return True
-        else:
-            return False
+        dummy, fw_settings = self.get_fw_zone_settings()
+        return fw_settings.queryPort(port=port, protocol=protocol)
 
     def set_enabled_immediate(self, port, protocol, timeout):
         self.fw.addPort(self.zone, port, protocol, timeout)
@@ -715,26 +703,14 @@ class ForwardPortTransaction(FirewallTransaction):
         )
 
     def get_enabled_immediate(self, port, proto, toport, toaddr, timeout):
-        forward_port = [port, proto, toport, toaddr]
         if self.fw_offline:
-            fw_zone, fw_settings = self.get_fw_zone_settings()
-            forward_list = fw_settings.getForwardPorts()
-        else:
-            forward_list = self.fw.getForwardPorts(self.zone)
-
-        if forward_port in forward_list:
-            return True
-        else:
-            return False
+            dummy, fw_settings = self.get_fw_zone_settings()
+            return fw_settings.queryForwardPort(port=port, protocol=proto, to_port=toport, to_addr=toaddr)
+        return self.fw.queryForwardPort(port=port, protocol=proto, to_port=toport, to_addr=toaddr)
 
     def get_enabled_permanent(self, port, proto, toport, toaddr, timeout):
-        forward_port = (port, proto, toport, toaddr)
-        fw_zone, fw_settings = self.get_fw_zone_settings()
-
-        if forward_port in fw_settings.getForwardPorts():
-            return True
-        else:
-            return False
+        dummy, fw_settings = self.get_fw_zone_settings()
+        return fw_settings.queryForwardPort(port=port, protocol=proto, to_port=toport, to_addr=toaddr)
 
     def set_enabled_immediate(self, port, proto, toport, toaddr, timeout):
         self.fw.addForwardPort(self.zone, port, proto, toport, toaddr, timeout)
