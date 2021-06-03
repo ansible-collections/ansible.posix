@@ -1,0 +1,139 @@
+---
+# Tasks to validate swapfile management (enabling/disabling its use) on FreeBSD.
+# The swapfile MUST be associated to a memory disk, that becomes the 'src'.
+
+- name: Swap off all (try to cleanup previous erraneous tests)
+  command:
+    cmd: swapoff -a
+
+
+- name: Try to activate swapfile
+  vars:
+    swapfile: /var/swapfile0
+    md_unit: 99
+    md_name: "md{{ md_unit }}"
+    md_path: "/dev/{{ md_name }}"
+
+  block:
+    - name: Create a file to be used for memory swapping
+      command:
+        cmd: "dd if=/dev/zero of={{ swapfile }} bs=1M count=64"
+        creates: "{{ swapfile }}"
+
+    - name: Setup permissions suitable for swap usage
+      file:
+        path: "{{ swapfile }}"
+        mode: u=rw,go=
+        state: file
+
+    - name: Attach a memory disk to the swap file
+      command:
+        cmd: "mdconfig -a -t vnode -u {{ md_unit }} -f {{ swapfile }}"
+        creates: "{{ md_path }}"
+
+
+    - name: Get swap info (0)
+      command: swapctl -l
+      register: swap_info_0
+      changed_when: false
+
+    - name: Assert that memory disk {{ md_path }} is not used by swap
+      assert:
+        that:
+          - swap_info_0.stdout is not search(md_path)
+
+    - name: Enable swap file
+      mount:
+        path: none
+        src: "{{ md_name }}"
+        fstype: swap
+        opts: "sw,file={{ swapfile }}"
+        state: mounted
+      register: swap_enabled_1
+
+    - name: Get swap info (1)
+      command: swapctl -l
+      register: swap_info_1
+      changed_when: false
+
+    - name: Assert that swap file is enabled
+      assert:
+        that:
+          - swap_enabled_1 is changed
+          - swap_info_1.stdout is search(md_path)
+
+
+    - name: Enable swap file, again
+      mount:
+        path: none
+        src: "{{ md_name }}"
+        fstype: swap
+        opts: "sw,file={{ swapfile }}"
+        state: mounted
+      register: swap_enabled_2
+
+    - name: Get swap info (2)
+      command: swapctl -l
+      register: swap_info_2
+      changed_when: false
+
+    - name: Assert that nothing changed
+      assert:
+        that:
+          - swap_enabled_2 is not changed
+          - swap_info_2.stdout == swap_info_1.stdout
+
+  always:
+    - name: Disable swap file
+      mount:
+        path: none
+        src: "{{ md_name }}"
+        fstype: swap
+        state: absent
+      register: swap_disabled_1
+
+    - name: Get swap info (3)
+      command: swapctl -l
+      register: swap_info_3
+      changed_when: false
+
+    - name: Assert that swap file is disabled
+      assert:
+        that:
+          - swap_disabled_1 is changed
+          - swap_info_3.stdout == swap_info_0.stdout
+
+    - name: Disable swap file, again
+      mount:
+        path: none
+        src: "{{ md_name }}"
+        fstype: swap
+        state: absent
+      register: swap_disabled_2
+
+    - name: Get swap info (4)
+      command: swapctl -l
+      register: swap_info_4
+      changed_when: false
+
+    - name: Assert that swap file is disabled and nothing changed
+      assert:
+        that:
+          - swap_disabled_2 is not changed
+          - swap_info_4.stdout == swap_info_3.stdout
+
+
+    - name: Detach memory disk
+      command:
+        cmd: "mdconfig -d -u {{ md_unit }}"
+        removes: "{{ md_path }}"
+
+    - name: Remove swap file
+      file:
+        path: "{{ swapfile }}"
+        state: absent
+
+
+- name: Swap on all (try to restore pre-test state)
+  command:
+    cmd: swapon -a

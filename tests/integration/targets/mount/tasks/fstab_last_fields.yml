@@ -1,0 +1,32 @@
+---
+# Tasks to validate the two last fields in fstab, that are optional on Linux,
+# are added if missing.
+
+- name: Create fstab record with missing last two fields
+  copy:
+    dest: /etc/fstab
+    content: '//nas/photo /home/jik/pictures cifs defaults,credentials=/etc/security/nas.creds,uid=jik,gid=users,forceuid,forcegid,noserverino,_netdev
+
+      '
+
+- name: Try to change the fstab record with the missing last two fields
+  mount:
+    src: //nas/photo
+    path: /home/jik/pictures
+    fstype: cifs
+    opts: defaults,credentials=/etc/security/nas.creds,uid=jik,gid=users,forceuid,forcegid,noserverino,_netdev,x-systemd.mount-timeout=0
+    state: present
+  register: optional_fields_update
+
+- name: Get the content of the fstab file
+  command:
+    cmd: cat /etc/fstab
+  changed_when: false
+  register: optional_fields_content
+
+- name: Check if the line containing the missing last two fields was changed
+  assert:
+    that:
+    - optional_fields_update is changed
+    - ''' 0 0'' in optional_fields_content.stdout'
+    - 1 == optional_fields_content.stdout_lines | length

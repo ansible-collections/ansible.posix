@@ -1,0 +1,65 @@
+---
+# Tasks to validate state=remounted behaves as expected.
+# Linux only.
+
+- name: Create empty file
+  command:
+    cmd: "dd if=/dev/zero of=/tmp/myfs.img bs=1048576 count=20"
+
+- name: Format FS
+  community.general.filesystem:
+    fstype: ext3
+    dev: /tmp/myfs.img
+
+- name: Mount the FS for the first time
+  mount:
+    path: /tmp/myfs
+    src: /tmp/myfs.img
+    fstype: ext3
+    state: mounted
+
+- name: Get the mount counter value
+  shell:
+    cmd: "dumpe2fs /tmp/myfs.img 2>/dev/null | grep -i '^mount count:'"
+  changed_when: false
+  register: mount_count1
+
+- name: Get the current mount as exposed in /proc/mounts
+  command:
+    cmd: "grep /tmp/myfs /proc/mounts"
+  changed_when: false
+  register: proc_mounts1
+
+- name: Remount the filesystem
+  mount:
+    path: /tmp/myfs
+    opts: nosuid
+    state: remounted
+
+- name: Get again the mount counter value
+  shell:
+    cmd: "dumpe2fs /tmp/myfs.img 2>/dev/null | grep -i '^mount count:'"
+  changed_when: false
+  register: mount_count2
+
+- name: Get again the current mount as exposed in /proc/mounts
+  command:
+    cmd: "grep /tmp/myfs /proc/mounts"
+  changed_when: false
+  register: proc_mounts2
+
+- name: Assert that mount has changed despite its counter has not
+  assert:
+    that:
+      - mount_count1.stdout == mount_count2.stdout
+      - proc_mounts1.stdout != proc_mounts2.stdout
+
+- name: Unmount the FS
+  mount:
+    path: /tmp/myfs
+    state: absent
+
+- name: Remove disk image
+  file:
+    path: /tmp/myfs.img
+    state: absent

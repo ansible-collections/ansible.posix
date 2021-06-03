@@ -1,0 +1,7 @@
+---
+minor_changes:
+  - mount - allow one to enable/disable swap spaces by mapping module's states
+    (``mounted``, ``unmounted`` ...) to ``swapon`` and ``swapoff`` commands
+    (https://github.com/ansible-collections/ansible.posix/issues/106).
+  - mount - refactor integration tests for better readability/understanding of
+    what is tested and what OS is targeted.
