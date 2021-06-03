@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - at - append line-separator to the end of the ``command`` (https://github.com/ansible-collections/ansible.posix/issues/169).
