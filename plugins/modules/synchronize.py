@@ -473,7 +473,7 @@ def main():
         _sshpass_pipe = os.pipe()
         cmd = ['sshpass', '-d' + to_native(_sshpass_pipe[0], errors='surrogate_or_strict')] + cmd
     if delay_updates:
-        cmd.append('--delay_updates')
+        cmd.append('--delay-updates')
         cmd.append('-F')
     if compress:
         cmd.append('--compress')
