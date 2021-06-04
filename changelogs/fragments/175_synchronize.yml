@@ -1,0 +1,3 @@
+---
+trivial:
+- synchronize - fix typo in ``delete`` parameter (https://github.com/ansible-collections/ansible.posix/issues/175).
