@@ -227,11 +227,13 @@
 - name: Block to test remounted option
   block:
   - name: Create empty file
-    command: dd if=/dev/zero of=/tmp/myfs.img bs=1048576 count=20
+    community.general.filesize:
+      path: /tmp/myfs.img
+      size: 20M
     when: ansible_system in ('Linux')
   - name: Format FS
     when: ansible_system in ('Linux')
-    community.general.system.filesystem:
+    community.general.filesystem:
       fstype: ext3
       dev: /tmp/myfs.img
   - name: Mount the FS for the first time
@@ -294,3 +296,39 @@
     - /tmp/myfs.img
     - /tmp/myfs
     when: ansible_system in ('Linux')
+
+- name: Block to test boot option for Linux
+  block:
+  - name: Create empty file
+    community.general.filesize:
+      path: /tmp/myfs.img
+      size: 20M
+  - name: Format FS
+    community.general.filesystem:
+      fstype: ext3
+      dev: /tmp/myfs.img
+  - name: Mount the FS with noauto option
+    mount:
+      path: /tmp/myfs
+      src: /tmp/myfs.img
+      fstype: ext3
+      state: mounted
+      boot: no
+      opts: rw,user,async
+    register: mount_info
+  - name: assert the mount without noauto was successful
+    assert:
+      that:
+      - mount_info['opts'] == 'rw,user,async,noauto'
+  - name: Unmount FS
+    mount:
+      path: /tmp/myfs
+      state: absent
+  - name: Remove the test FS
+    file:
+      path: '{{ item }}'
+      state: absent
+    loop:
+    - /tmp/myfs.img
+    - /tmp/myfs
+  when: ansible_system in ('Linux')
