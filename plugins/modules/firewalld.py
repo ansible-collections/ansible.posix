@@ -99,7 +99,7 @@ options:
     choices: [ absent, disabled, enabled, present ]
   timeout:
     description:
-      - The amount of time the rule should be in effect for when non-permanent.
+      - The amount of time in seconds the rule should be in effect for when non-permanent.
     type: int
     default: 0
   masquerade:
