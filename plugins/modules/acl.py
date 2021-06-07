@@ -67,8 +67,10 @@ options:
     description:
     - Recursively sets the specified ACL.
     - Incompatible with C(state=query).
+    - Alias C(recurse) added in version 1.3.0.
     type: bool
     default: no
+    aliases: [ recurse ]
   use_nfsv4_acls:
     description:
     - Use NFSv4 ACLs instead of POSIX ACLs.
@@ -273,7 +275,7 @@ def main():
             ),
             follow=dict(type='bool', default=True),
             default=dict(type='bool', default=False),
-            recursive=dict(type='bool', default=False),
+            recursive=dict(type='bool', default=False, aliases=['recurse']),
             recalculate_mask=dict(
                 type='str',
                 default='default',
