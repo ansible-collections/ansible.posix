@@ -1,0 +1,3 @@
+---
+bugfixes:
+- csh - define ``ECHO`` and ``COMMAND_SEP`` (https://github.com/ansible-collections/ansible.posix/issues/204).
