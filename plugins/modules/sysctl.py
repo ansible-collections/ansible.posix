@@ -366,7 +366,7 @@ class SysctlModule(object):
     # Completely rewrite the sysctl file
     def write_sysctl(self):
         # open a tmp file
-        fd, tmp_path = tempfile.mkstemp('.conf', '.ansible_m_sysctl_', os.path.dirname(self.sysctl_file))
+        fd, tmp_path = tempfile.mkstemp('.conf', '.ansible_m_sysctl_', os.path.dirname(os.path.realpath(self.sysctl_file)))
         f = open(tmp_path, "w")
         try:
             for l in self.fixed_lines:
@@ -377,7 +377,7 @@ class SysctlModule(object):
         f.close()
 
         # replace the real one
-        self.module.atomic_move(tmp_path, self.sysctl_file)
+        self.module.atomic_move(tmp_path, os.path.realpath(self.sysctl_file))
 
 
 # ==============================================================
