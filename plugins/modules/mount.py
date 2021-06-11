@@ -766,7 +766,7 @@ def main():
 
     lock_timeout = 2
     lock_tempdir = '/tmp'
-    lock_message = 'another instance of the module holds the %s lock' % os.path.basename(args['fstab'])
+    lock_message = 'another instance of the module holds the %s lock: timeout (%s)'
 
     _fstab = FileLock()
     try:
@@ -872,8 +872,8 @@ def main():
             else:
                 module.fail_json(msg='Unexpected position reached')
 
-    except LockTimeout:
-        module.fail_json(msg=lock_message)
+    except LockTimeout as e:
+        module.fail_json(msg=lock_message % (os.path.basename(args['fstab']), to_native(e)))
 
     # If the managed node is Solaris, convert the boot value type to Boolean
     #  to match the type of return value with the module argument.
