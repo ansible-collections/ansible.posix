@@ -342,4 +342,4 @@
       assert:
         that:
           - stat_result.stat.islnk is defined and stat_result.stat.islnk
-          - stat_result.stat.lnk_source == /tmp/ansible_sysctl_test.conf
+          - stat_result.stat.lnk_source == "/tmp/ansible_sysctl_test.conf"
