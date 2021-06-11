@@ -338,7 +338,7 @@
         path: /tmp/ansible_sysctl_test_symlink.conf
       register: stat_result
 
-    - Ensure the sysctl file remains a symlink
+    - name: Ensure the sysctl file remains a symlink
       assert:
         that:
           - stat_result.stat.islnk is defined and stat_result.stat.islnk
