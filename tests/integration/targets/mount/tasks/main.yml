@@ -2,10 +2,12 @@
   file:
     state: directory
     path: '{{ output_dir }}/mount_dest'
+
 - name: Create a directory to bind mount
   file:
     state: directory
     path: '{{ output_dir }}/mount_source'
+
 - name: Put something in the directory so we see that it worked
   copy:
     content: 'Testing
@@ -13,6 +15,7 @@
       '
     dest: '{{ output_dir }}/mount_source/test_file'
   register: orig_info
+
 - name: Bind mount a filesystem (Linux)
   mount:
     src: '{{ output_dir }}/mount_source'
@@ -22,6 +25,7 @@
     opts: bind
   when: ansible_system == 'Linux'
   register: bind_result_linux
+
 - name: Bind mount a filesystem (FreeBSD)
   mount:
     src: '{{ output_dir }}/mount_source'
@@ -30,11 +34,13 @@
     fstype: nullfs
   when: ansible_system == 'FreeBSD'
   register: bind_result_freebsd
+
 - name: get checksum for bind mounted file
   stat:
     path: '{{ output_dir }}/mount_dest/test_file'
   when: ansible_system in ('FreeBSD', 'Linux')
   register: dest_stat
+
 - name: assert the bind mount was successful
   assert:
     that:
@@ -42,6 +48,7 @@
     - dest_stat['stat']['exists']
     - orig_info['checksum'] == dest_stat['stat']['checksum']
   when: ansible_system in ('FreeBSD', 'Linux')
+
 - name: Bind mount a filesystem (Linux)
   mount:
     src: '{{ output_dir }}/mount_source'
@@ -51,6 +58,7 @@
     opts: bind
   when: ansible_system == 'Linux'
   register: bind_result_linux
+
 - name: Bind mount a filesystem (FreeBSD)
   mount:
     src: '{{ output_dir }}/mount_source'
@@ -59,11 +67,13 @@
     fstype: nullfs
   when: ansible_system == 'FreeBSD'
   register: bind_result_freebsd
+
 - name: Make sure we didn't mount a second time
   assert:
     that:
     - (ansible_system == 'Linux' and not bind_result_linux['changed']) or (ansible_system == 'FreeBSD' and not bind_result_freebsd['changed'])
   when: ansible_system in ('FreeBSD', 'Linux')
+
 - name: Remount filesystem with different opts (Linux)
   mount:
     src: '{{ output_dir }}/mount_source'
@@ -73,6 +83,7 @@
     opts: bind,ro
   when: ansible_system == 'Linux'
   register: bind_result_linux
+
 - name: Remount filesystem with different opts (FreeBSD)
   mount:
     src: '{{ output_dir }}/mount_source'
@@ -82,9 +93,11 @@
     opts: ro
   when: ansible_system == 'FreeBSD'
   register: bind_result_freebsd
+
 - name: Get mount options
   shell: mount | grep mount_dest | grep -E -w '(ro|read-only)' | wc -l
   register: remount_options
+
 - name: Make sure the filesystem now has the new opts
   assert:
     that:
@@ -92,23 +105,27 @@
     - '''1'' in remount_options.stdout'
     - 1 == remount_options.stdout_lines | length
   when: ansible_system in ('FreeBSD', 'Linux')
+
 - name: Unmount the bind mount
   mount:
     name: '{{ output_dir }}/mount_dest'
     state: absent
   when: ansible_system in ('Linux', 'FreeBSD')
   register: unmount_result
+
 - name: Make sure the file no longer exists in dest
   stat:
     path: '{{ output_dir }}/mount_dest/test_file'
   when: ansible_system in ('FreeBSD', 'Linux')
   register: dest_stat
+
 - name: Check that we unmounted
   assert:
     that:
     - unmount_result['changed']
     - not dest_stat['stat']['exists']
   when: ansible_system in ('FreeBSD', 'Linux')
+
 - name: Create fstab record for the first swap file
   mount:
     name: none
@@ -118,6 +135,7 @@
     state: present
   register: swap1_created
   when: ansible_system in ('Linux')
+
 - name: Try to create fstab record for the first swap file again
   mount:
     name: none
@@ -127,12 +145,14 @@
     state: present
   register: swap1_created_again
   when: ansible_system in ('Linux')
+
 - name: Check that we created the swap1 record
   assert:
     that:
     - swap1_created['changed']
     - not swap1_created_again['changed']
   when: ansible_system in ('Linux')
+
 - name: Create fstab record for the second swap file
   mount:
     name: none
@@ -142,6 +162,7 @@
     state: present
   register: swap2_created
   when: ansible_system in ('Linux')
+
 - name: Try to create fstab record for the second swap file again
   mount:
     name: none
@@ -151,12 +172,14 @@
     state: present
   register: swap2_created_again
   when: ansible_system in ('Linux')
+
 - name: Check that we created the swap2 record
   assert:
     that:
     - swap2_created['changed']
     - not swap2_created_again['changed']
   when: ansible_system in ('Linux')
+
 - name: Remove the fstab record for the first swap file
   mount:
     name: none
@@ -164,6 +187,7 @@
     state: absent
   register: swap1_removed
   when: ansible_system in ('Linux')
+
 - name: Try to remove the fstab record for the first swap file again
   mount:
     name: none
@@ -171,12 +195,14 @@
     state: absent
   register: swap1_removed_again
   when: ansible_system in ('Linux')
+
 - name: Check that we removed the swap1 record
   assert:
     that:
     - swap1_removed['changed']
     - not swap1_removed_again['changed']
   when: ansible_system in ('Linux')
+
 - name: Remove the fstab record for the second swap file
   mount:
     name: none
@@ -184,6 +210,7 @@
     state: absent
   register: swap2_removed
   when: ansible_system in ('Linux')
+
 - name: Try to remove the fstab record for the second swap file again
   mount:
     name: none
@@ -191,12 +218,14 @@
     state: absent
   register: swap2_removed_again
   when: ansible_system in ('Linux')
+
 - name: Check that we removed the swap2 record
   assert:
     that:
     - swap2_removed['changed']
     - not swap2_removed_again['changed']
   when: ansible_system in ('Linux')
+
 - name: Create fstab record with missing last two fields
   copy:
     dest: /etc/fstab
@@ -204,6 +233,7 @@
 
       '
   when: ansible_system in ('Linux')
+
 - name: Try to change the fstab record with the missing last two fields
   mount:
     src: //nas/photo
@@ -213,10 +243,12 @@
     state: present
   register: optional_fields_update
   when: ansible_system in ('Linux')
+
 - name: Get the content of the fstab file
   shell: cat /etc/fstab
   register: optional_fields_content
   when: ansible_system in ('Linux')
+
 - name: Check if the line containing the missing last two fields was changed
   assert:
     that:
@@ -224,6 +256,7 @@
     - ''' 0 0'' in optional_fields_content.stdout'
     - 1 == optional_fields_content.stdout_lines | length
   when: ansible_system in ('Linux')
+
 - name: Block to test remounted option
   block:
   - name: Create empty file
@@ -231,11 +264,13 @@
       path: /tmp/myfs.img
       size: 20M
     when: ansible_system in ('Linux')
+
   - name: Format FS
     when: ansible_system in ('Linux')
     community.general.filesystem:
       fstype: ext3
       dev: /tmp/myfs.img
+
   - name: Mount the FS for the first time
     mount:
       path: /tmp/myfs
@@ -243,43 +278,52 @@
       fstype: ext2
       state: mounted
     when: ansible_system in ('Linux')
+
   - name: Get the last write time
     shell: 'dumpe2fs /tmp/myfs.img 2>/dev/null | grep -i last write time: |cut -d: -f2-'
     register: last_write_time
     when: ansible_system in ('Linux')
+
   - name: Wait 2 second
     pause:
       seconds: 2
     when: ansible_system in ('Linux')
+
   - name: Test if the FS is remounted
     mount:
       path: /tmp/myfs
       state: remounted
     when: ansible_system in ('Linux')
+
   - name: Get again the last write time
     shell: 'dumpe2fs /tmp/myfs.img 2>/dev/null | grep -i last write time: |cut -d: -f2-'
     register: last_write_time2
     when: ansible_system in ('Linux')
+
   - name: Fail if they are the same
     fail:
       msg: Filesytem was not remounted, testing of the module failed!
     when: last_write is defined and last_write_time2 is defined and last_write_time.stdout == last_write_time2.stdout and ansible_system in ('Linux')
+
   - name: Remount filesystem with different opts using remounted option (Linux only)
     mount:
       path: /tmp/myfs
       state: remounted
       opts: rw,noexec
     when: ansible_system == 'Linux'
+
   - name: Get remounted options (Linux only)
     shell: mount | grep myfs | grep -E -w 'noexec' | wc -l
     register: remounted_options
     when: ansible_system == 'Linux'
+
   - name: Make sure the filesystem now has the new opts after using remounted (Linux only)
     assert:
       that:
         - "'1' in remounted_options.stdout"
         - "1 == remounted_options.stdout_lines | length"
     when: ansible_system == 'Linux'
+
   always:
   - name: Umount the test FS
     mount:
@@ -288,6 +332,7 @@
       opts: loop
       state: absent
     when: ansible_system in ('Linux')
+
   - name: Remove the test FS
     file:
       path: '{{ item }}'
@@ -303,10 +348,12 @@
     community.general.filesize:
       path: /tmp/myfs.img
       size: 20M
+
   - name: Format FS
     community.general.filesystem:
       fstype: ext3
       dev: /tmp/myfs.img
+
   - name: Mount the FS with noauto option
     mount:
       path: /tmp/myfs
@@ -316,14 +363,17 @@
       boot: no
       opts: rw,user,async
     register: mount_info
+
   - name: assert the mount without noauto was successful
     assert:
       that:
       - mount_info['opts'] == 'rw,user,async,noauto'
+
   - name: Unmount FS
     mount:
       path: /tmp/myfs
       state: absent
+
   - name: Remove the test FS
     file:
       path: '{{ item }}'
