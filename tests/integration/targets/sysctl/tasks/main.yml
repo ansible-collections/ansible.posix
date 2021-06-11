@@ -333,7 +333,7 @@
         sysctl_set: false
         reload: false
 
-    - Stat sysctl file
+    - name: Stat sysctl file
       stat:
         path: /tmp/ansible_sysctl_test_symlink.conf
       register: stat_result
