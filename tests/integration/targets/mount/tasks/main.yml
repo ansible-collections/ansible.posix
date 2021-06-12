@@ -332,3 +332,44 @@
     - /tmp/myfs.img
     - /tmp/myfs
   when: ansible_system in ('Linux')
+
+- name: Block to test mode option in Linux
+  block:
+  - name: Create empty file
+    community.general.filesize:
+      path: /tmp/myfs.img
+      size: 20M
+  - name: Format FS
+    community.general.filesystem:
+      fstype: ext3
+      dev: /tmp/myfs.img
+  - name: Make sure that mount point does not exist
+    file:
+      path: /tmp/myfs
+      state: absent
+  - name: Mount the FS to non existent directory with mode option
+    mount:
+      path: /tmp/myfs
+      src: /tmp/myfs.img
+      fstype: ext3
+      state: mounted
+      mode: 0000
+  - name: Unmount FS to access underlying directory
+    command: |
+      umount /tmp/myfs.img
+  - name: Check status of mount point
+    stat:
+      path: /tmp/myfs
+    register: mount_point_stat
+  - name: Assert that the mount point has right permission
+    assert:
+      that:
+      - mount_point_stat['stat']['mode'] == '0000'
+  - name: Remove the test FS
+    file:
+      path: '{{ item }}'
+      state: absent
+    loop:
+    - /tmp/myfs.img
+    - /tmp/myfs
+  when: ansible_system in ('Linux')
