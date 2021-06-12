@@ -105,6 +105,17 @@ options:
         the original file back if you somehow clobbered it incorrectly.
     type: bool
     default: no
+  mode:
+    description:
+      - The permission applied to create a new directory for mount point.
+        If the mount point already exists, this parameter is not used.
+      - This parameter only affects to the mount point itself.
+        If this module creates multiple directories recursively,
+        other directories follow the system's default umask.
+      - Note that after running this task and device being successfuly mounted,
+        the mode of the original directory will be hidden by the target device.
+    type: raw
+    required: false
 notes:
   - As of Ansible 2.3, the I(name) option has been changed to I(path) as
     default, but I(name) still works as well.
@@ -122,6 +133,7 @@ EXAMPLES = r'''
     fstype: iso9660
     opts: ro,noauto
     state: present
+    mode: 0755
 
 - name: Mount up device by label
   ansible.posix.mount:
@@ -665,6 +677,7 @@ def main():
             src=dict(type='path'),
             backup=dict(type='bool', default=False),
             state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted', 'remounted']),
+            mode=dict(type='raw'),
         ),
         supports_check_mode=True,
         required_if=(
@@ -761,6 +774,7 @@ def main():
 
     state = module.params['state']
     name = module.params['path']
+    mode = module.params['mode']
     changed = False
 
     if state == 'absent':
@@ -812,6 +826,9 @@ def main():
                             # check above. As long as it's a dir, we don't need to error out.
                             if not (ex.errno == errno.EEXIST and os.path.isdir(b_curpath)):
                                 raise
+
+                if mode is not None:
+                    os.chmod(name, int(mode))
 
             except (OSError, IOError) as e:
                 module.fail_json(
