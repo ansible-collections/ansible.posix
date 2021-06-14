@@ -107,12 +107,12 @@ options:
     default: no
   mode:
     description:
-      - The permission applied to create a new directory for mount point.
+      - The permission applied to create a new directory for the mount point.
         If the mount point already exists, this parameter is not used.
-      - This parameter only affects to the mount point itself.
+      - This parameter only affects the mount point itself.
         If this module creates multiple directories recursively,
         other directories follow the system's default umask.
-      - Note that after running this task and device being successfuly mounted,
+      - Note that after running this task and the device being successfully mounted,
         the mode of the original directory will be hidden by the target device.
     type: raw
     required: false
