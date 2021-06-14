@@ -827,12 +827,17 @@ def main():
                             if not (ex.errno == errno.EEXIST and os.path.isdir(b_curpath)):
                                 raise
 
-                if mode is not None:
-                    os.chmod(name, int(mode))
-
             except (OSError, IOError) as e:
                 module.fail_json(
                     msg="Error making dir %s: %s" % (name, to_native(e)))
+
+            # Set permissions to the newly created mount point.
+            if mode is not None:
+                try:
+                    changed = module.set_mode_if_different(name, mode, changed)
+                except Exception as e:
+                    module.fail_json(
+                        msg="Error setting permissions %s: %s" % (name, to_native(e)))
 
         name, backup_lines, changed = _set_mount_save_old(module, args)
         res = 0
