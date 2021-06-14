@@ -115,7 +115,7 @@ options:
       - Note that after running this task and device being successfuly mounted,
         the mode of the original directory will be hidden by the target device.
     type: raw
-    required: false
+    version_added: '1.3.0'
 notes:
   - As of Ansible 2.3, the I(name) option has been changed to I(path) as
     default, but I(name) still works as well.
