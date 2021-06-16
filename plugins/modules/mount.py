@@ -96,7 +96,10 @@ options:
       - Only applies to Solaris and Linux systems.
       - For Solaris systems, C(true) will set C(yes) as the value of mount at boot
         in I(/etc/vfstab).
-      - For Linux systems, C(true) will add C(noauto) to mount options in I(/etc/fstab).
+      - For Linux, FreeBSD, NetBSD and OpenBSD systems, C(false) will add C(noauto)
+        to mount options in I(/etc/fstab).
+      - To avoid mount option conflicts, if C(noauto) specified in C(opts),
+        mount module will ignore C(boot).
     type: bool
     default: yes
   backup:
@@ -722,10 +725,10 @@ def main():
     for key in ('src', 'fstype', 'passno', 'opts', 'dump', 'fstab'):
         if module.params[key] is not None:
             args[key] = module.params[key]
-    if platform.system().lower() == 'linux':
-        # Linux has 'noauto' as mount opts to handle mount on boot
-        #  So boot option should manage 'noauto' in opts
-        # TODO: We need to support other system like *BSD that 'noauto' option available
+    if platform.system().lower() == 'linux' or platform.system().lower().endswith('bsd'):
+        # Linux, FreeBSD, NetBSD and OpenBSD have 'noauto' as mount option to
+        # handle mount on boot.  To avoid mount option conflicts, if 'noauto'
+        # specified in 'opts',  mount module will ignore 'boot'.
         opts = args['opts'].split(',')
         if 'noauto' in opts:
             args['warnings'].append("Ignore the 'boot' due to 'opts' contains 'noauto'.")
