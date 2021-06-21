@@ -135,10 +135,10 @@ options:
         that does not match the inventory user, you should set this parameter to C(no).
     type: bool
     default: yes
-  use_ssh_args:
+  ssh_args:
     description:
-      - Use the ssh_args specified in ansible.cfg. Setting this to `yes` will also make `synchronize` use `ansible_ssh_common_args`.
-    type: bool
+      - Use custom connection options for ssh connection. For more details `man ssh_options`. (e.g. C(-o "User=ansible"))
+    type: str
     default: no
   ssh_connection_multiplexing:
     description:
