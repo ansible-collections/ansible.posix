@@ -105,13 +105,10 @@ options:
         the original file back if you somehow clobbered it incorrectly.
     type: bool
     default: no
-  mode:
+  umask:
     description:
-      - The permission applied to create a new directory for the mount point.
+      - The permission applied to create new directory(ies) for the mount point.
         If the mount point already exists, this parameter is not used.
-      - This parameter only affects the mount point itself.
-        If this module creates multiple directories recursively,
-        other directories follow the system's default umask.
       - Note that after running this task and the device being successfully mounted,
         the mode of the original directory will be hidden by the target device.
     type: raw
@@ -133,7 +130,7 @@ EXAMPLES = r'''
     fstype: iso9660
     opts: ro,noauto
     state: present
-    mode: 0755
+    umask: 0022
 
 - name: Mount up device by label
   ansible.posix.mount:
@@ -677,7 +674,7 @@ def main():
             src=dict(type='path'),
             backup=dict(type='bool', default=False),
             state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted', 'remounted']),
-            mode=dict(type='raw'),
+            umask=dict(type='raw'),
         ),
         supports_check_mode=True,
         required_if=(
@@ -774,7 +771,7 @@ def main():
 
     state = module.params['state']
     name = module.params['path']
-    mode = module.params['mode']
+    umask = module.params['umask']
     changed = False
 
     if state == 'absent':
@@ -832,10 +829,27 @@ def main():
                     msg="Error making dir %s: %s" % (name, to_native(e)))
 
             # Set permissions to the newly created mount point.
-            if mode is not None:
+            if umask is not None:
+                # When umask is integer, calculate logical complement of the value
+                # otherwise, pass it to set_mode_if_different() as is.
+                if isinstance(umask, int):
+                    directory_mode = 0o0777 & ~umask
+                else:
+                    try:
+                        umask = int(umask, 8)
+                        directory_mode = 0o0777 & ~umask
+                    except Exception:
+                        directory_mode = umask
+
                 try:
-                    changed = module.set_mode_if_different(name, mode, changed)
+                    for dirname in dirs_created:
+                        changed = module.set_mode_if_different(dirname, directory_mode, changed)
                 except Exception as e:
+                    try:
+                        for dirname in dirs_created[::-1]:
+                            os.rmdir(dirname)
+                    except Exception:
+                        pass
                     module.fail_json(
                         msg="Error setting permissions %s: %s" % (name, to_native(e)))
 
