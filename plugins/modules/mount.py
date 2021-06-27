@@ -107,7 +107,7 @@ options:
     default: no
   umask:
     description:
-      - The permission applied to create new directory(ies) for the mount point.
+      - The umask to set before creating new directory(ies) for the mount point.
         If the mount point already exists, this parameter is not used.
       - Note that after running this task and the device being successfully mounted,
         the mode of the original directory will be hidden by the target device.
@@ -801,8 +801,19 @@ def main():
 
             changed = True
     elif state == 'mounted':
+        
         dirs_created = []
         if not os.path.exists(name) and not module.check_mode:
+            old_umask = None
+            if umask is not None:
+                if not isinstance(umask, int):
+                    try:
+                        umask = int(umask, 8)
+                    except ValueError as e:
+                        module.fail_json(msg="umask must be an octal integer: %s" % (to_native(e)))
+                old_umask = os.umask(umask)
+                os.umask(umask)
+
             try:
                 # Something like mkdir -p but with the possibility to undo.
                 # Based on some copy-paste from the "file" module.
@@ -827,31 +838,9 @@ def main():
             except (OSError, IOError) as e:
                 module.fail_json(
                     msg="Error making dir %s: %s" % (name, to_native(e)))
-
-            # Set permissions to the newly created mount point.
-            if umask is not None:
-                # When umask is integer, calculate logical complement of the value
-                # otherwise, pass it to set_mode_if_different() as is.
-                if isinstance(umask, int):
-                    directory_mode = 0o0777 & ~umask
-                else:
-                    try:
-                        umask = int(umask, 8)
-                        directory_mode = 0o0777 & ~umask
-                    except Exception:
-                        directory_mode = umask
-
-                try:
-                    for dirname in dirs_created:
-                        changed = module.set_mode_if_different(dirname, directory_mode, changed)
-                except Exception as e:
-                    try:
-                        for dirname in dirs_created[::-1]:
-                            os.rmdir(dirname)
-                    except Exception:
-                        pass
-                    module.fail_json(
-                        msg="Error setting permissions %s: %s" % (name, to_native(e)))
+            finally:
+                if old_umask is not None:
+                    os.umask(old_umask)
 
         name, backup_lines, changed = _set_mount_save_old(module, args)
         res = 0

@@ -335,55 +335,37 @@
 
 - name: Block to test umask option
   block:
-  - name: Create empty file
-    community.general.filesize:
-      path: /tmp/myfs.img
-      size: 1M
-  - name: Format FS
-    community.general.filesystem:
-      fstype: ext3
-      dev: /tmp/myfs.img
-    when: ansible_system == 'Linux'
-  - name: Format FS
-    community.general.filesystem:
-      fstype: nullfs
-      dev: /tmp/myfs.img
-    when: ansible_system == 'FreeBSD'
   - name: Make sure that mount point does not exist
     file:
-      path: /tmp/myfs_mountpoint
+      path: /tmp/mount_dest
       state: absent
-
-  - name: Mount the FS to non existent directory with raw umask
+  - name: Create a directory to bind mount
+    file:
+      state: directory
+      path: /tmp/mount_source
+  - name: Bind mount a filesystem with umask
     mount:
-      path: /tmp/myfs_mountpoint
-      src: /tmp/myfs.img
-      fstype: ext3
+      src: /tmp/mount_source
+      path: /tmp/mount_dest
       state: mounted
+      fstype: None
+      opts: bind
       umask: 0777
-    when: ansible_system == 'Linux'
-  - name: Mount the FS to non existent directory with raw umask(FreeBSD)
+    when: ansible_system != 'FreeBSD'
+  - name: Bind mount a filesystem with umask(FreeBSD)
     mount:
-      path: /tmp/myfs_mountpoint
-      src: /tmp/myfs.img
-      fstype: nullfs
+      src: /tmp/mount_source
+      path: /tmp/mount_dest
       state: mounted
+      fstype: nullfs
       umask: 0777
     when: ansible_system == 'FreeBSD'
-  - name: Check status of parent directory of mount point
-    stat:
-      path: /tmp/foobar
-    register: parent_dir_stat
-  - name: Assert that the parent directory of the mount point has right permission
-    assert:
-      that:
-      - parent_dir_stat['stat']['mode'] == '0000'
   - name: Unmount FS to access underlying directory
     command: |
-      umount /tmp/myfs.img
-  - name: Check status of mount point
+      umount /tmp/mount_dest
+  - name: Stat mount point directory
     stat:
-      path: /tmp/myfs_mountpoint
+      path: /tmp/mount_dest
     register: mount_point_stat
   - name: Assert that the mount point has right permission
     assert:
@@ -391,128 +373,38 @@
       - mount_point_stat['stat']['mode'] == '0000'
   - name: Cleanup directory
     file:
-      path: /tmp/myfs_mountpoint
+      path: /tmp/mount_dest
       state: absent
-
-  - name: Mount the FS to non existent directory with string umask
+  - name: Bind mount a filesystem with string umask
     mount:
-      path: /tmp/myfs_mountpoint
-      src: /tmp/myfs.img
-      fstype: ext3
+      src: /tmp/mount_source
+      path: /tmp/mount_dest
       state: mounted
+      fstype: None
+      opts: bind
       umask: "0777"
-    when: ansible_system == 'Linux'
-  - name: Mount the FS to non existent directory with string umask(FreeBSD)
+    when: ansible_system != 'FreeBSD'
+  - name: Bind mount a filesystem with string umask(FreeBSD)
     mount:
-      path: /tmp/myfs_mountpoint
-      src: /tmp/myfs.img
-      fstype: nullfs
+      src: /tmp/mount_source
+      path: /tmp/mount_dest
       state: mounted
+      fstype: nullfs
       umask: "0777"
     when: ansible_system == 'FreeBSD'
-  - name: Check status of parent directory of mount point
-    stat:
-      path: /tmp/foobar
-    register: parent_dir_stat
-  - name: Assert that the parent directory of the mount point has right permission
-    assert:
-      that:
-      - parent_dir_stat['stat']['mode'] == '0000'
   - name: Unmount FS to access underlying directory
     command: |
-      umount /tmp/myfs.img
-  - name: Check status of mount point
+      umount /tmp/mount_dest
+  - name: Stat mount point directory
     stat:
-      path: /tmp/myfs_mountpoint
+      path: /tmp/mount_dest
     register: mount_point_stat
   - name: Assert that the mount point has right permission
     assert:
       that:
       - mount_point_stat['stat']['mode'] == '0000'
-  - name: Cleanup directory
-    file:
-      path: /tmp/myfs_mountpoint
-      state: absent
-
-  - name: Remount the FS to non existent directory with symbolic umask expression
-    mount:
-      path: /tmp/myfs_mountpoint
-      src: /tmp/myfs.img
-      fstype: ext3
-      state: mounted
-      umask: "u+rw,g-wx,o-rwx"
-    when: ansible_system == 'Linux'
-  - name: Remount the FS to non existent directory with symbolic umask expression(FreeBSD)
-    mount:
-      path: /tmp/myfs_mountpoint
-      src: /tmp/myfs.img
-      fstype: nullfs
-      state: mounted
-      umask: "u+rw,g-wx,o-rwx"
-    when: ansible_system == 'FreeBSD'
-  - name: Check status of parent directory of mount point
-    stat:
-      path: /tmp/foobar
-    register: parent_dir_stat
-  - name: Assert that the parent directory of the mount point has right permission
-    assert:
-      that:
-      - parent_dir_stat['stat']['mode'] == '0640'
-  - name: Unmount FS to access underlying directory
-    command: |
-      umount /tmp/myfs.img
-  - name: Check status of mount point
-    stat:
-      path: /tmp/myfs_mountpoint
-    register: mount_point_stat
-  - name: Assert that the mount point has right permission
-    assert:
-      that:
-      - mount_point_stat['stat']['mode'] == '0640'
-  - name: Cleanup directory
-    file:
-      path: /tmp/myfs_mountpoint
-      state: absent
-
-  - name: Remount the FS to non existent directory with symbolic umask expression
-    mount:
-      path: /tmp/myfs_mountpoint
-      src: /tmp/myfs.img
-      fstype: ext3
-      state: mounted
-      umask: "u=rw,g=r,o=r"
-    when: ansible_system == 'Linux'
-  - name: Remount the FS to non existent directory with symbolic umask expression(FreeBSD)
-    mount:
-      path: /tmp/myfs_mountpoint
-      src: /tmp/myfs.img
-      fstype: nullfs
-      state: mounted
-      umask: "u=rw,g=r,o=r"
-    when: ansible_system == 'FreeBSD'
-  - name: Check status of parent directory of mount point
-    stat:
-      path: /tmp/foobar
-    register: parent_dir_stat
-  - name: Assert that the parent directory of the mount point has right permission
-    assert:
-      that:
-      - parent_dir_stat['stat']['mode'] == '0644'
-  - name: Unmount FS to access underlying directory
-    command: |
-      umount /tmp/myfs.img
-  - name: Check status of mount point
-    stat:
-      path: /tmp/myfs_mountpoint
-    register: mount_point_stat
-  - name: Assert that the mount point has right permission
-    assert:
-      that:
-      - mount_point_stat['stat']['mode'] == '0644'
   - name: Remove the test FS
     file:
-      path: '{{ item }}'
+      path: /tmp/mount_dest
       state: absent
-    loop:
-    - /tmp/myfs.img
-    - /tmp/myfs_mountpoint
+  when: ansible_system not in ('MacOS')
