@@ -801,7 +801,6 @@ def main():
 
             changed = True
     elif state == 'mounted':
-        
         dirs_created = []
         if not os.path.exists(name) and not module.check_mode:
             old_umask = None
