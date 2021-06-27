@@ -407,4 +407,4 @@
     file:
       path: /tmp/mount_dest
       state: absent
-  when: ansible_system not in ('MacOS')
+  when: ansible_system not in ('Darwin')
