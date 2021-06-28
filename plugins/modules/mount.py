@@ -811,7 +811,6 @@ def main():
                     except ValueError as e:
                         module.fail_json(msg="umask must be an octal integer: %s" % (to_native(e)))
                 old_umask = os.umask(umask)
-                os.umask(umask)
 
             try:
                 # Something like mkdir -p but with the possibility to undo.
