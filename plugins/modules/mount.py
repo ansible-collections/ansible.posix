@@ -108,6 +108,14 @@ options:
         the original file back if you somehow clobbered it incorrectly.
     type: bool
     default: no
+  umask:
+    description:
+      - The umask to set before creating new directory(ies) for the mount point.
+        If the mount point already exists, this parameter is not used.
+      - Note that after running this task and the device being successfully mounted,
+        the mode of the original directory will be hidden by the target device.
+    type: raw
+    version_added: '1.3.0'
 notes:
   - As of Ansible 2.3, the I(name) option has been changed to I(path) as
     default, but I(name) still works as well.
@@ -125,6 +133,7 @@ EXAMPLES = r'''
     fstype: iso9660
     opts: ro,noauto
     state: present
+    umask: 0022
 
 - name: Mount up device by label
   ansible.posix.mount:
@@ -668,6 +677,7 @@ def main():
             src=dict(type='path'),
             backup=dict(type='bool', default=False),
             state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted', 'remounted']),
+            umask=dict(type='raw'),
         ),
         supports_check_mode=True,
         required_if=(
@@ -764,6 +774,7 @@ def main():
 
     state = module.params['state']
     name = module.params['path']
+    umask = module.params['umask']
     changed = False
 
     if state == 'absent':
@@ -795,6 +806,15 @@ def main():
     elif state == 'mounted':
         dirs_created = []
         if not os.path.exists(name) and not module.check_mode:
+            old_umask = None
+            if umask is not None:
+                if not isinstance(umask, int):
+                    try:
+                        umask = int(umask, 8)
+                    except ValueError as e:
+                        module.fail_json(msg="umask must be an octal integer: %s" % (to_native(e)))
+                old_umask = os.umask(umask)
+
             try:
                 # Something like mkdir -p but with the possibility to undo.
                 # Based on some copy-paste from the "file" module.
@@ -819,6 +839,9 @@ def main():
             except (OSError, IOError) as e:
                 module.fail_json(
                     msg="Error making dir %s: %s" % (name, to_native(e)))
+            finally:
+                if old_umask is not None:
+                    os.umask(old_umask)
 
         name, backup_lines, changed = _set_mount_save_old(module, args)
         res = 0

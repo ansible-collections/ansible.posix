@@ -382,3 +382,79 @@
     - /tmp/myfs.img
     - /tmp/myfs
   when: ansible_system in ('Linux')
+
+- name: Block to test umask option
+  block:
+  - name: Make sure that mount point does not exist
+    file:
+      path: /tmp/mount_dest
+      state: absent
+  - name: Create a directory to bind mount
+    file:
+      state: directory
+      path: /tmp/mount_source
+  - name: Bind mount a filesystem with umask
+    mount:
+      src: /tmp/mount_source
+      path: /tmp/mount_dest
+      state: mounted
+      fstype: None
+      opts: bind
+      umask: 0777
+    when: ansible_system != 'FreeBSD'
+  - name: Bind mount a filesystem with umask(FreeBSD)
+    mount:
+      src: /tmp/mount_source
+      path: /tmp/mount_dest
+      state: mounted
+      fstype: nullfs
+      umask: 0777
+    when: ansible_system == 'FreeBSD'
+  - name: Unmount FS to access underlying directory
+    command: |
+      umount /tmp/mount_dest
+  - name: Stat mount point directory
+    stat:
+      path: /tmp/mount_dest
+    register: mount_point_stat
+  - name: Assert that the mount point has right permission
+    assert:
+      that:
+      - mount_point_stat['stat']['mode'] == '0000'
+  - name: Cleanup directory
+    file:
+      path: /tmp/mount_dest
+      state: absent
+  - name: Bind mount a filesystem with string umask
+    mount:
+      src: /tmp/mount_source
+      path: /tmp/mount_dest
+      state: mounted
+      fstype: None
+      opts: bind
+      umask: "0777"
+    when: ansible_system != 'FreeBSD'
+  - name: Bind mount a filesystem with string umask(FreeBSD)
+    mount:
+      src: /tmp/mount_source
+      path: /tmp/mount_dest
+      state: mounted
+      fstype: nullfs
+      umask: "0777"
+    when: ansible_system == 'FreeBSD'
+  - name: Unmount FS to access underlying directory
+    command: |
+      umount /tmp/mount_dest
+  - name: Stat mount point directory
+    stat:
+      path: /tmp/mount_dest
+    register: mount_point_stat
+  - name: Assert that the mount point has right permission
+    assert:
+      that:
+      - mount_point_stat['stat']['mode'] == '0000'
+  - name: Remove the test FS
+    file:
+      path: /tmp/mount_dest
+      state: absent
+  when: ansible_system not in ('Darwin')
