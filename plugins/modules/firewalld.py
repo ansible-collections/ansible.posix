@@ -114,7 +114,7 @@ options:
     description:
       - firewalld Zone target
       - If state is set to C(absent), this will reset the target to default
-    choices: [ default, ACCEPT, DROP, %%REJECT%% ]
+    choices: [ default, ACCEPT, DROP, "%%REJECT%%" ]
     type: str
     version_added: 1.2.0
 notes:
