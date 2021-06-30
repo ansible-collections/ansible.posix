@@ -226,6 +226,7 @@
       - optional_fields_update['changed']
       - ''' 0 0'' in optional_fields_content.stdout'
       - 1 == optional_fields_content.stdout_lines | length
+    when: ansible_system in ('Linux')
   - name: Create empty file
     command: dd if=/dev/zero of=/tmp/myfs.img bs=1048576 count=20
   - name: Format FS
