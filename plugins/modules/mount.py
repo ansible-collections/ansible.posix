@@ -93,7 +93,13 @@ options:
   boot:
     description:
       - Determines if the filesystem should be mounted on boot.
-      - Only applies to Solaris systems.
+      - Only applies to Solaris and Linux systems.
+      - For Solaris systems, C(true) will set C(yes) as the value of mount at boot
+        in I(/etc/vfstab).
+      - For Linux, FreeBSD, NetBSD and OpenBSD systems, C(false) will add C(noauto)
+        to mount options in I(/etc/fstab).
+      - To avoid mount option conflicts, if C(noauto) specified in C(opts),
+        mount module will ignore C(boot).
     type: bool
     default: yes
   backup:
@@ -169,6 +175,15 @@ EXAMPLES = r'''
     opts: rw,sync,hard,intr
     state: mounted
     fstype: nfs
+
+- name: Mount NFS volumes with noauto according to boot option
+  ansible.posix.mount:
+    src: 192.168.1.100:/nfs/ssd/shared_data
+    path: /mnt/shared_data
+    opts: rw,sync,hard,intr
+    boot: no
+    state: mounted
+    fstype: nfs
 '''
 
 import errno
@@ -231,7 +246,7 @@ def _set_mount_save_old(module, args):
     old_lines = []
     exists = False
     changed = False
-    escaped_args = dict([(k, _escape_fstab(v)) for k, v in iteritems(args)])
+    escaped_args = dict([(k, _escape_fstab(v)) for k, v in iteritems(args) if k != 'warnings'])
     new_line = '%(src)s %(name)s %(fstype)s %(opts)s %(dump)s %(passno)s\n'
 
     if platform.system() == 'SunOS':
@@ -677,7 +692,8 @@ def main():
             opts='-',
             passno='-',
             fstab=module.params['fstab'],
-            boot='yes' if module.params['boot'] else 'no'
+            boot='yes' if module.params['boot'] else 'no',
+            warnings=[]
         )
         if args['fstab'] is None:
             args['fstab'] = '/etc/vfstab'
@@ -687,7 +703,9 @@ def main():
             opts='defaults',
             dump='0',
             passno='0',
-            fstab=module.params['fstab']
+            fstab=module.params['fstab'],
+            boot='yes',
+            warnings=[]
         )
         if args['fstab'] is None:
             args['fstab'] = '/etc/fstab'
@@ -705,14 +723,27 @@ def main():
         linux_mounts = get_linux_mounts(module)
 
         if linux_mounts is None:
-            args['warnings'] = (
-                'Cannot open file /proc/self/mountinfo. '
-                'Bind mounts might be misinterpreted.')
+            args['warnings'].append('Cannot open file /proc/self/mountinfo.'
+                                    ' Bind mounts might be misinterpreted.')
 
     # Override defaults with user specified params
     for key in ('src', 'fstype', 'passno', 'opts', 'dump', 'fstab'):
         if module.params[key] is not None:
             args[key] = module.params[key]
+    if platform.system().lower() == 'linux' or platform.system().lower().endswith('bsd'):
+        # Linux, FreeBSD, NetBSD and OpenBSD have 'noauto' as mount option to
+        # handle mount on boot.  To avoid mount option conflicts, if 'noauto'
+        # specified in 'opts',  mount module will ignore 'boot'.
+        opts = args['opts'].split(',')
+        if 'noauto' in opts:
+            args['warnings'].append("Ignore the 'boot' due to 'opts' contains 'noauto'.")
+        elif not module.params['boot']:
+            args['boot'] = 'no'
+            if 'defaults' in opts:
+                args['warnings'].append("Ignore the 'boot' due to 'opts' contains 'defaults'.")
+            else:
+                opts.append('noauto')
+                args['opts'] = ','.join(opts)
 
     # If fstab file does not exist, we first need to create it. This mainly
     # happens when fstab option is passed to the module.
