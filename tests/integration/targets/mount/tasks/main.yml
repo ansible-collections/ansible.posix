@@ -1,10 +1,3 @@
-- name: System details
-  debug: msg="{{ item }}"
-  with_items: 
-  - "{{ ansible_distribution }}"
-  - "{{ ansible_system }}"
-
-
 - name: Create the mount point
   file:
     state: directory
@@ -268,7 +261,9 @@
 
   - name: Create empty file
     command: dd if=/dev/zero of=/tmp/myfs.img bs=1048576 count=20
+
   - name: Format FS
+    when: ansible_system in ('Linux')
     community.general.system.filesystem:
       fstype: ext3
       dev: /tmp/myfs.img
@@ -279,23 +274,28 @@
       src: /tmp/myfs.img
       fstype: ext2
       state: mounted
+    when: ansible_system in ('Linux')
 
   - name: Get the last write time
     shell: 'dumpe2fs /tmp/myfs.img 2>/dev/null | grep -i last write time: |cut -d: -f2-'
     register: last_write_time
+    when: ansible_system in ('Linux')
 
   - name: Wait 2 second
     pause:
       seconds: 2
+    when: ansible_system in ('Linux')
 
   - name: Test if the FS is remounted
     mount:
       path: /tmp/myfs
       state: remounted
+    when: ansible_system in ('Linux')
 
   - name: Get again the last write time
     shell: 'dumpe2fs /tmp/myfs.img 2>/dev/null | grep -i last write time: |cut -d: -f2-'
     register: last_write_time2
+    when: ansible_system in ('Linux')
 
   - name: Fail if they are the same
     fail:
@@ -329,11 +329,13 @@
       state: mounted
       backup: yes
     register: mount_backup_out
+    when: ansible_system in ('Linux')
 
   - name: ensure backup_file in returned output
     assert:
       that:
         - "'backup_file' in mount_backup_out"
+    when: ansible_system in ('Linux')
   
   always:
   - name: Umount the test FS
@@ -342,6 +344,7 @@
       src: /tmp/myfs.img
       opts: loop
       state: absent
+    when: ansible_system in ('Linux')
 
   - name: Remove the test FS
     file:
