@@ -136,7 +136,6 @@
       fstype: swap
       state: present
     register: swap1_created
-    when: ansible_system in ('Linux')
 
   - name: Try to create fstab record for the first swap file again
     mount:
@@ -146,14 +145,12 @@
       fstype: swap
       state: present
     register: swap1_created_again
-    when: ansible_system in ('Linux')
 
   - name: Check that we created the swap1 record
     assert:
       that:
       - swap1_created['changed']
       - not swap1_created_again['changed']
-    when: ansible_system in ('Linux')
 
   - name: Create fstab record for the second swap file
     mount:
@@ -163,7 +160,6 @@
       fstype: swap
       state: present
     register: swap2_created
-    when: ansible_system in ('Linux')
 
   - name: Try to create fstab record for the second swap file again
     mount:
@@ -173,14 +169,12 @@
       fstype: swap
       state: present
     register: swap2_created_again
-    when: ansible_system in ('Linux')
 
   - name: Check that we created the swap2 record
     assert:
       that:
       - swap2_created['changed']
       - not swap2_created_again['changed']
-    when: ansible_system in ('Linux')
 
   - name: Remove the fstab record for the first swap file
     mount:
@@ -188,7 +182,6 @@
       src: /tmp/swap1
       state: absent
     register: swap1_removed
-    when: ansible_system in ('Linux')
 
   - name: Try to remove the fstab record for the first swap file again
     mount:
@@ -196,14 +189,12 @@
       src: /tmp/swap1
       state: absent
     register: swap1_removed_again
-    when: ansible_system in ('Linux')
 
   - name: Check that we removed the swap1 record
     assert:
       that:
       - swap1_removed['changed']
       - not swap1_removed_again['changed']
-    when: ansible_system in ('Linux')
 
   - name: Remove the fstab record for the second swap file
     mount:
@@ -211,7 +202,6 @@
       src: /tmp/swap2
       state: absent
     register: swap2_removed
-    when: ansible_system in ('Linux')
 
   - name: Try to remove the fstab record for the second swap file again
     mount:
@@ -219,14 +209,12 @@
       src: /tmp/swap2
       state: absent
     register: swap2_removed_again
-    when: ansible_system in ('Linux')
 
   - name: Check that we removed the swap2 record
     assert:
       that:
       - swap2_removed['changed']
       - not swap2_removed_again['changed']
-    when: ansible_system in ('Linux')
 
   - name: Create fstab record with missing last two fields
     copy:
@@ -234,7 +222,6 @@
       content: '//nas/photo /home/jik/pictures cifs defaults,credentials=/etc/security/nas.creds,uid=jik,gid=users,forceuid,forcegid,noserverino,_netdev
 
         '
-    when: ansible_system in ('Linux')
 
   - name: Try to change the fstab record with the missing last two fields
     mount:
@@ -244,12 +231,10 @@
       opts: defaults,credentials=/etc/security/nas.creds,uid=jik,gid=users,forceuid,forcegid,noserverino,_netdev,x-systemd.mount-timeout=0
       state: present
     register: optional_fields_update
-    when: ansible_system in ('Linux')
 
   - name: Get the content of the fstab file
     shell: cat /etc/fstab
     register: optional_fields_content
-    when: ansible_system in ('Linux')
 
   - name: Check if the line containing the missing last two fields was changed
     assert:
@@ -257,14 +242,14 @@
       - optional_fields_update['changed']
       - ''' 0 0'' in optional_fields_content.stdout'
       - 1 == optional_fields_content.stdout_lines | length
-    when: ansible_system in ('Linux')
 
   - name: Create empty file
-    command: dd if=/dev/zero of=/tmp/myfs.img bs=1048576 count=20
+    community.general.filesize:
+      path: /tmp/myfs.img
+      size: 20M
 
   - name: Format FS
-    when: ansible_system in ('Linux')
-    community.general.system.filesystem:
+    community.general.filesystem:
       fstype: ext3
       dev: /tmp/myfs.img
 
@@ -274,28 +259,23 @@
       src: /tmp/myfs.img
       fstype: ext2
       state: mounted
-    when: ansible_system in ('Linux')
 
   - name: Get the last write time
     shell: 'dumpe2fs /tmp/myfs.img 2>/dev/null | grep -i last write time: |cut -d: -f2-'
     register: last_write_time
-    when: ansible_system in ('Linux')
 
   - name: Wait 2 second
     pause:
       seconds: 2
-    when: ansible_system in ('Linux')
 
   - name: Test if the FS is remounted
     mount:
       path: /tmp/myfs
       state: remounted
-    when: ansible_system in ('Linux')
 
   - name: Get again the last write time
     shell: 'dumpe2fs /tmp/myfs.img 2>/dev/null | grep -i last write time: |cut -d: -f2-'
     register: last_write_time2
-    when: ansible_system in ('Linux')
 
   - name: Fail if they are the same
     fail:
@@ -307,19 +287,16 @@
       path: /tmp/myfs
       state: remounted
       opts: rw,noexec
-    when: ansible_system == 'Linux'
 
   - name: Get remounted options (Linux only)
     shell: mount | grep myfs | grep -E -w 'noexec' | wc -l
     register: remounted_options
-    when: ansible_system == 'Linux'
 
   - name: Make sure the filesystem now has the new opts after using remounted (Linux only)
     assert:
       that:
         - "'1' in remounted_options.stdout"
         - "1 == remounted_options.stdout_lines | length"
-    when: ansible_system == 'Linux'
 
   - name: Mount the FS again to test backup
     mount:
@@ -329,13 +306,11 @@
       state: mounted
       backup: yes
     register: mount_backup_out
-    when: ansible_system in ('Linux')
 
   - name: ensure backup_file in returned output
     assert:
       that:
         - "'backup_file' in mount_backup_out"
-    when: ansible_system in ('Linux')
   
   always:
   - name: Umount the test FS
@@ -344,7 +319,6 @@
       src: /tmp/myfs.img
       opts: loop
       state: absent
-    when: ansible_system in ('Linux')
 
   - name: Remove the test FS
     file:
@@ -353,7 +327,7 @@
     loop:
     - /tmp/myfs.img
     - /tmp/myfs
-    when: ansible_system in ('Linux')
+  when: ansible_system in ('Linux')
 
 - name: Block to test boot option for Linux
   block:
