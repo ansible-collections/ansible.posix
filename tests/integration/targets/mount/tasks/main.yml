@@ -360,7 +360,6 @@
     mount:
       path: /tmp/myfs
       state: absent
-    when: ansible_system in ('Linux')
 
   - name: Remove the test FS
     file:
