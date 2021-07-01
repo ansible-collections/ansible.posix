@@ -1,0 +1,50 @@
+# -------------------------------------------------------------
+# comments
+
+- name: Add rsa key with existing comment
+  authorized_key:
+    user: root
+    key: "{{ rsa_key_basic }}"
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+  register: result
+
+- name: Change the comment on an existing key
+  authorized_key:
+    user: root
+    key: "{{ rsa_key_basic }}"
+    comment: user@acme.com
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+  register: result
+
+- name: get the file content
+  shell: cat "{{ output_dir | expanduser }}/authorized_keys" | fgrep DATA_BASIC
+  changed_when: no
+  register: content
+
+- name: Assert that comment on an existing key was changed
+  assert:
+    that:
+      - "'user@acme.com' in content.stdout"
+
+- name: Set the same key with comment to ensure no changes are reported
+  authorized_key:
+    user: root
+    key: "{{ rsa_key_basic }}"
+    comment: user@acme.com
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+  register: result
+
+- name: Assert that no changes were made when running again
+  assert:
+    that:
+      - not result.changed
+
+- debug:
+    var: "{{ item }}"
+    verbosity: 1
+  with_items:
+    - result
+    - content

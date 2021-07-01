@@ -1,0 +1,34 @@
+# -------------------------------------------------------------
+# check mode
+
+- name: CHECK MODE | copy an existing file in place with comments
+  copy:
+    src: existing_authorized_keys
+    dest: "{{ output_dir | expanduser }}/authorized_keys"
+
+- name: CHECK MODE | add key in check mode to validate return codes
+  authorized_key:
+    user: root
+    key: "{{ multiple_key_different_order_2 }}"
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+  check_mode: True
+  register: result
+
+- name: CHECK MODE | assert that authorized_keys return values are consistent
+  assert:
+    that:
+      - 'result.changed == True'
+      - '"user" in result'
+      - '"key" in result'
+
+- name: CHECK MODE | recopy authorized_keys to ensure it was not changed
+  copy:
+    src: existing_authorized_keys
+    dest: "{{ output_dir | expanduser }}/authorized_keys"
+  register: result
+
+- name: CHECK MODE | assert that the authorized_keys file was not changed
+  assert:
+    that:
+      - 'result.changed == False'
