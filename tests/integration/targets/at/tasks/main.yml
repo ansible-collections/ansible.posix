@@ -51,7 +51,9 @@
     count: 20
     units: minutes
   register: at_test0
+
 - debug: var=at_test0
+
 - name: validate results
   assert:
     that:
@@ -116,4 +118,4 @@
   assert:
     that:
       - at_chdir_valid is changed
-      - not at_chdir_valid is changed
+      - at_chdir_invalid is changed
