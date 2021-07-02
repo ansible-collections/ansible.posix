@@ -97,7 +97,7 @@
     that:
       - at_add is changed
       - at_removal is changed
-  when: ansible_distribution not in ('Ubuntu', 'FreeBSD')
+  when: ansible_distribution not in ('Ubuntu', 'FreeBSD') or ansible_distribution == 'CentOS' and  distributed_major_version > 6
 
 - name: Create an at command with chdir with valid value
   at:
