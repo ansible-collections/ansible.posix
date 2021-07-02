@@ -88,6 +88,10 @@
 
 - debug: var=at_removal
 
+- name: Wait for at to run the previous command
+  pause:
+    minutes: 1
+
 - name: Validate results
   assert:
     that:
