@@ -29,99 +29,103 @@
 ## at
 ##
 
-- name: define distros to attempt installing at on
-  set_fact:
-    package_distros:
-      - RedHat
-      - CentOS
-      - ScientificLinux
-      - Fedora
-      - Ubuntu
-      - Debian
-      - openSUSE Leap
+- name: Run At tests
+  block:
+    - name: define distros to attempt installing at on
+      set_fact:
+        package_distros:
+          - RedHat
+          - CentOS
+          - ScientificLinux
+          - Fedora
+          - Ubuntu
+          - Debian
+          - openSUSE Leap
 
-- name: ensure at is installed
-  package:
-    name: at
-    state: present
-  when: ansible_distribution in package_distros
+    - name: ensure at is installed
+      package:
+        name: at
+        state: present
+      when: ansible_distribution in package_distros
 
-- name: run the first example
-  at:
-    command: "ls -d / > /dev/null"
-    count: 20
-    units: minutes
-  register: at_test0
+    - name: run the first example
+      at:
+        command: "ls -d / > /dev/null"
+        count: 20
+        units: minutes
+      register: at_test0
 
-- debug: var=at_test0
+    - debug: var=at_test0
 
-- name: validate results
-  assert:
-    that:
-      - 'at_test0.changed is defined'
-      - 'at_test0.count is defined'
-      - 'at_test0.script_file is defined'
-      - 'at_test0.state is defined'
-      - 'at_test0.units is defined'
+    - name: validate results
+      assert:
+        that:
+          - 'at_test0.changed is defined'
+          - 'at_test0.count is defined'
+          - 'at_test0.script_file is defined'
+          - 'at_test0.state is defined'
+          - 'at_test0.units is defined'
 
-- name: Add a useless command using at
-  at:
-    command: /bin/logger 'AT task ran from Ansible'
-    count: 1
-    units: minutes
-    unique: yes
-  register: at_add
+    - name: Add a useless command using at
+      at:
+        command: /bin/logger 'AT task ran from Ansible'
+        count: 1
+        units: minutes
+        unique: yes
+      register: at_add
 
-- debug: var=at_add
+    - debug: var=at_add
 
-- name: Wait for at to run the previous command
-  pause:
-    minutes: 1
+    - name: Wait for at to run the previous command
+      pause:
+        minutes: 1
 
-- name: Add a useless command
-  at:
-    command: /bin/logger 'AT task ran from Ansible'
-    count: 1
-    units: minutes
-    unique: true
-    state: absent
-  register: at_removal
+    - name: Add a useless command
+      at:
+        command: /bin/logger 'AT task ran from Ansible'
+        count: 1
+        units: minutes
+        unique: true
+        state: absent
+      register: at_removal
 
-- debug: var=at_removal
+    - debug: var=at_removal
 
-- name: Wait for at to run the previous command
-  pause:
-    minutes: 1
+    - name: Wait for at to run the previous command
+      pause:
+        minutes: 1
 
-- name: Validate results
-  assert:
-    that:
-      - at_add is changed
-      - at_removal is changed
-  when: (ansible_facts['distribution'] == "CentOS" and ansible_facts['distribution_major_version'] != "6") or (ansible_facts['distribution'] not in ('Ubuntu','FreeBSD'))
+    - name: Validate results
+      assert:
+        that:
+          - at_add is changed
+          - at_removal is changed
 
-- name: Create an at command with chdir with valid value
-  at:
-    command: /bin/logger 'AT task ran from Ansible with chdir'
-    count: 1
-    units: minutes
-    chdir: /tmp
-  register: at_chdir_valid
-- debug: var=at_chdir_valid
+    - name: Create an at command with chdir with valid value
+      at:
+        command: /bin/logger 'AT task ran from Ansible with chdir'
+        count: 1
+        units: minutes
+        chdir: /tmp
+      register: at_chdir_valid
+    - debug: var=at_chdir_valid
 
-- name: Create an at command with chdir with invalid value
-  at:
-    command: /bin/logger 'AT task ran from Ansible with chdir'
-    count: 1
-    units: minutes
-    chdir: /invalid
-  register: at_chdir_invalid
-  ignore_errors: true
+    - name: Create an at command with chdir with invalid value
+      at:
+        command: /bin/logger 'AT task ran from Ansible with chdir'
+        count: 1
+        units: minutes
+        chdir: /invalid
+      register: at_chdir_invalid
+      ignore_errors: true
 
-- debug: var=at_chdir_invalid
+    - debug: var=at_chdir_invalid
 
-- name: Validate results
-  assert:
-    that:
-      - at_chdir_valid is changed
-      - at_chdir_invalid is changed
+    - name: Validate results
+      assert:
+        that:
+          - at_chdir_valid is changed
+          - at_chdir_invalid is changed
+  when: 
+    - not (ansible_facts['distribution'] in ('Ubuntu','FreeBSD'))
+    - not (ansible_distribution == "CentOS" and ansible_distribution_version is version('6', '=='))
