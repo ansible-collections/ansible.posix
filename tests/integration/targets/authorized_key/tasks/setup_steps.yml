@@ -1,0 +1,50 @@
+# -------------------------------------------------------------
+# Setup steps
+
+- name: copy an existing file in place with comments
+  copy:
+    src: existing_authorized_keys
+    dest: "{{ output_dir | expanduser }}/authorized_keys"
+
+- name: add multiple keys different order
+  authorized_key:
+    user: root
+    key: "{{ multiple_key_different_order_2 }}"
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+  register: result
+
+- name: get the file content
+  shell: cat "{{ output_dir | expanduser }}/authorized_keys"
+  changed_when: no
+  register: multiple_keys_existing
+
+- name: assert that the key was added and comments and ordering preserved
+  assert:
+    that:
+      - 'result.changed == True'
+      - '"# I like candy" in multiple_keys_existing.stdout'
+      - '"# I like candy" in multiple_keys_existing.stdout_lines[0]'
+      - '"ssh-rsa DATA_BASIC 1@testing" in multiple_keys_existing.stdout'
+      # The specific index is a little fragile, but I want to verify the line shows up
+      # as the 3rd line in the new entries after the existing entries and comments are preserved
+      - '"ssh-rsa DATA_BASIC 1@testing" in multiple_keys_existing.stdout_lines[7]'
+
+# start afresh
+
+- name: remove file foo.txt
+  file:
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+    state: absent
+
+- name: touch the authorized_keys file
+  file:
+    dest: "{{ output_dir }}/authorized_keys"
+    state: touch
+  register: result
+
+- name: assert that the authorized_keys file was created
+  assert:
+    that:
+      - 'result.changed == True'
+      - 'result.state == "file"'

@@ -1,0 +1,3 @@
+---
+trivial:
+- authorized_key - Split tasks/main.yml in integration tests to each function block.
