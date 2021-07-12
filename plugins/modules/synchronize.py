@@ -203,6 +203,11 @@ options:
     description: Internal use only. See C(use_ssh_args) for ssh arg settings.
     type: str
     required: false
+  quiet:
+    description:
+      - This specifies rsync quiet option which on yes/true suppresses the non-error messages
+    type: bool
+    default: no
 
 notes:
    - rsync must be installed on both the local and remote host.
@@ -360,6 +365,12 @@ EXAMPLES = r'''
         src: /tmp/localpath/
         dest: /tmp/remotepath
         rsync_path: /usr/gnu/bin/rsync
+
+- name: Synchronization with --quiet option enabled
+  ansible.posix.synchronize:
+    src: some/relative/path
+    dest: /some/absolute/path
+    quiet: yes
 '''
 
 
@@ -623,7 +634,6 @@ def main():
     else:
         (rc, out, err) = module.run_command(cmdstr)
 
-    # If quiet is true, supress the verbose output by suppressing changes but allowing errors
     if quiet:
         cmd.append('--quiet')
 
