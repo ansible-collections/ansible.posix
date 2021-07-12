@@ -438,7 +438,7 @@ def main():
             mode=dict(type='str', default='push', choices=['pull', 'push']),
             link_dest=dict(type='list', elements='path'),
             link_dest=dict(type='list', elements='str'),
-            print_err_only=dict(type='bool',default=False)
+            quiet=dict(type='bool',default=False)
         ),
         supports_check_mode=True,
     )
@@ -479,7 +479,7 @@ def main():
     verify_host = module.params['verify_host']
     link_dest = module.params['link_dest']
     delay_updates = module.params['delay_updates']
-    print_err_only = module.params['print_err_only']
+    quiet = module.params['quiet']
 
     if '/' not in rsync:
         rsync = module.get_bin_path(rsync, required=True)
@@ -623,9 +623,9 @@ def main():
     else:
         (rc, out, err) = module.run_command(cmdstr)
 
-    # If print_errors_only is true, supress the verbose output by suppressing changes but allowing errors
-    if print_err_only:
-        return module.fail_json(msg=err)
+    # If quiet is true, supress the verbose output by suppressing changes but allowing errors
+    if quiet:
+        cmd.append('--quiet')
 
     if rc:
         return module.fail_json(msg=err, rc=rc, cmd=cmdstr)
