@@ -208,6 +208,7 @@ options:
       - This specifies rsync quiet option which on yes/true suppresses the non-error messages
     type: bool
     default: no
+    version_added: '1.3.0'
 
 notes:
    - rsync must be installed on both the local and remote host.
@@ -615,6 +616,9 @@ def main():
 
     cmd.append(shlex_quote(source))
     cmd.append(shlex_quote(dest))
+    if quiet:
+      cmd.append('--quiet')
+
     cmdstr = ' '.join(cmd)
 
     # If we are using password authentication, write the password into the pipe
@@ -633,9 +637,6 @@ def main():
             before_communicate_callback=_write_password_to_pipe)
     else:
         (rc, out, err) = module.run_command(cmdstr)
-
-    if quiet:
-        cmd.append('--quiet')
 
     if rc:
         return module.fail_json(msg=err, rc=rc, cmd=cmdstr)
