@@ -265,46 +265,36 @@
   - directory_a/foo.txt
   - directory_a
   - directory_b
-
-- name: setup - test for source with working dir with spaces in path
-  file:
-    state: directory
-    path: '{{output_dir}}/{{item}}'
-  delegate_to: '{{ inventory_hostname }}'
-  with_items:
-    - 'directory a'
-    - 'directory b'
-- name: setup - create test new files
-  copy:
-    dest: '{{output_dir}}/directory a/{{item}}'
-    mode: '0644'
-    content: 'hello world'
-  with_items:
-    - foo.txt
-  delegate_to: '{{ inventory_hostname }}'
-- name: copy source with spaces in dir path
+- name: synchronize files with quiet option
   synchronize:
-    src: '{{output_dir}}/directory a/foo.txt'
-    dest: '{{output_dir}}/directory b/'
-  delegate_to: '{{ inventory_hostname }}'
+    src: '{{output_dir}}/foo.txt'
+    dest: '{{output_dir}}/foo.result'
+    quiet: true 
   register: sync_result
   ignore_errors: true
-- name: get stat information for directory_b
-  stat:
-    path: '{{ output_dir }}/directory b/foo.txt'
-  register: stat_result_b
 - assert:
     that:
-      - '''changed'' in sync_result'
-      - sync_result.changed == true
-      - stat_result_b.stat.exists == True
-      - stat_result_b.stat.checksum == '2aae6c35c94fcfb415dbe95f408b9ce91ee846ed'
+    - '''--quiet'' in sync_result.cmd'
 - name: Cleanup
   file:
     state: absent
     path: '{{output_dir}}/{{item}}'
   with_items:
-    - 'directory b/foo.txt'
-    - 'directory a/foo.txt'
-    - 'directory a'
-    - 'directory b'
+  - foo.result
+  - bar.result
+- name: synchronize files without quiet option 
+  synchronize:
+    src: '{{output_dir}}/foo.txt'
+    dest: '{{output_dir}}/foo.result'
+  register: sync_result
+  ignore_errors: true
+- assert:
+    that:
+    - '''--quiet'' not in sync_result.cmd'
+- name: Cleanup
+  file:
+    state: absent
+    path: '{{output_dir}}/{{item}}'
+  with_items:
+  - foo.result
+  - bar.result

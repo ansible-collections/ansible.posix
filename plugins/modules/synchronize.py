@@ -431,7 +431,7 @@ def main():
             delay_updates=dict(type='bool', default=True),
             mode=dict(type='str', default='push', choices=['pull', 'push']),
             link_dest=dict(type='list', elements='str'),
-            quiet=dict(type='bool',default=False)
+            quiet=dict(type='bool', default=False)
         ),
         supports_check_mode=True,
     )
@@ -604,7 +604,7 @@ def main():
     cmd.append(shlex_quote(source))
     cmd.append(shlex_quote(dest))
     if quiet:
-      cmd.append('--quiet')
+        cmd.append('--quiet')
 
     cmdstr = ' '.join(cmd)
 
