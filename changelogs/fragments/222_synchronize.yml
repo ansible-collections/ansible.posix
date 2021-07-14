@@ -1,0 +1,3 @@
+---
+bugfixes:
+- synchronize - use SSH args from SSH connection plugin (https://github.com/ansible-collections/ansible.posix/issues/222).
