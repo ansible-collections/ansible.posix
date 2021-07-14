@@ -67,3 +67,55 @@
   assert:
     that:
     - result is not changed
+
+- name: firewalld dmz zone target %%REJECT%%
+  firewalld:
+    zone: dmz
+    permanent: True
+    state: present
+    target: '%%REJECT%%'
+  register: result
+
+- name: assert firewalld dmz zone target %%REJECT%% present worked
+  assert:
+    that:
+    - result is changed
+
+- name: firewalld dmz zone target %%REJECT%% rerun (verify not changed)
+  firewalld:
+    zone: dmz
+    permanent: True
+    state: present
+    target: '%%REJECT%%'
+  register: result
+
+- name: assert firewalld dmz zone target %%REJECT%% present worked (verify not changed)
+  assert:
+    that:
+    - result is not changed
+
+- name: firewalld dmz zone target %%REJECT%% absent
+  firewalld:
+    zone: dmz
+    permanent: True
+    state: absent
+    target: '%%REJECT%%'
+  register: result
+
+- name: assert firewalld dmz zone target %%REJECT%% absent worked
+  assert:
+    that:
+    - result is changed
+
+- name: firewalld dmz zone target %%REJECT%% rerun (verify not changed)
+  firewalld:
+    zone: dmz
+    permanent: True
+    state: absent
+    target: '%%REJECT%%'
+  register: result
+
+- name: assert firewalld dmz zone target %%REJECT%% present worked (verify not changed)
+  assert:
+    that:
+    - result is not changed
