@@ -1,0 +1,2 @@
+bugfixes:
+- sysctl - modifying conditional check for docker to fix tests being skipped (https://github.com/ansible-collections/ansible.posix/pull/226).
