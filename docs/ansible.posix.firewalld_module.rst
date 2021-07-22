@@ -153,7 +153,7 @@ Parameters
                 </td>
                 <td>
                         <div>Should this configuration be in the running firewalld configuration or persist across reboots.</div>
-                        <div>As of Ansible 2.3, permanent operations can operate on firewalld configs when it is not running (requires firewalld &gt;= 3.0.9).</div>
+                        <div>As of Ansible 2.3, permanent operations can operate on firewalld configs when it is not running (requires firewalld &gt;= 0.3.9).</div>
                         <div>Note that if this is <code>no</code>, immediate is assumed <code>yes</code>.</div>
                 </td>
             </tr>
