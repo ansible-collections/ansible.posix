@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - at - use ``atrm`` command instead of ``at -r`` to avoid ``invalid option`` error on ``RHEL6`` and ``CentOS6``.
+  - at - fixed search logic for job_id to perform correctly on ``*BSD`` and Solaris.

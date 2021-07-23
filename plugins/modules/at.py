@@ -86,9 +86,9 @@ def add_job(module, result, at_cmd, count, units, command, script_file):
     result['changed'] = True
 
 
-def delete_job(module, result, at_cmd, command, script_file):
+def delete_job(module, result, at_cmd, atrm_cmd, command, script_file):
     for matching_job in get_matching_jobs(module, at_cmd, script_file):
-        at_command = "%s -r %s" % (at_cmd, matching_job)
+        at_command = "%s %s" % (atrm_cmd, matching_job)
         rc, out, err = module.run_command(at_command, check_rc=True)
         result['changed'] = True
     if command:
@@ -98,13 +98,17 @@ def delete_job(module, result, at_cmd, command, script_file):
 
 def get_matching_jobs(module, at_cmd, script_file):
     matching_jobs = []
-
+    os_type = platform.system().lower()
     atq_cmd = module.get_bin_path('atq', True)
 
     # Get list of job numbers for the user.
     atq_command = "%s" % atq_cmd
     rc, out, err = module.run_command(atq_command, check_rc=True)
-    current_jobs = out.splitlines()
+    if os_type in ['sunos', 'openbsd']:
+        # Skip header in the command-line output
+        current_jobs = out.splitlines()[1:]
+    else:
+        current_jobs = out.splitlines()
     if len(current_jobs) == 0:
         return matching_jobs
 
@@ -115,12 +119,20 @@ def get_matching_jobs(module, at_cmd, script_file):
     # Loop through the jobs.
     #   If the script text is contained in a job add job number to list.
     for current_job in current_jobs:
-        split_current_job = current_job.split()
-        at_opt = '-c' if platform.system() != 'AIX' else '-lv'
-        at_command = "%s %s %s" % (at_cmd, at_opt, split_current_job[0])
+        job_id = get_id_from_jobqueue(os_type, current_job)
+        at_opt = '-c' if os_type != 'AIX' else '-lv'
+
+        if os_type == 'sunos':
+            # at -c option is different purpose in Solaris.
+            # So it needs to read job spool file(/var/spool/cron/atjobs/<job_ID>) directly.
+            at_cmd = 'cat'
+            at_dir = '/var/spool/cron/atjobs/'
+            at_command = '%s %s/%s' % (at_cmd, at_dir, job_id)
+        else:
+            at_command = "%s %s %s" % (at_cmd, at_opt, job_id)
         rc, out, err = module.run_command(at_command, check_rc=True)
         if script_file_string in out:
-            matching_jobs.append(split_current_job[0])
+            matching_jobs.append(job_id)
 
     # Return the list.
     return matching_jobs
@@ -132,6 +144,20 @@ def create_tempfile(command):
     fileh.write(command + os.linesep)
     fileh.close()
     return script_file
+
+
+def get_id_from_jobqueue(os_type, current_job):
+    # Linux: job_id is located at the beginning of the atq output.
+    # FreeBSD and NetBSD: job_id is located at the end of the atq output,
+    # OpenBSD and Solaris: job_id is located in middle of the atq output.
+    split_current_job = current_job.split()
+    if os_type in ['freebsd', 'netbsd']:
+        job_id = split_current_job[-1]
+    elif os_type in ['openbsd', 'sunos']:
+        job_id = split_current_job[6]
+    else:
+        job_id = split_current_job[0]
+    return job_id
 
 
 def main():
@@ -151,6 +177,7 @@ def main():
     )
 
     at_cmd = module.get_bin_path('at', True)
+    atrm_cmd = module.get_bin_path('atrm', True)
 
     command = module.params['command']
     script_file = module.params['script_file']
@@ -173,7 +200,7 @@ def main():
 
     # if absent remove existing and return
     if state == 'absent':
-        delete_job(module, result, at_cmd, command, script_file)
+        delete_job(module, result, at_cmd, atrm_cmd, command, script_file)
 
     # if unique if existing return unchanged
     if unique:

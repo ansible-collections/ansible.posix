@@ -28,7 +28,7 @@
 ## at
 ##
 
-- name: define distros to attempt installing at on 
+- name: define distros to attempt installing at on
   set_fact:
     package_distros:
         - RedHat
@@ -51,8 +51,8 @@
     count: 20
     units: minutes
   register: at_test0
-- debug: var=at_test0
-- name: validate results
+
+- name: validate results for schedule creation
   assert:
       that:
           - 'at_test0.changed is defined'
@@ -60,3 +60,15 @@
           - 'at_test0.script_file is defined'
           - 'at_test0.state is defined'
           - 'at_test0.units is defined'
+
+- name: remove first example schedule
+  at:
+    command: "ls -d / > /dev/null"
+    state: absent
+  register: at_test1
+
+- name: validate results for schedule deletion
+  assert:
+      that:
+          - 'at_test1.changed'
+          - 'at_test1.state == "absent"'
