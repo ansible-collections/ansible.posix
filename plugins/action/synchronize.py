@@ -66,7 +66,15 @@ class ActionModule(ActionBase):
             return path
 
         # If using docker or buildah, do not add user information
-        if self._remote_transport not in ['docker', 'community.general.docker', 'community.docker.docker', 'buildah', 'containers.podman.buildah'] and user:
+        if self._remote_transport not in [
+            'docker',
+            'community.general.docker',
+            'community.docker.docker',
+            'buildah',
+            'containers.podman.buildah',
+            'podman',
+            'containers.podman.podman'
+        ] and user:
             user_prefix = '%s@' % (user, )
 
         if self._host_is_ipv6_address(host):
