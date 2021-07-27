@@ -205,7 +205,7 @@ options:
     required: false
   quiet:
     description:
-      - This specifies rsync quiet option which on yes/true suppresses the non-error messages
+      - This option specifies quiet option which on true suppresses the output.
     type: bool
     default: no
     version_added: '1.3.0'
@@ -367,7 +367,7 @@ EXAMPLES = r'''
         dest: /tmp/remotepath
         rsync_path: /usr/gnu/bin/rsync
 
-- name: Synchronization with --quiet option enabled
+- name: Synchronization with quiet option enabled
   ansible.posix.synchronize:
     src: some/relative/path
     dest: /some/absolute/path
@@ -651,15 +651,20 @@ def main():
     out_lines = out_clean.split('\n')
     while '' in out_lines:
         out_lines.remove('')
+
+    result = dict(changed=changed, rc=rc, cmd=cmdstr)
+
+    if quiet:
+        result['msg'] = "OUTPUT IS HIDDEN DUE TO 'quiet=true'"
+        result['stdout_lines'] = []
+    else:
+        result['msg'] = out_clean
+        result['std_out'] = out_lines
+
     if module._diff:
-        diff = {'prepared': out_clean}
-        return module.exit_json(changed=changed, msg=out_clean,
-                                rc=rc, cmd=cmdstr, stdout_lines=out_lines,
-                                diff=diff)
+        result['diff'] = {'prepare': out_clean}
 
-    return module.exit_json(changed=changed, msg=out_clean,
-                            rc=rc, cmd=cmdstr, stdout_lines=out_lines)
-
+    return module.exit_json(**result)
 
 if __name__ == '__main__':
     main()
