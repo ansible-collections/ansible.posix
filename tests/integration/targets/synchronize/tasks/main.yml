@@ -274,7 +274,7 @@
   ignore_errors: true
 - assert:
     that:
-    - '''--quiet'' in sync_result.cmd'
+    - '''files/directories have been synchronized'' in sync_result.msg'
 - name: Cleanup
   file:
     state: absent
@@ -290,7 +290,7 @@
   ignore_errors: true
 - assert:
     that:
-    - '''--quiet'' not in sync_result.cmd'
+    - '''files/directories have been synchronized'' not in sync_result.msg'
 - name: Cleanup
   file:
     state: absent
