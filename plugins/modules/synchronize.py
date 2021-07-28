@@ -8,7 +8,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 DOCUMENTATION = r'''
 ---
 module: synchronize
@@ -652,19 +651,17 @@ def main():
     while '' in out_lines:
         out_lines.remove('')
 
-    result = dict(changed=changed, rc=rc, cmd=cmdstr)
+    result = dict(changed=changed, rc=rc, cmd=cmdstr, stdout_lines=out_lines, msg=out_clean)
 
     if quiet:
-        result['msg'] = "OUTPUT IS HIDDEN DUE TO 'quiet=true'"
-        result['stdout_lines'] = []
-    else:
-        result['msg'] = out_clean
-        result['std_out'] = out_lines
+        changes = len(out_lines) - 1 if len(out_lines) >= 1 else 0
+        result['msg'] = "%s files/directories have been synchronized" % changes
 
     if module._diff:
-        result['diff'] = {'prepare': out_clean}
+        result['diff'] = {'prepared': out_clean}
 
     return module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
