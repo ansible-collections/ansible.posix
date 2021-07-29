@@ -20,3 +20,6 @@
 
 # firewalld zone target operation test cases
 - import_tasks: zone_target_test_cases.yml
+
+# firewalld icmp block inversion operation test cases
+- import_tasks: icmp_block_inversion_test.yml 

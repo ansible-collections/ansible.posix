@@ -1,0 +1,32 @@
+# Test playbook for the firewalld module - port operations
+# (c) 2021, Vrinda Punj <vpunj@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: firewalld icmp_block inversion is not enabled by no
+  firewalld:
+    zone: drop
+    state: enabled
+    permanent: yes
+    icmp_block_inversion: no
+  register: result
+
+- name: assert firewalld port test permanent enabled worked
+  assert:
+    that:
+    - result is changed
+
+- name: firewalld icmp_block inversion is enabled by yes
+  firewalld:
+    zone: drop
+    state: enabled
+    permanent: yes
+    icmp_block_inversion: yes
+  register: result
+
+- name: assert firewalld port test permanent enabled rerun worked (verify not changed)
+  assert:
+    that:
+    - result is changed
+
+
+

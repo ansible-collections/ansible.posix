@@ -224,6 +224,8 @@ except ImportError:
     pass
 
 
+NEGATIVES = {"n","N","no","No","NO","false","False","FALSE","off","Off","OFF",None}
+
 class IcmpBlockTransaction(FirewallTransaction):
     """
     IcmpBlockTransaction
@@ -859,7 +861,7 @@ def main():
         if changed is True:
             msgs.append("Changed icmp-block %s to %s" % (icmp_block, desired_state))
 
-    if icmp_block_inversion is not None:
+    if icmp_block_inversion not in NEGATIVES:
 
         transaction = IcmpBlockInversionTransaction(
             module,
@@ -978,7 +980,7 @@ def main():
         changed, transaction_msgs = transaction.run()
         msgs = msgs + transaction_msgs
 
-    if masquerade is not None:
+    if masquerade not in NEGATIVES:
 
         transaction = MasqueradeTransaction(
             module,
