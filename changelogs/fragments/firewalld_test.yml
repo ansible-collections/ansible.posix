@@ -1,0 +1,3 @@
+---
+bugfixes:
+- firewalld - enable integration after migration (https://github.com/ansible-collections/ansible.posix/pull/239).
