@@ -28,6 +28,11 @@ from ansible.plugins.action import ActionBase
 from ansible.plugins.loader import connection_loader
 
 
+DOCKER = ['docker', 'community.general.docker', 'community.docker.docker']
+PODMAN = ['podman', 'ansible.builtin.podman', 'containers.podman.podman']
+BUILDAH = ['buildah', 'containers.podman.buildah']
+
+
 class ActionModule(ActionBase):
 
     def _get_absolute_path(self, path):
@@ -66,15 +71,7 @@ class ActionModule(ActionBase):
             return path
 
         # If using docker or buildah, do not add user information
-        if self._remote_transport not in [
-            'docker',
-            'community.general.docker',
-            'community.docker.docker',
-            'buildah',
-            'containers.podman.buildah',
-            'podman',
-            'containers.podman.podman'
-        ] and user:
+        if self._remote_transport not in DOCKER + PODMAN + BUILDAH and user:
             user_prefix = '%s@' % (user, )
 
         if self._host_is_ipv6_address(host):
@@ -182,10 +179,14 @@ class ActionModule(ActionBase):
         self._remote_transport = self._connection.transport
 
         # Handle docker connection options
-        if self._remote_transport in ['docker', 'community.general.docker', 'community.docker.docker']:
+        if self._remote_transport in DOCKER:
             self._docker_cmd = self._connection.docker_cmd
             if self._play_context.docker_extra_args:
                 self._docker_cmd = "%s %s" % (self._docker_cmd, self._play_context.docker_extra_args)
+        elif self._remote_transport in PODMAN:
+            self._docker_cmd = self._connection._options['podman_executable']
+            if self._connection._options.get('podman_extra_args'):
+                self._docker_cmd = "%s %s" % (self._docker_cmd, self._connection._options['podman_extra_args'])
 
         # self._connection accounts for delegate_to so
         # remote_transport is the transport ansible thought it would need
@@ -203,8 +204,8 @@ class ActionModule(ActionBase):
 
         # ssh paramiko docker buildah and local are fully supported transports.  Anything
         # else only works with delegate_to
-        if delegate_to is None and self._connection.transport not in \
-                ('ssh', 'paramiko', 'local', 'docker', 'community.general.docker', 'community.docker.docker', 'buildah', 'containers.podman.buildah'):
+        if delegate_to is None and self._connection.transport not in [
+                'ssh', 'paramiko', 'local'] + DOCKER + PODMAN + BUILDAH:
             result['failed'] = True
             result['msg'] = (
                 "synchronize uses rsync to function. rsync needs to connect to the remote "
@@ -371,7 +372,7 @@ class ActionModule(ActionBase):
         if not dest_is_local:
             # don't escalate for docker. doing --rsync-path with docker exec fails
             # and we can switch directly to the user via docker arguments
-            if self._play_context.become and not rsync_path and self._remote_transport not in ['docker', 'community.general.docker', 'community.docker.docker']:
+            if self._play_context.become and not rsync_path and self._remote_transport not in DOCKER + PODMAN:
                 # If no rsync_path is set, become was originally set, and dest is
                 # remote then add privilege escalation here.
                 if self._play_context.become_method == 'sudo':
@@ -398,9 +399,7 @@ class ActionModule(ActionBase):
 
         # If launching synchronize against docker container
         # use rsync_opts to support container to override rsh options
-        if self._remote_transport in [
-            'docker', 'community.general.docker', 'community.docker.docker', 'buildah', 'containers.podman.buildah'
-        ] and not use_delegate:
+        if self._remote_transport in DOCKER + BUILDAH + PODMAN and not use_delegate:
             # Replicate what we do in the module argumentspec handling for lists
             if not isinstance(_tmp_args.get('rsync_opts'), MutableSequence):
                 tmp_rsync_opts = _tmp_args.get('rsync_opts', [])
@@ -413,14 +412,14 @@ class ActionModule(ActionBase):
             if '--blocking-io' not in _tmp_args['rsync_opts']:
                 _tmp_args['rsync_opts'].append('--blocking-io')
 
-            if self._remote_transport in ['docker', 'community.general.docker', 'community.docker.docker']:
+            if self._remote_transport in DOCKER + PODMAN:
                 if become and self._play_context.become_user:
                     _tmp_args['rsync_opts'].append("--rsh=%s exec -u %s -i" % (self._docker_cmd, self._play_context.become_user))
                 elif user is not None:
                     _tmp_args['rsync_opts'].append("--rsh=%s exec -u %s -i" % (self._docker_cmd, user))
                 else:
                     _tmp_args['rsync_opts'].append("--rsh=%s exec -i" % self._docker_cmd)
-            elif self._remote_transport in ['buildah', 'containers.podman.buildah']:
+            elif self._remote_transport in BUILDAH:
                 _tmp_args['rsync_opts'].append("--rsh=buildah run --")
 
         # run the module and store the result

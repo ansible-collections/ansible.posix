@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - synchronize - complete podman support for synchronize module.
