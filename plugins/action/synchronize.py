@@ -21,6 +21,7 @@ import os.path
 
 from ansible import constants as C
 from ansible.module_utils.six import string_types
+from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_text
 from ansible.module_utils.common._collections_compat import MutableSequence
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -414,13 +415,13 @@ class ActionModule(ActionBase):
 
             if self._remote_transport in DOCKER + PODMAN:
                 if become and self._play_context.become_user:
-                    _tmp_args['rsync_opts'].append("--rsh=%s exec -u %s -i" % (self._docker_cmd, self._play_context.become_user))
+                    _tmp_args['rsync_opts'].append('--rsh=' + shlex_quote('%s exec -u %s -i' % (self._docker_cmd, self._play_context.become_user)))
                 elif user is not None:
-                    _tmp_args['rsync_opts'].append("--rsh=%s exec -u %s -i" % (self._docker_cmd, user))
+                    _tmp_args['rsync_opts'].append('--rsh=' + shlex_quote('%s exec -u %s -i' % (self._docker_cmd, user)))
                 else:
-                    _tmp_args['rsync_opts'].append("--rsh=%s exec -i" % self._docker_cmd)
+                    _tmp_args['rsync_opts'].append('--rsh=' + shlex_quote('%s exec -i' % self._docker_cmd))
             elif self._remote_transport in BUILDAH:
-                _tmp_args['rsync_opts'].append("--rsh=buildah run --")
+                _tmp_args['rsync_opts'].append('--rsh=' + shlex_quote('buildah run --'))
 
         # run the module and store the result
         result.update(self._execute_module('ansible.posix.synchronize', module_args=_tmp_args, task_vars=task_vars))
