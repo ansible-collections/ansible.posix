@@ -22,7 +22,7 @@
 
 - name: Test inside Docker
   when:
-    - ansible_facts.virtualization_type == 'docker'
+    - ansible_facts.virtualization_type == 'docker' or ansible_facts.virtualization_type == 'container'
   block:
     - set_fact:
         output_dir_test: "{{ output_dir }}/test_sysctl"
