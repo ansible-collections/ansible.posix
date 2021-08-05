@@ -271,7 +271,6 @@
     dest: '{{ output_dir }}/foo.result'
     quiet: true 
   register: sync_result
-  ignore_errors: true
 - assert:
     that:
     - '''files/directories have been synchronized'' in sync_result.msg'
@@ -287,7 +286,6 @@
     src: '{{ output_dir }}/foo.txt'
     dest: '{{ output_dir }}/foo.result'
   register: sync_result
-  ignore_errors: true
 - assert:
     that:
     - '''files/directories have been synchronized'' not in sync_result.msg'
