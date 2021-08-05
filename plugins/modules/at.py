@@ -20,7 +20,7 @@ options:
   chdir:
     description:
     - An optional location from where to run the command C(at).
-    - Useful for intance when running a playbook using ansible-pull with C(purge) option.
+    - Useful for instance when running a playbook using ansible-pull with C(purge) option.
     type: path
     version_added: 1.3.0
   command:
@@ -44,7 +44,7 @@ options:
     description:
      - The state dictates if the command or script file should be evaluated as present(added) or absent(deleted).
     type: str
-    choices: [absent, present]
+    choices: [ absent, present ]
     default: present
   unique:
     description:
