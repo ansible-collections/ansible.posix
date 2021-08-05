@@ -654,7 +654,7 @@ def main():
     result = dict(changed=changed, rc=rc, cmd=cmdstr, stdout_lines=out_lines, msg=out_clean)
 
     if quiet:
-        changes = len(out_lines) - 1 if len(out_lines) >= 1 else 0
+        changes = out.count(changed_marker) if changed else 0
         result['msg'] = "%s files/directories have been synchronized" % changes
 
     if module._diff:
