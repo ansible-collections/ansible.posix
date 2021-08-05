@@ -267,8 +267,8 @@
   - directory_b
 - name: synchronize files with quiet option
   synchronize:
-    src: '{{output_dir}}/foo.txt'
-    dest: '{{output_dir}}/foo.result'
+    src: '{{ output_dir }}/foo.txt'
+    dest: '{{ output_dir }}/foo.result'
     quiet: true 
   register: sync_result
   ignore_errors: true
@@ -278,14 +278,14 @@
 - name: Cleanup
   file:
     state: absent
-    path: '{{output_dir}}/{{item}}'
-  with_items:
+    path: '{{ output_dir }}/{{ item }}'
+  loop:
   - foo.result
   - bar.result
 - name: synchronize files without quiet option 
   synchronize:
-    src: '{{output_dir}}/foo.txt'
-    dest: '{{output_dir}}/foo.result'
+    src: '{{ output_dir }}/foo.txt'
+    dest: '{{ output_dir }}/foo.result'
   register: sync_result
   ignore_errors: true
 - assert:
@@ -294,7 +294,7 @@
 - name: Cleanup
   file:
     state: absent
-    path: '{{output_dir}}/{{item}}'
+    path: '{{ output_dir }}/{{ item }}'
   with_items:
   - foo.result
   - bar.result
