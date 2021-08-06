@@ -293,6 +293,6 @@
   file:
     state: absent
     path: '{{ output_dir }}/{{ item }}'
-  with_items:
+  loop:
   - foo.result
   - bar.result
