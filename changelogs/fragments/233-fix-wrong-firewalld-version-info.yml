@@ -1,0 +1,3 @@
+---
+trivial:
+  - firewalld - fix wrong version number in the module document.
