@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - synchronize - properly quote rsync CLI parameters (https://github.com/ansible-collections/ansible.posix/pull/241).
