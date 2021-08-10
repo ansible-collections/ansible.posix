@@ -15,6 +15,13 @@
       register: check_output
       ignore_errors: true
 
+    - name: Enable dbus-broker daemon
+      service:
+        name: dbus-broker
+        enabled: true
+        state: started
+      when: (ansible_distribution == 'Fedora' and ansible_distribution_major_version is version('34', '=='))
+
     - name: Test Online Operations
       block:
         - name: start firewalld
