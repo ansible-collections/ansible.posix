@@ -77,8 +77,7 @@ class ActionModule(ActionBase):
 
         if self._host_is_ipv6_address(host):
             return '[%s%s]:%s' % (user_prefix, host, path)
-        else:
-            return '%s%s:%s' % (user_prefix, host, path)
+        return '%s%s:%s' % (user_prefix, host, path)
 
     def _process_origin(self, host, path, user):
 
@@ -178,6 +177,15 @@ class ActionModule(ActionBase):
 
         # Store remote connection type
         self._remote_transport = self._connection.transport
+        use_ssh_args = _tmp_args.pop('use_ssh_args', None)
+
+        if use_ssh_args and self._connection.transport == 'ssh':
+            ssh_args = [
+                self._connection.get_option('ssh_args'),
+                self._connection.get_option('ssh_common_args'),
+                self._connection.get_option('ssh_extra_args'),
+            ]
+            _tmp_args['ssh_args'] = ' '.join([a for a in ssh_args if a])
 
         # Handle docker connection options
         if self._remote_transport in DOCKER:
@@ -214,8 +222,6 @@ class ActionModule(ActionBase):
                 "copy. This remote host is being accessed via %s instead "
                 "so it cannot work." % self._connection.transport)
             return result
-
-        use_ssh_args = _tmp_args.pop('use_ssh_args', None)
 
         # Parameter name needed by the ansible module
         _tmp_args['_local_rsync_path'] = task_vars.get('ansible_rsync_path') or 'rsync'
@@ -389,14 +395,6 @@ class ActionModule(ActionBase):
             self._play_context.become = False
 
         _tmp_args['rsync_path'] = rsync_path
-
-        if use_ssh_args:
-            ssh_args = [
-                getattr(self._play_context, 'ssh_args', ''),
-                getattr(self._play_context, 'ssh_common_args', ''),
-                getattr(self._play_context, 'ssh_extra_args', ''),
-            ]
-            _tmp_args['ssh_args'] = ' '.join([a for a in ssh_args if a])
 
         # If launching synchronize against docker container
         # use rsync_opts to support container to override rsh options
