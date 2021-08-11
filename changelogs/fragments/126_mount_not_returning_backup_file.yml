@@ -1,2 +1,0 @@
-minor_changes:
-- mount - returns ``backup_file`` value when a backup fstab is created.

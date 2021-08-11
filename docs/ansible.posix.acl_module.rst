@@ -59,7 +59,7 @@ Parameters
                     <b>entity</b>
                     <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
                     <div style="font-size: small">
-                        <span style="color: purple">-</span>
+                        <span style="color: purple">string</span>
                     </div>
                 </td>
                 <td>
@@ -74,7 +74,7 @@ Parameters
                     <b>entry</b>
                     <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
                     <div style="font-size: small">
-                        <span style="color: purple">-</span>
+                        <span style="color: purple">string</span>
                     </div>
                 </td>
                 <td>
@@ -94,7 +94,7 @@ Parameters
                     <b>etype</b>
                     <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
                     <div style="font-size: small">
-                        <span style="color: purple">-</span>
+                        <span style="color: purple">string</span>
                     </div>
                 </td>
                 <td>
@@ -151,13 +151,14 @@ Parameters
                     <b>permissions</b>
                     <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
                     <div style="font-size: small">
-                        <span style="color: purple">-</span>
+                        <span style="color: purple">string</span>
                     </div>
                 </td>
                 <td>
                 </td>
                 <td>
-                        <div>The permissions to apply/remove can be any combination of <code>r</code>, <code>w</code>, <code>x</code> (read, write and execute respectively), and <code>X</code> (execute permission if the file is a directory or already has execute permission for some user)</div>
+                        <div>The permissions to apply/remove can be any combination of <code>r</code>, <code>w</code>, <code>x</code></div>
+                        <div>(read, write and execute respectively), and <code>X</code> (execute permission if the file is a directory or already has execute permission for some user)</div>
                 </td>
             </tr>
             <tr>
@@ -166,7 +167,7 @@ Parameters
                     <b>recalculate_mask</b>
                     <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
                     <div style="font-size: small">
-                        <span style="color: purple">-</span>
+                        <span style="color: purple">string</span>
                     </div>
                 </td>
                 <td>
@@ -200,6 +201,8 @@ Parameters
                 <td>
                         <div>Recursively sets the specified ACL.</div>
                         <div>Incompatible with <code>state=query</code>.</div>
+                        <div>Alias <code>recurse</code> added in version 1.3.0.</div>
+                        <div style="font-size: small; color: darkgreen"><br/>aliases: recurse</div>
                 </td>
             </tr>
             <tr>
@@ -208,7 +211,7 @@ Parameters
                     <b>state</b>
                     <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
                     <div style="font-size: small">
-                        <span style="color: purple">-</span>
+                        <span style="color: purple">string</span>
                     </div>
                 </td>
                 <td>
@@ -259,7 +262,7 @@ Notes
 Examples
 --------
 
-.. code-block:: yaml+jinja
+.. code-block:: yaml
 
     - name: Grant user Joe read access to a file
       ansible.posix.acl:

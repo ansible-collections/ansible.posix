@@ -1,4 +1,0 @@
----
-minor_changes:
-  - mount - Change behavior of ``boot`` option to set ``noauto`` on Linux nodes
-    (https://github.com/ansible-collections/ansible.posix/issues/28).

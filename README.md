@@ -28,6 +28,7 @@ Name | Description
 [ansible.posix.at](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.at_module.rst)|Schedule the execution of a command or script file via the at command
 [ansible.posix.authorized_key](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.authorized_key_module.rst)|Adds or removes an SSH authorized key
 [ansible.posix.firewalld](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.firewalld_module.rst)|Manage arbitrary ports/services with firewalld
+[ansible.posix.firewalld_info](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.firewalld_info_module.rst)|Gather information about firewalld
 [ansible.posix.mount](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.mount_module.rst)|Control active and configured mount points
 [ansible.posix.patch](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.patch_module.rst)|Apply patch files using the GNU patch tool
 [ansible.posix.seboolean](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.seboolean_module.rst)|Toggles SELinux booleans

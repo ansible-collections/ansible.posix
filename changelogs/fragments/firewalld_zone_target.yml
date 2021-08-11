@@ -1,2 +1,0 @@
-minor_changes:
-  - firewalld - bring the ``target`` feature back (https://github.com/ansible-collections/ansible.posix/issues/112).

@@ -1,3 +1,0 @@
----
-trivial:
-- firewalld - specify unit for ``timeout`` parameter in docs (https://github.com/ansible-collections/ansible.posix/issues/193).

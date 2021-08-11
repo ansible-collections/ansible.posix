@@ -1,4 +1,0 @@
----
-bugfixes:
-  - patch - fix FQCN usage for action plugin (https://github.com/ansible-collections/ansible.posix/issues/11)
-  - synchronize - fix FQCN usage for action plugin (https://github.com/ansible-collections/ansible.posix/issues/11)

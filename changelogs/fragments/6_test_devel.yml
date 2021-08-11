@@ -1,2 +1,0 @@
-minor_changes:
-- CI should use devel (https://github.com/ansible-collections/ansible.posix/pull/6).

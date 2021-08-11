@@ -1,3 +1,0 @@
----
-bugfixes:
-  - selinux - add missing configuration keys for /etc/selinux/config (https://github.com/ansible-collections/ansible.posix/issues/23)
