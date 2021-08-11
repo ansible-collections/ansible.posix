@@ -58,14 +58,14 @@ Parameters
                     <b>name</b>
                     <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
                     <div style="font-size: small">
-                        <span style="color: purple">-</span>
+                        <span style="color: purple">string</span>
                          / <span style="color: red">required</span>
                     </div>
                 </td>
                 <td>
                 </td>
                 <td>
-                        <div>The dot-separated path (aka <em>key</em>) specifying the sysctl variable.</div>
+                        <div>The dot-separated path (also known as <em>key</em>) specifying the sysctl variable.</div>
                         <div style="font-size: small; color: darkgreen"><br/>aliases: key</div>
                 </td>
             </tr>
@@ -94,7 +94,7 @@ Parameters
                     <b>state</b>
                     <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
                     <div style="font-size: small">
-                        <span style="color: purple">-</span>
+                        <span style="color: purple">string</span>
                     </div>
                 </td>
                 <td>
@@ -113,7 +113,7 @@ Parameters
                     <b>sysctl_file</b>
                     <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
                     <div style="font-size: small">
-                        <span style="color: purple">-</span>
+                        <span style="color: purple">path</span>
                     </div>
                 </td>
                 <td>
@@ -148,7 +148,7 @@ Parameters
                     <b>value</b>
                     <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
                     <div style="font-size: small">
-                        <span style="color: purple">-</span>
+                        <span style="color: purple">string</span>
                     </div>
                 </td>
                 <td>
@@ -167,7 +167,7 @@ Parameters
 Examples
 --------
 
-.. code-block:: yaml+jinja
+.. code-block:: yaml
 
     # Set vm.swappiness to 5 in /etc/sysctl.conf
     - ansible.posix.sysctl:
@@ -212,4 +212,4 @@ Status
 Authors
 ~~~~~~~
 
-- David CHANIAL (@davixx) <david.chanial@gmail.com>
+- David CHANIAL (@davixx)

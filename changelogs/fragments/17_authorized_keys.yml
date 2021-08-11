@@ -1,3 +1,0 @@
----
-bugfixes:
-- authorized_keys - Added FIDO2 security keys (https://github.com/ansible-collections/ansible.posix/issues/17).

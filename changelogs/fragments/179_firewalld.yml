@@ -1,3 +1,0 @@
----
-bugfixes:
-- firewalld - ensure idempotency with firewalld 0.9.3 (https://github.com/ansible-collections/ansible.posix/issues/179).

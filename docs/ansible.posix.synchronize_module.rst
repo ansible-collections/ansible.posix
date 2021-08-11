@@ -116,6 +116,26 @@ Parameters
             <tr>
                 <td colspan="1">
                     <div class="ansibleOptionAnchor" id="parameter-"></div>
+                    <b>delay_updates</b>
+                    <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
+                    <div style="font-size: small">
+                        <span style="color: purple">boolean</span>
+                    </div>
+                    <div style="font-style: italic; font-size: small; color: darkgreen">added in 1.3.0</div>
+                </td>
+                <td>
+                        <ul style="margin: 0; padding: 0"><b>Choices:</b>
+                                    <li>no</li>
+                                    <li><div style="color: blue"><b>yes</b>&nbsp;&larr;</div></li>
+                        </ul>
+                </td>
+                <td>
+                        <div>This option puts the temporary file from each updated file into a holding directory until the end of the transfer, at which time all the files are renamed into place in rapid succession.</div>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="1">
+                    <div class="ansibleOptionAnchor" id="parameter-"></div>
                     <b>delete</b>
                     <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
                     <div style="font-size: small">
@@ -129,9 +149,9 @@ Parameters
                         </ul>
                 </td>
                 <td>
-                        <div>Delete files in <code>dest</code> that don&#x27;t exist (after transfer, not before) in the <code>src</code> path.</div>
-                        <div>This option requires <code>recursive=yes</code>.</div>
-                        <div>This option ignores excluded files and behaves like the rsync opt --delete-excluded.</div>
+                        <div>Delete files in <em>dest</em> that do not exist (after transfer, not before) in the <em>src</em> path.</div>
+                        <div>This option requires <em>recursive=yes</em>.</div>
+                        <div>This option ignores excluded files and behaves like the rsync opt <code>--delete-after</code>.</div>
                 </td>
             </tr>
             <tr>
@@ -165,7 +185,7 @@ Parameters
                 <td>
                         <div>Port number for ssh on the destination host.</div>
                         <div>Prior to Ansible 2.0, the ansible_ssh_port inventory var took precedence over this value.</div>
-                        <div>This parameter defaults to the value of <code>ansible_ssh_port</code> or <code>ansible_port</code>, the <code>remote_port</code> config setting or the value from ssh client configuration if none of the former have been set.</div>
+                        <div>This parameter defaults to the value of <code>ansible_port</code>, the <code>remote_port</code> config setting or the value from ssh client configuration if none of the former have been set.</div>
                 </td>
             </tr>
             <tr>
@@ -233,6 +253,7 @@ Parameters
                     <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
                     <div style="font-size: small">
                         <span style="color: purple">list</span>
+                         / <span style="color: purple">elements=string</span>
                     </div>
                 </td>
                 <td>
@@ -384,6 +405,7 @@ Parameters
                     <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
                     <div style="font-size: small">
                         <span style="color: purple">list</span>
+                         / <span style="color: purple">elements=string</span>
                     </div>
                 </td>
                 <td>
@@ -466,6 +488,27 @@ Parameters
             <tr>
                 <td colspan="1">
                     <div class="ansibleOptionAnchor" id="parameter-"></div>
+                    <b>ssh_connection_multiplexing</b>
+                    <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
+                    <div style="font-size: small">
+                        <span style="color: purple">boolean</span>
+                    </div>
+                </td>
+                <td>
+                        <ul style="margin: 0; padding: 0"><b>Choices:</b>
+                                    <li><div style="color: blue"><b>no</b>&nbsp;&larr;</div></li>
+                                    <li>yes</li>
+                        </ul>
+                </td>
+                <td>
+                        <div>SSH connection multiplexing for rsync is disabled by default to prevent misconfigured ControlSockets from resulting in failed SSH connections. This is accomplished by setting the SSH <code>ControlSocket</code> to <code>none</code>.</div>
+                        <div>Set this option to <code>yes</code> to allow multiplexing and reduce SSH connection overhead.</div>
+                        <div>Note that simply setting this option to <code>yes</code> is not enough; You must also configure SSH connection multiplexing in your SSH client config by setting values for <code>ControlMaster</code>, <code>ControlPersist</code> and <code>ControlPath</code>.</div>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="1">
+                    <div class="ansibleOptionAnchor" id="parameter-"></div>
                     <b>times</b>
                     <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
                     <div style="font-size: small">
@@ -499,7 +542,8 @@ Parameters
                         </ul>
                 </td>
                 <td>
-                        <div>Use the ssh_args specified in ansible.cfg.</div>
+                        <div>In Ansible 2.10 and lower, it uses the ssh_args specified in <code>ansible.cfg</code>.</div>
+                        <div>In Ansible 2.11 and onwards, when set to <code>true</code>, it uses all SSH connection configurations like <code>ansible_ssh_args</code>, <code>ansible_ssh_common_args</code>, and <code>ansible_ssh_extra_args</code>.</div>
                 </td>
             </tr>
             <tr>
@@ -542,7 +586,7 @@ Notes
    - Inspect the verbose output to validate the destination user/host/path are what was expected.
    - To exclude files and directories from being synchronized, you may add ``.rsync-filter`` files to the source directory.
    - rsync daemon must be up and running with correct permission when using rsync protocol in source or destination path.
-   - The ``synchronize`` module forces `--delay-updates` to avoid leaving a destination in a broken in-between state if the underlying rsync process encounters an error. Those synchronizing large numbers of files that are willing to trade safety for performance should call rsync directly.
+   - The ``synchronize`` module enables `--delay-updates` by default to avoid leaving a destination in a broken in-between state if the underlying rsync process encounters an error. Those synchronizing large numbers of files that are willing to trade safety for performance should disable this option.
    - link_destination is subject to the same limitations as the underlying rsync daemon. Hard links are only preserved if the relative subtrees of the source and destination are the same. Attempts to hardlink into a directory that is a subdirectory of the source will be prevented.
 
 
@@ -560,7 +604,7 @@ See Also
 Examples
 --------
 
-.. code-block:: yaml+jinja
+.. code-block:: yaml
 
     - name: Synchronization of src on the control machine to dest on the remote hosts
       ansible.posix.synchronize:
@@ -678,7 +722,7 @@ Examples
     # Specify the rsync binary to use on remote host and on local host
     - hosts: groupofhosts
       vars:
-            ansible_rsync_path: /usr/gnu/bin/rsync
+        ansible_rsync_path: /usr/gnu/bin/rsync
 
       tasks:
         - name: copy /tmp/localpath/ to remote location /tmp/remotepath

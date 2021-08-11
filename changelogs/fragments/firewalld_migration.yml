@@ -1,3 +1,0 @@
----
-minor_changes:
-  - firewalld - add firewalld module to ansible.posix collection

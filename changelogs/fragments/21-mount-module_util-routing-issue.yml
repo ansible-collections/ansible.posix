@@ -1,3 +1,0 @@
----
-bugfixes:
-  - mount - fix issues with ismount module_util pathing for Ansible 2.9 (fixes https://github.com/ansible-collections/ansible.posix/issues/21)

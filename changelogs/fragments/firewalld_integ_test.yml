@@ -1,3 +1,0 @@
----
-trivial:
-- firewalld - fix integration tests for Fedora 34 (https://github.com/ansible-collections/ansible.posix/pull/243).

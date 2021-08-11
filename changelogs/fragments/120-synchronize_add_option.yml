@@ -1,2 +1,0 @@
-minor_changes:
-- synchronize - add the ``ssh_connection_multiplexing`` option to allow SSH connection multiplexing (https://github.com/ansible/ansible/issues/24365).

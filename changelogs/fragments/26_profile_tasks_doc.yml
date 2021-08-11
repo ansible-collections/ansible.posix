@@ -1,2 +1,0 @@
-bugfixes:
-- Typecast results before use in profile_tasks callback (https://github.com/ansible/ansible/issues/69563).

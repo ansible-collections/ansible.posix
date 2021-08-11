@@ -1,2 +1,0 @@
-minor_changes:
-- Remove sanity jobs from shippable (https://github.com/ansible-collections/ansible.posix/pull/43).

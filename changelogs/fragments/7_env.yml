@@ -1,2 +1,0 @@
-bugfixes:
-- Allow unsetting existing environment vars via environment by specifying a null value (https://github.com/ansible/ansible/pull/68236).

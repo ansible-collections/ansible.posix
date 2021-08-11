@@ -1,4 +1,0 @@
----
-bugfixes:
-  - synchronize - add ``community.docker.docker`` to the list of supported
-    transports (https://github.com/ansible-collections/ansible.posix/issues/132).

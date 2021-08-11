@@ -1,3 +1,0 @@
----
-bugfixes:
-  - synchronize - add ``community.podman.podman`` to the list of supported connection plugins (https://github.com/ansible-community/molecule-podman/issues/45).
