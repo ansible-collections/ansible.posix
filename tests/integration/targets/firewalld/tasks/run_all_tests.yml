@@ -14,7 +14,10 @@
 - include_tasks: port_test_cases.yml
 
 # firewalld source operation test cases
-- import_tasks: source_test_cases.yml
+- include_tasks: source_test_cases.yml
 
 # firewalld zone target operation test cases
-- import_tasks: zone_target_test_cases.yml
+- include_tasks: zone_target_test_cases.yml
+
+# firewalld port forwarding operation test cases
+- include_tasks: port_forward_test_cases.yml
