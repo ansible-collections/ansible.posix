@@ -190,6 +190,7 @@ def build_command(module, mode, path, follow, default, recursive, recalculate_ma
     '''Builds and returns a getfacl/setfacl command.'''
     if mode == 'set':
         cmd = [module.get_bin_path('setfacl', True)]
+        cmd.extend(['-m', entry])
     elif mode == 'rm':
         cmd = [module.get_bin_path('setfacl', True)]
         cmd.extend(['-x', entry])
