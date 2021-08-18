@@ -706,7 +706,7 @@ class ForwardPortTransaction(FirewallTransaction):
         if self.fw_offline:
             dummy, fw_settings = self.get_fw_zone_settings()
             return fw_settings.queryForwardPort(port=port, protocol=proto, to_port=toport, to_addr=toaddr)
-        return self.fw.queryForwardPort(port=port, protocol=proto, to_port=toport, to_addr=toaddr)
+        return self.fw.queryForwardPort(zone=self.zone, port=port, protocol=proto, toport=toport, toaddr=toaddr)
 
     def get_enabled_permanent(self, port, proto, toport, toaddr, timeout):
         dummy, fw_settings = self.get_fw_zone_settings()

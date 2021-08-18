@@ -1,0 +1,3 @@
+---
+bugfixes:
+- firewalld - Correct usage of queryForwardPort (https://github.com/ansible-collections/ansible.posix/issues/247).
