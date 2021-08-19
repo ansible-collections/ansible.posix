@@ -20,6 +20,12 @@
 # apply sysctl, or it will always fail, because of that in most cases (except
 # those when it should fail) we have to use `reload=no`.
 
+
+- name: Display ansible_virtualization_type
+  debug:
+    var: ansible_facts.virtualization_type
+
+
 - name: Test inside Docker
   when:
     - ansible_facts.virtualization_type == 'docker' or ansible_facts.virtualization_type == 'container'
