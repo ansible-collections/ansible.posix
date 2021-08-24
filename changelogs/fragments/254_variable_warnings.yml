@@ -1,0 +1,5 @@
+---
+minor_changes:
+- firewalld - Show warning message that variable type of ``masquerade`` and
+  ``icmp_block_inversion`` will be changed from ``str`` to ``boolean``
+  in the future release (https://github.com/ansible-collections/ansible.posix/pull/254).
