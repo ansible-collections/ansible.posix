@@ -213,6 +213,7 @@ EXAMPLES = r'''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible_collections.ansible.posix.plugins.module_utils.firewalld import FirewallTransaction, fw_offline
 
 try:
@@ -875,6 +876,14 @@ def main():
         if changed is True:
             msgs.append("Changed icmp-block-inversion %s to %s" % (icmp_block_inversion, desired_state))
 
+        # Type of icmp_block_inversion will be changed to boolean in a future release.
+        try:
+            boolean(icmp_block_inversion, True)
+        except TypeError:
+            module.warn('The value of the icmp_block_inversion option is "%s". '
+                        'The type of the option will be changed from string to boolean in a future release. '
+                        'To avoid unexpected behavior, please change the value to boolean.' % icmp_block_inversion)
+
     if service is not None:
 
         transaction = ServiceTransaction(
@@ -991,6 +1000,14 @@ def main():
 
         changed, transaction_msgs = transaction.run()
         msgs = msgs + transaction_msgs
+
+        # Type of masquerade will be changed to boolean in a future release.
+        try:
+            boolean(masquerade, True)
+        except TypeError:
+            module.warn('The value of the masquerade option is "%s". '
+                        'The type of the option will be changed from string to boolean in a future release. '
+                        'To avoid unexpected behavior, please change the value to boolean.' % masquerade)
 
     if target is not None:
 
