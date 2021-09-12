@@ -460,6 +460,7 @@ def _set_ephemeral_args(args):
 
     return result
 
+
 def mount(module, args):
     """Mount up a path or remount if needed."""
 
@@ -726,6 +727,7 @@ def _is_same_mount_src(module, args, mntinfo_file="/proc/self/mountinfo"):
 
     # (dst == mountpoint and src == name) was never reached
     return False
+
 
 def main():
     module = AnsibleModule(
