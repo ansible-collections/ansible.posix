@@ -31,12 +31,12 @@ options:
   src:
     description:
       - Device (or NFS volume, or something else) to be mounted on I(path).
-      - Required when I(state) set to C(present) or C(mounted).
+      - Required when I(state) set to C(present), C(mounted) or C(ephemeral).
     type: path
   fstype:
     description:
       - Filesystem type.
-      - Required when I(state) is C(present) or C(mounted).
+      - Required when I(state) is C(present), C(mounted) or C(ephemeral).
     type: str
   opts:
     description:
@@ -48,7 +48,7 @@ options:
       - Note that if set to C(null) and I(state) set to C(present),
         it will cease to work and duplicate entries will be made
         with subsequent runs.
-      - Has no effect on Solaris systems.
+      - Has no effect on Solaris systems or when used with C(ephemeral).
     type: str
     default: 0
   passno:
@@ -57,7 +57,7 @@ options:
       - Note that if set to C(null) and I(state) set to C(present),
         it will cease to work and duplicate entries will be made
         with subsequent runs.
-      - Deprecated on Solaris systems.
+      - Deprecated on Solaris systems. Has no effect when used with C(ephemeral).
     type: str
     default: 0
   state:
@@ -68,6 +68,13 @@ options:
       - If C(unmounted), the device will be unmounted without changing I(fstab).
       - C(present) only specifies that the device is to be configured in
         I(fstab) and does not trigger or require a mount.
+      - C(ephemeral) only specifies that the device is to be mounted, without changing
+        I(fstab). If it is already mounted, a remount will be triggered.
+        This will always return changed=True. If the mount point C(path)
+        has already a device mounted on, and its I(src) is different than C(src),
+        the module will fail to avoid unexpected unmount or mount point override.
+        If the mount point is not present, the mount point will be created.
+        The value of C(fstab) is ignored.
       - C(absent) specifies that the device mount's entry will be removed from
         I(fstab) and will also unmount the device and remove the mount
         point.
@@ -80,7 +87,7 @@ options:
         instead to work around this issue.
     type: str
     required: true
-    choices: [ absent, mounted, present, unmounted, remounted ]
+    choices: [ absent, mounted, present, unmounted, remounted, ephemeral ]
   fstab:
     description:
       - File to use instead of C(/etc/fstab).
@@ -89,6 +96,7 @@ options:
       - OpenBSD does not allow specifying alternate fstab files with mount so do not
         use this on OpenBSD with any state that operates on the live filesystem.
       - This parameter defaults to /etc/fstab or /etc/vfstab on Solaris.
+      - This parameter is ignored when I(state) is set to C(ephemeral).
     type: str
   boot:
     description:
@@ -100,6 +108,7 @@ options:
         to mount options in I(/etc/fstab).
       - To avoid mount option conflicts, if C(noauto) specified in C(opts),
         mount module will ignore C(boot).
+      - This parameter is ignored when I(state) is set to C(ephemeral).
     type: bool
     default: yes
   backup:
@@ -184,6 +193,14 @@ EXAMPLES = r'''
     boot: no
     state: mounted
     fstype: nfs
+
+- name: Mount ephemeral SMB volume
+  ansible.posix.mount:
+    src: //192.168.1.200/share
+    path: /mnt/smb_share
+    opts: "rw,vers=3,file_mode=0600,dir_mode=0700,dom={{ ad_domain }},username={{ ad_username }},password={{ ad_password }}"
+    fstype: cifs
+    state: ephemeral
 '''
 
 import errno
@@ -426,6 +443,23 @@ def _set_fstab_args(fstab_file):
     return result
 
 
+def _set_ephemeral_args(args):
+    result = []
+    # Set fstype switch according to platform. SunOS/Solaris use -F
+    if platform.system().lower() == 'sunos':
+        result.append('-F')
+    else:
+        result.append('-t')
+    result.append(args['fstype'])
+
+    # Even if '-o remount' is already set, specifying multiple -o is valid
+    if args['opts'] != 'defaults':
+        result += ['-o', args['opts']]
+
+    result.append(args['src'])
+
+    return result
+
 def mount(module, args):
     """Mount up a path or remount if needed."""
 
@@ -442,7 +476,10 @@ def mount(module, args):
                     'OpenBSD does not support alternate fstab files. Do not '
                     'specify the fstab parameter for OpenBSD hosts'))
     else:
-        cmd += _set_fstab_args(args['fstab'])
+        if module.params['state'] != 'ephemeral':
+            cmd += _set_fstab_args(args['fstab'])
+        else:
+            cmd += _set_ephemeral_args(args)
 
     cmd += [name]
 
@@ -494,7 +531,10 @@ def remount(module, args):
                     'OpenBSD does not support alternate fstab files. Do not '
                     'specify the fstab parameter for OpenBSD hosts'))
     else:
-        cmd += _set_fstab_args(args['fstab'])
+        if module.params['state'] != 'ephemeral':
+            cmd += _set_fstab_args(args['fstab'])
+        else:
+            cmd += _set_ephemeral_args(args)
 
     cmd += [args['name']]
     out = err = ''
@@ -587,9 +627,8 @@ def is_bind_mounted(module, linux_mounts, dest, src=None, fstype=None):
     return is_mounted
 
 
-def get_linux_mounts(module, mntinfo_file="/proc/self/mountinfo"):
-    """Gather mount information"""
-
+def _get_mount_info(module, mntinfo_file="/proc/self/mountinfo"):
+    """Return raw mount information"""
     try:
         f = open(mntinfo_file)
     except IOError:
@@ -601,6 +640,17 @@ def get_linux_mounts(module, mntinfo_file="/proc/self/mountinfo"):
         f.close()
     except IOError:
         module.fail_json(msg="Cannot close file %s" % mntinfo_file)
+
+    return lines
+
+
+def get_linux_mounts(module, mntinfo_file="/proc/self/mountinfo"):
+    """Gather mount information"""
+
+    lines = _get_mount_info(module)
+    # Keep same behavior than before
+    if lines is None:
+        return
 
     mntinfo = {}
 
@@ -659,6 +709,24 @@ def get_linux_mounts(module, mntinfo_file="/proc/self/mountinfo"):
     return mounts
 
 
+def _is_same_mount_src(module, args, mntinfo_file="/proc/self/mountinfo"):
+    """Return True if the mounted fs on mountpoint is the same source than src"""
+    mountpoint = args['name']
+    src = args['src']
+    lines = _get_mount_info(module)
+
+    # If this function is used and we cannot retrieve mount info, we must fail to avoid unexpected behavior
+    if lines is None:
+        module.fail_json(msg="Unable to retrieve mount info from '%s'" % mntinfo_file)
+
+    for line in lines:
+        fields = line.split()
+        if fields[4] == mountpoint and fields[-2] == src:
+            return True
+
+    # (dst == mountpoint and src == name) was never reached
+    return False
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -671,12 +739,13 @@ def main():
             passno=dict(type='str', no_log=False),
             src=dict(type='path'),
             backup=dict(type='bool', default=False),
-            state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted', 'remounted']),
+            state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted', 'remounted', 'ephemeral']),
         ),
         supports_check_mode=True,
         required_if=(
             ['state', 'mounted', ['src', 'fstype']],
             ['state', 'present', ['src', 'fstype']],
+            ['state', 'ephemeral', ['src', 'fstype']]
         ),
     )
 
@@ -747,15 +816,17 @@ def main():
 
     # If fstab file does not exist, we first need to create it. This mainly
     # happens when fstab option is passed to the module.
-    if not os.path.exists(args['fstab']):
-        if not os.path.exists(os.path.dirname(args['fstab'])):
-            os.makedirs(os.path.dirname(args['fstab']))
-        try:
-            open(args['fstab'], 'a').close()
-        except PermissionError as e:
-            module.fail_json(msg="Failed to open %s due to permission issue" % args['fstab'])
-        except Exception as e:
-            module.fail_json(msg="Failed to open %s due to %s" % (args['fstab'], to_native(e)))
+    # If state is 'ephemeral', we do not need fstab file
+    if module.params['state'] != 'ephemeral':
+        if not os.path.exists(args['fstab']):
+            if not os.path.exists(os.path.dirname(args['fstab'])):
+                os.makedirs(os.path.dirname(args['fstab']))
+            try:
+                open(args['fstab'], 'a').close()
+            except PermissionError as e:
+                module.fail_json(msg="Failed to open %s due to permission issue" % args['fstab'])
+            except Exception as e:
+                module.fail_json(msg="Failed to open %s due to %s" % (args['fstab'], to_native(e)))
 
     # absent:
     #   Remove from fstab and unmounted.
@@ -766,6 +837,8 @@ def main():
     # mounted:
     #   Add to fstab if not there and make sure it is mounted. If it has
     #   changed in fstab then remount it.
+    # ephemeral:
+    #   Do not change fstab state, but mount.
 
     state = module.params['state']
     name = module.params['path']
@@ -797,7 +870,7 @@ def main():
                         msg="Error unmounting %s: %s" % (name, msg))
 
             changed = True
-    elif state == 'mounted':
+    elif state == 'mounted' or state == 'ephemeral':
         dirs_created = []
         if not os.path.exists(name) and not module.check_mode:
             try:
@@ -825,7 +898,11 @@ def main():
                 module.fail_json(
                     msg="Error making dir %s: %s" % (name, to_native(e)))
 
-        name, backup_lines, changed = _set_mount_save_old(module, args)
+        # ephemeral: completely ignore fstab
+        if state != 'ephemeral':
+            name, backup_lines, changed = _set_mount_save_old(module, args)
+        else:
+            name, backup_lines, changed = args['name'], [], False
         res = 0
 
         if (
@@ -835,7 +912,25 @@ def main():
             if changed and not module.check_mode:
                 res, msg = remount(module, args)
                 changed = True
+
+            # When 'state' == 'ephemeral', we don't know what is in fstab, and 'changed' is always False
+            if state == 'ephemeral':
+                # If state == 'ephemeral', check if the mountpoint src == module.params['src']
+                # If it doesn't, fail to prevent unwanted unmount or unwanted mountpoint override
+                if _is_same_mount_src(module, args):
+                    res, msg = remount(module, args)
+                    changed = True
+                else:
+                    module.fail_json(
+                        msg=(
+                            'Ephemeral mount point is already mounted with a different '
+                            'source than the specified one. Failing in order to prevent an '
+                            'unwanted unmount or override operation. Try replacing this command with '
+                            'a "state: unmounted" followed by a "state: ephemeral", or use '
+                            'a different destination path.'))
+
         else:
+            # If not already mounted, mount it
             changed = True
 
             if not module.check_mode:
@@ -847,7 +942,8 @@ def main():
             # A non-working fstab entry may break the system at the reboot,
             # so undo all the changes if possible.
             try:
-                write_fstab(module, backup_lines, args['fstab'])
+                if state != 'ephemeral':
+                    write_fstab(module, backup_lines, args['fstab'])
             except Exception:
                 pass
 
