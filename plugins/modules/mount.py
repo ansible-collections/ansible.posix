@@ -648,7 +648,7 @@ def _get_mount_info(module, mntinfo_file="/proc/self/mountinfo"):
 def get_linux_mounts(module, mntinfo_file="/proc/self/mountinfo"):
     """Gather mount information"""
 
-    lines = _get_mount_info(module)
+    lines = _get_mount_info(module, mntinfo_file)
     # Keep same behavior than before
     if lines is None:
         return
