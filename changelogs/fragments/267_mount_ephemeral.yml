@@ -1,0 +1,4 @@
+---
+minor_changes:
+- mount - Add ``ephemeral`` value for the ``state`` parameter, that allows to mount a filesystem
+  without altering the ``fstab`` file (https://github.com/ansible-collections/ansible.posix/pull/267).
