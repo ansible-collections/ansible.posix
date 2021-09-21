@@ -1,0 +1,3 @@
+---
+bugfixes:
+- profile_tasks - Correctly calculate task execution time with serial execution (https://github.com/ansible-collections/ansible.posix/issues/83).
