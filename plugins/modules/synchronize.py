@@ -11,12 +11,12 @@ __metaclass__ = type
 
 DOCUMENTATION = r'''
 ---
-module: synchronize
+module: ansible.posix.synchronize
 short_description: A wrapper around rsync to make common tasks in your playbooks quick and easy
 description:
-    - C(synchronize) is a wrapper around rsync to make common tasks in your playbooks quick and easy.
+    - C(ansible.posix.synchronize) is a wrapper around rsync to make common tasks in your playbooks quick and easy.
     - It is run and originates on the local host where Ansible is being run.
-    - Of course, you could just use the C(command) action to call rsync yourself, but you also have to add a fair number of
+    - Of course, you could just use the C(ansible.builtin.command) action to call rsync yourself, but you also have to add a fair number of
       boilerplate options and host facts.
     - This module is not intended to provide access to the full power of rsync, but does make the most common
       invocations easier to implement. You `still` may need to call rsync directly via C(command) or C(shell) depending on your use case.
@@ -37,7 +37,7 @@ options:
   dest_port:
     description:
       - Port number for ssh on the destination host.
-      - Prior to Ansible 2.0, the ansible_ssh_port inventory var took precedence over this value.
+      - Prior to Ansible 2.0, the C(ansible_ssh_port) inventory var took precedence over this value.
       - This parameter defaults to the value of C(ansible_port), the C(remote_port) config setting
         or the value from ssh client configuration if none of the former have been set.
     type: int
@@ -51,12 +51,12 @@ options:
     default: push
   archive:
     description:
-      - Mirrors the rsync archive flag, enables recursive, links, perms, times, owner, group flags and -D.
+      - Mirrors the rsync archive flag, enables I(recursive), I(links), I(perms), I(times), I(owner), I(group) flags and C(-D).
     type: bool
     default: yes
   checksum:
     description:
-      - Skip based on checksum, rather than mod-time & size; Note that that "archive" option is still enabled by default - the "checksum" option will
+      - Skip based on checksum, rather than mod-time & size; Note that that I(archive) option is still enabled by default - the I(checksum) option will
         not disable it.
     type: bool
     default: no
@@ -86,12 +86,12 @@ options:
   recursive:
     description:
       - Recurse into directories.
-      - This parameter defaults to the value of the archive option.
+      - This parameter defaults to the value of the I(archive) option.
     type: bool
   links:
     description:
       - Copy symlinks as symlinks.
-      - This parameter defaults to the value of the archive option.
+      - This parameter defaults to the value of the I(archive) option.
     type: bool
   copy_links:
     description:
@@ -101,22 +101,22 @@ options:
   perms:
     description:
       - Preserve permissions.
-      - This parameter defaults to the value of the archive option.
+      - This parameter defaults to the value of the I(archive) option.
     type: bool
   times:
     description:
       - Preserve modification times.
-      - This parameter defaults to the value of the archive option.
+      - This parameter defaults to the value of the I(archive) option.
     type: bool
   owner:
     description:
       - Preserve owner (super user only).
-      - This parameter defaults to the value of the archive option.
+      - This parameter defaults to the value of the I(archive) option.
     type: bool
   group:
     description:
       - Preserve group.
-      - This parameter defaults to the value of the archive option.
+      - This parameter defaults to the value of the I(archive) option.
     type: bool
   rsync_path:
     description:
@@ -130,7 +130,7 @@ options:
     default: 0
   set_remote_user:
     description:
-      - Put user@ for the remote paths.
+      - Put C(user@) for the remote paths.
       - If you have a custom ssh config to define the remote user for a host
         that does not match the inventory user, you should set this parameter to C(no).
     type: bool
@@ -191,14 +191,13 @@ notes:
    - rsync must be installed on both the local and remote host.
    - For the C(synchronize) module, the "local host" is the host `the synchronize task originates on`, and the "destination host" is the host
      `synchronize is connecting to`.
-   - The "local host" can be changed to a different host by using `delegate_to`.  This enables copying between two remote hosts or entirely on one
+   - The "local host" can be changed to a different host by using I(delegate_to).  This enables copying between two remote hosts or entirely on one
      remote machine.
    - >
-     The user and permissions for the synchronize `src` are those of the user running the Ansible task on the local host (or the remote_user for a
-     delegate_to host when delegate_to is used).
-   - The user and permissions for the synchronize `dest` are those of the `remote_user` on the destination host or the `become_user` if `become=yes` is active.
-   - In Ansible 2.0 a bug in the synchronize module made become occur on the "local host".  This was fixed in Ansible 2.0.1.
-   - Currently, synchronize is limited to elevating permissions via passwordless sudo.  This is because rsync itself is connecting to the remote machine
+     The user and permissions for the synchronize I(src) are those of the user running the Ansible task on the local host (or the remote_user for a
+     I(delegate_to) host when I(delegate_to) is used).
+   - The user and permissions for the synchronize I(dest) are those of the `remote_user` on the destination host or the I(become_user) if I(become=yes) is active.
+   - Currently, C(ansible.posix.synchronize) is limited to elevating permissions via passwordless sudo.  This is because rsync itself is connecting to the remote machine
      and rsync doesn't give us a way to pass sudo credentials in.
    - Currently there are only a few connection types which support synchronize (ssh, paramiko, local, and docker) because a sync strategy has been
      determined for those connection types.  Note that the connection for these must not need a password as rsync itself is making the connection and
@@ -207,9 +206,9 @@ notes:
    - Inspect the verbose output to validate the destination user/host/path are what was expected.
    - To exclude files and directories from being synchronized, you may add C(.rsync-filter) files to the source directory.
    - rsync daemon must be up and running with correct permission when using rsync protocol in source or destination path.
-   - The C(synchronize) module enables `--delay-updates` by default to avoid leaving a destination in a broken in-between state if the underlying rsync process
+   - The C(ansible.posix.synchronize) module enables `--delay-updates` by default to avoid leaving a destination in a broken in-between state if the underlying rsync process
      encounters an error. Those synchronizing large numbers of files that are willing to trade safety for performance should disable this option.
-   - link_destination is subject to the same limitations as the underlying rsync daemon. Hard links are only preserved if the relative subtrees
+   - C(link_dest) is subject to the same limitations as the underlying rsync daemon. Hard links are only preserved if the relative subtrees
      of the source and destination are the same. Attempts to hardlink into a directory that is a subdirectory of the source will be prevented.
 seealso:
 - module: copy
