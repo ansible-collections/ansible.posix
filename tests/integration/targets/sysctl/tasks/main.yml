@@ -17,7 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 # NOTE: Testing sysctl inside an unprivileged container means that we cannot
-# apply sysctl, or it will always fail, because of that in most cases (except
+# apply sysctl, or it will always fFail, because of that in most cases (except
 # those when it should fail) we have to use `reload=no`.
 
 - name: Test inside Docker
@@ -123,9 +123,9 @@
         that:
           - sysctl_test2_change_test is not changed
 
-    - name: Try sysctl with an invalid value
+    - name: Try sysctl with an invalid key
       sysctl:
-        name: net.ipv4.ip_forward
+        name: net.ipv4.invalid_key
         value: foo
       register: sysctl_test3
       ignore_errors: yes
