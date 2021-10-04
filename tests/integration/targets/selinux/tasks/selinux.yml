@@ -26,10 +26,14 @@
     state: present
 
 - name: TEST 1 | Get current SELinux config file contents
+  slurp:
+    src: /etc/sysconfig/selinux
+  register: selinux_config_original_base64
+
+- name: TEST 1 | Register SELinux config and SELinux status
   set_fact:
-    selinux_config_original: "{{ lookup('file', '/etc/sysconfig/selinux').split('\n') }}"
+    selinux_config_original: "{{ selinux_config_original_base64.content | b64decode | split('\n') }}"
     before_test_sestatus: "{{ ansible_selinux }}"
-  delegate_to: "{{ inventory_hostname }}"
 
 - debug:
     var: "{{ item }}"
@@ -95,10 +99,14 @@
       - (_disable_test1.warnings | length ) >= 1
       - _disable_test2.reboot_required
 
-- name: TEST 1 | Get modified config file
+- name: TEST 1 | Get modified config
+  slurp:
+    src: /etc/sysconfig/selinux
+  register: selinux_config_after_base64
+
+- name: TEST 1 | Register modified config
   set_fact:
-    selinux_config_after: "{{ lookup('file', '/etc/sysconfig/selinux').split('\n') }}"
-  delegate_to: "{{ inventory_hostname }}"
+    selinux_config_after: "{{ selinux_config_after_base64.content | b64decode | split('\n') }}"
 
 - debug:
     var: selinux_config_after
@@ -211,9 +219,13 @@
       - not _state_test2.reboot_required
 
 - name: TEST 2 | Get modified config file
+  slurp:
+    src: /etc/sysconfig/selinux
+  register: selinux_config_after_base64
+
+- name: TEST 2 | Register modified config
   set_fact:
-    selinux_config_after: "{{ lookup('file', '/etc/sysconfig/selinux').split('\n') }}"
-  delegate_to: "{{ inventory_hostname }}"
+    selinux_config_after: "{{ selinux_config_after_base64.content | b64decode | split('\n') }}"
 
 - debug:
     var: selinux_config_after
