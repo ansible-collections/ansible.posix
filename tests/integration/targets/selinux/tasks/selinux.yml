@@ -29,6 +29,7 @@
   set_fact:
     selinux_config_original: "{{ lookup('file', '/etc/sysconfig/selinux').split('\n') }}"
     before_test_sestatus: "{{ ansible_selinux }}"
+  delegate_to: "{{ inventory_hostname }}"
 
 - debug:
     var: "{{ item }}"
@@ -97,6 +98,7 @@
 - name: TEST 1 | Get modified config file
   set_fact:
     selinux_config_after: "{{ lookup('file', '/etc/sysconfig/selinux').split('\n') }}"
+  delegate_to: "{{ inventory_hostname }}"
 
 - debug:
     var: selinux_config_after
@@ -211,6 +213,7 @@
 - name: TEST 2 | Get modified config file
   set_fact:
     selinux_config_after: "{{ lookup('file', '/etc/sysconfig/selinux').split('\n') }}"
+  delegate_to: "{{ inventory_hostname }}"
 
 - debug:
     var: selinux_config_after
