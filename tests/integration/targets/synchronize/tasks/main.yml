@@ -2,18 +2,23 @@
   package:
     name: rsync
   when: ansible_distribution != "MacOSX"
-- name: cleanup old files
-  shell: rm -rf {{output_dir}}/*
+- name: Clean up the working directory and files
+  file:
+    path: "{{ output_dir }}"
+    state: absent
+- name: Create the working directory
+  file:
+    path: "{{ output_dir }}"
+    state: directory
 - name: create test new files
   copy: dest={{output_dir}}/{{item}} mode=0644 content="hello world"
   with_items:
   - foo.txt
   - bar.txt
-- stat:
-    path: "{{ output_dir }}"
 - name: synchronize file to new filename
   synchronize: src={{output_dir}}/foo.txt dest={{output_dir}}/foo.result
   register: sync_result
+  delegate_to: "{{ inventory_hostname }}"
 - assert:
     that:
     - '''changed'' in sync_result'
@@ -36,6 +41,7 @@
 - name: test that the file is not copied a second time
   synchronize: src={{output_dir}}/foo.txt dest={{output_dir}}/foo.result
   register: sync_result
+  delegate_to: "{{ inventory_hostname }}"
 - assert:
     that:
     - sync_result.changed == False
@@ -52,6 +58,7 @@
     dest: '{{output_dir}}/foo.result'
     mode: push
   register: sync_result
+  delegate_to: "{{ inventory_hostname }}"
 - assert:
     that:
     - '''changed'' in sync_result'
@@ -77,6 +84,7 @@
     dest: '{{output_dir}}/foo.result'
     mode: push
   register: sync_result
+  delegate_to: "{{ inventory_hostname }}"
 - assert:
     that:
     - sync_result.changed == False
@@ -93,6 +101,7 @@
     dest: '{{output_dir}}/foo.result'
     mode: pull
   register: sync_result
+  delegate_to: "{{ inventory_hostname }}"
 - assert:
     that:
     - '''changed'' in sync_result'
@@ -118,6 +127,7 @@
     dest: '{{output_dir}}/foo.result'
     mode: pull
   register: sync_result
+  delegate_to: "{{ inventory_hostname }}"
 - assert:
     that:
     - sync_result.changed == False
@@ -134,6 +144,7 @@
   - foo.txt
   - bar.txt
   register: sync_result
+  delegate_to: "{{ inventory_hostname }}"
 - assert:
     that:
     - sync_result.changed
@@ -156,6 +167,7 @@
 - name: synchronize files using rsync_path (issue#7182)
   synchronize: src={{output_dir}}/foo.txt dest={{output_dir}}/foo.rsync_path rsync_path="sudo rsync"
   register: sync_result
+  delegate_to: "{{ inventory_hostname }}"
 - assert:
     that:
     - '''changed'' in sync_result'
@@ -188,6 +200,7 @@
     dest: '{{output_dir}}/{{item}}/foo.txt'
   with_items:
   - directory_a
+  delegate_to: "{{ inventory_hostname }}"
 - name: synchronize files using link_dest
   synchronize:
     src: '{{output_dir}}/directory_a/foo.txt'
@@ -195,6 +208,7 @@
     link_dest:
     - '{{output_dir}}/directory_a'
   register: sync_result
+  delegate_to: "{{ inventory_hostname }}"
 - name: get stat information for directory_a
   stat:
     path: '{{ output_dir }}/directory_a/foo.txt'
