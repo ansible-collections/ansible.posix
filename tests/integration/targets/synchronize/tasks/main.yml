@@ -2,11 +2,11 @@
   package:
     name: rsync
   when: ansible_distribution != "MacOSX"
-- name: Clean up the working directory and files
+- name: Clean up working directory and files
   file:
     path: "{{ output_dir }}"
     state: absent
-- name: Create the working directory
+- name: Create working directory
   file:
     path: "{{ output_dir }}"
     state: directory
