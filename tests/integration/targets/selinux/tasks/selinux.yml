@@ -108,6 +108,10 @@
     src: /etc/sysconfig/selinux
   register: selinux_config_after_base64
 
+- name: TEST 1 | Register modified config
+  set_fact:
+    selinux_config_after_raw: "{{ selinux_config_after_base64.content | b64decode }}"
+
 - name: TEST 1 | Split by line and register modified config
   set_fact:
     selinux_config_after: "{{ selinux_config_after_raw.split('\n') }}"
