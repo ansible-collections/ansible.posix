@@ -213,3 +213,73 @@ class TestSynchronizeAction(unittest.TestCase):
     def test_basic(self):
         x = SynchronizeTester()
         x.runtest(fixturepath=os.path.join(self.fixturedir, 'basic'))
+
+    @patch('ansible_collections.ansible.posix.plugins.action.synchronize.connection_loader', FakePluginLoader)
+    def test_basic_become(self):
+        x = SynchronizeTester()
+        x.runtest(fixturepath=os.path.join(self.fixturedir, 'basic_become'))
+
+    @patch('ansible_collections.ansible.posix.plugins.action.synchronize.connection_loader', FakePluginLoader)
+    def test_basic_become_cli(self):
+        # --become on the cli sets _play_context.become
+        x = SynchronizeTester()
+        x.runtest(fixturepath=os.path.join(self.fixturedir, 'basic_become_cli'))
+
+    @patch('ansible_collections.ansible.posix.plugins.action.synchronize.connection_loader', FakePluginLoader)
+    def test_basic_vagrant(self):
+        # simple vagrant example
+        x = SynchronizeTester()
+        x.runtest(fixturepath=os.path.join(self.fixturedir, 'basic_vagrant'))
+
+    @patch('ansible_collections.ansible.posix.plugins.action.synchronize.connection_loader', FakePluginLoader)
+    def test_basic_vagrant_sudo(self):
+        # vagrant plus sudo
+        x = SynchronizeTester()
+        x.runtest(fixturepath=os.path.join(self.fixturedir, 'basic_vagrant_sudo'))
+
+    @patch('ansible_collections.ansible.posix.plugins.action.synchronize.connection_loader', FakePluginLoader)
+    def test_basic_vagrant_become_cli(self):
+        # vagrant plus sudo
+        x = SynchronizeTester()
+        x.runtest(fixturepath=os.path.join(self.fixturedir, 'basic_vagrant_become_cli'))
+
+    @patch('ansible_collections.ansible.posix.plugins.action.synchronize.connection_loader', FakePluginLoader)
+    def test_delegate_remote(self):
+        # delegate to other remote host
+        x = SynchronizeTester()
+        x.runtest(fixturepath=os.path.join(self.fixturedir, 'delegate_remote'))
+
+    @patch('ansible_collections.ansible.posix.plugins.action.synchronize.connection_loader', FakePluginLoader)
+    def test_delegate_remote_su(self):
+        # delegate to other remote host with su enabled
+        x = SynchronizeTester()
+        x.runtest(fixturepath=os.path.join(self.fixturedir, 'delegate_remote_su'))
+
+    @patch('ansible_collections.ansible.posix.plugins.action.synchronize.connection_loader', FakePluginLoader)
+    def test_basic_with_private_key(self):
+        x = SynchronizeTester()
+        x.runtest(fixturepath=os.path.join(self.fixturedir, 'basic_with_private_key'))
+
+    @patch('ansible_collections.ansible.posix.plugins.action.synchronize.connection_loader', FakePluginLoader)
+    def test_delegate_remote_with_private_key(self):
+        # delegate to other remote host and use the module param private_key
+        x = SynchronizeTester()
+        x.runtest(fixturepath=os.path.join(self.fixturedir, 'delegate_remote_with_private_key'))
+
+    @patch('ansible_collections.ansible.posix.plugins.action.synchronize.connection_loader', FakePluginLoader)
+    def test_delegate_remote_play_context_private_key(self):
+        # delegate to other remote host and use the play context private_key
+        x = SynchronizeTester()
+        x.runtest(fixturepath=os.path.join(self.fixturedir, 'delegate_remote_play_context_private_key'))
+
+    @patch.object(ActionModule, '_low_level_execute_command', side_effect=BreakPoint)
+    @patch.object(ActionModule, '_remote_expand_user', side_effect=ActionModule._remote_expand_user, autospec=True)
+    def test_remote_user_not_in_local_tmpdir(self, spy_remote_expand_user, ll_ec):
+        x = SynchronizeTester()
+        SAM = ActionModule(x.task, x.connection, x._play_context,
+                           x.loader, x.templar, x.shared_loader_obj)
+        try:
+            SAM.run(task_vars={'hostvars': {'foo': {}, 'localhost': {}}, 'inventory_hostname': 'foo'})
+        except BreakPoint:
+            pass
+        self.assertEqual(spy_remote_expand_user.call_count, 0)
