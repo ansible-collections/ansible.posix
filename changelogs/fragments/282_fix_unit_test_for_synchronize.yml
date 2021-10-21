@@ -1,0 +1,3 @@
+---
+trivial:
+- Fix unit tests of synchronize action plugin to use yaml.safe_load().
