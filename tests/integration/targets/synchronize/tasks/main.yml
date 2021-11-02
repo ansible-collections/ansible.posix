@@ -265,3 +265,20 @@
   - directory_a/foo.txt
   - directory_a
   - directory_b
+
+- name: setup - test for source with working dir with spaces in path
+  file:
+    state: directory
+    path: '{{output_dir}}/{{item}}'
+  delegate_to: '{{ inventory_hostname }}'
+  with_items:
+    - 'directory a'
+    - 'directory b'
+- name: setup - create test new files
+  copy:
+    dest: '{{output_dir}}/directory a/{{item}}'
+    mode: '0644'
+    content: 'hello world'
+  with_items:
+    - foo.txt
+  delegate_to: '{{ inventory_hostname }}'
