@@ -587,8 +587,8 @@ def main():
     if '@' not in dest:
         dest = os.path.expanduser(dest)
 
-    cmd.append(source)
-    cmd.append(dest)
+    cmd.append(shlex_quote(source))
+    cmd.append(shlex_quote(dest))
     cmdstr = ' '.join(cmd)
 
     # If we are using password authentication, write the password into the pipe
