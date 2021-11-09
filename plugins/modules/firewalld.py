@@ -128,8 +128,11 @@ notes:
     The module will not take care of this for you implicitly because that would undo any previously performed immediate actions which were not
     permanent. Therefore, if you require immediate access to a newly created zone it is recommended you reload firewalld immediately after the zone
     creation returns with a changed state and before you perform any other immediate, non-permanent actions on that zone.
+  - This module needs C(python-firewall) or C(python3-firewall) on managed nodes.
+    It is usually provided as a subset with C(firewalld) from the OS distributor for the OS default Python interpreter.
 requirements:
 - firewalld >= 0.2.11
+- python-firewall >= 0.2.11
 author:
 - Adam Miller (@maxamillion)
 '''
