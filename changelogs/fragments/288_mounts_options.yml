@@ -1,0 +1,3 @@
+---
+trivial:
+- mount - remove deprecated option from nfs example
