@@ -172,7 +172,7 @@ EXAMPLES = r'''
   ansible.posix.mount:
     src: 192.168.1.100:/nfs/ssd/shared_data
     path: /mnt/shared_data
-    opts: rw,sync,hard,intr
+    opts: rw,sync,hard
     state: mounted
     fstype: nfs
 
@@ -180,7 +180,7 @@ EXAMPLES = r'''
   ansible.posix.mount:
     src: 192.168.1.100:/nfs/ssd/shared_data
     path: /mnt/shared_data
-    opts: rw,sync,hard,intr
+    opts: rw,sync,hard
     boot: no
     state: mounted
     fstype: nfs
