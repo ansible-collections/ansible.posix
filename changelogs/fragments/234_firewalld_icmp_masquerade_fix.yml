@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - firewalld - Fix no enabling Icmp block inversion and masquerade (https://github.com/ansible-collections/ansible.posix/issues/235).
