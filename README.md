@@ -6,7 +6,7 @@ https://dev.azure.com/ansible/ansible.posix/_apis/build/status/CI?branchName=mai
 
 <!-- Describe the collection and why a user would want to use it. What does the collection do? -->
 An Ansible Collection of modules and plugins that target POSIX UNIX/Linux and derivative Operating Systems.
- 
+
 ## Supported Versions of Ansible
 <!--start requires_ansible-->
 ## Ansible version compatibility
@@ -28,6 +28,7 @@ Name | Description
 [ansible.posix.at](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.at_module.rst)|Schedule the execution of a command or script file via the at command
 [ansible.posix.authorized_key](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.authorized_key_module.rst)|Adds or removes an SSH authorized key
 [ansible.posix.firewalld](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.firewalld_module.rst)|Manage arbitrary ports/services with firewalld
+[ansible.posix.firewalld_info](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.firewalld_info_module.rst)|Gather information about firewalld
 [ansible.posix.mount](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.mount_module.rst)|Control active and configured mount points
 [ansible.posix.patch](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.patch_module.rst)|Apply patch files using the GNU patch tool
 [ansible.posix.seboolean](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.seboolean_module.rst)|Toggles SELinux booleans
@@ -75,9 +76,7 @@ This collection follows the Ansible project's
 Please read and familiarize yourself with this document.
 
 ## Release notes
-
-* 0.1.1 Initial stable build
-* 0.1.0 Internal only build
+See [changelog](https://github.com/ansible-collections/ansible.posix/blob/main/CHANGELOG.rst) for more details.
 
 ## External requirements
 
@@ -87,9 +86,11 @@ None
 
 <!-- List the versions of Ansible the collection has been tested with. Must match what is in galaxy.yml. -->
 
-* ansible-base 2.11 (devel)
-* ansible-base 2.10 (Beta)
-* ansible-base 2.9 (stable)
+* ansible-core 2.13 (devel)
+* ansible-core 2.12 (stable)
+* ansible-core 2.11 (stable)
+* ansible-base 2.10 (stable)
+* ansible 2.9 (stable)
 
 ## Roadmap
 

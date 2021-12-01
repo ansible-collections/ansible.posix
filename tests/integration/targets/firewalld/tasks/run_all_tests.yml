@@ -9,17 +9,18 @@
 
 # firewalld service operation test cases
 - include_tasks: service_test_cases.yml
-  # Skipping on CentOS 8 due to https://github.com/ansible/ansible/issues/64750
-  when: not (ansible_facts.distribution == "CentOS" and ansible_distribution_major_version is version('8', '=='))
 
 # firewalld port operation test cases
 - include_tasks: port_test_cases.yml
 
 # firewalld source operation test cases
-- import_tasks: source_test_cases.yml
+- include_tasks: source_test_cases.yml
 
 # firewalld zone target operation test cases
 - import_tasks: zone_target_test_cases.yml
 
 # firewalld icmp block inversion operation test cases
 - import_tasks: icmp_block_inversion_test.yml 
+
+# firewalld port forwarding operation test cases
+- include_tasks: port_forward_test_cases.yml

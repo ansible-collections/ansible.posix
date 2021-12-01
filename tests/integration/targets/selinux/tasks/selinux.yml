@@ -20,10 +20,24 @@
 # ##############################################################################
 # Test changing the state, which requires a reboot
 
+- name: TEST 1 | Make sure grubby is present
+  package:
+    name: grubby
+    state: present
+
 - name: TEST 1 | Get current SELinux config file contents
+  slurp:
+    src: /etc/sysconfig/selinux
+  register: selinux_config_original_base64
+
+- name: TEST 1 | Register SELinux config and SELinux status
   set_fact:
-    selinux_config_original: "{{ lookup('file', '/etc/sysconfig/selinux').split('\n') }}"
+    selinux_config_original_raw: "{{ selinux_config_original_base64.content | b64decode }}"
     before_test_sestatus: "{{ ansible_selinux }}"
+
+- name: TEST 1 | Split by line and register original config
+  set_fact:
+    selinux_config_original: "{{ selinux_config_original_raw.split('\n') }}"
 
 - debug:
     var: "{{ item }}"
@@ -90,8 +104,17 @@
       - _disable_test2.reboot_required
 
 - name: TEST 1 | Get modified config file
+  slurp:
+    src: /etc/sysconfig/selinux
+  register: selinux_config_after_base64
+
+- name: TEST 1 | Register modified config
   set_fact:
-    selinux_config_after: "{{ lookup('file', '/etc/sysconfig/selinux').split('\n') }}"
+    selinux_config_after_raw: "{{ selinux_config_after_base64.content | b64decode }}"
+
+- name: TEST 1 | Split by line and register modified config
+  set_fact:
+    selinux_config_after: "{{ selinux_config_after_raw.split('\n') }}"
 
 - debug:
     var: selinux_config_after
@@ -104,10 +127,51 @@
       - selinux_config_after[selinux_config_after.index('SELINUX=disabled')]  is search("^SELINUX=\w+$")
       - selinux_config_after[selinux_config_after.index('SELINUXTYPE=targeted')]  is search("^SELINUXTYPE=\w+$")
 
-- name: TEST 1 | Reset SELinux configuration for next test
+- name: TEST 1 | Disable SELinux again, with kernel arguments update
+  selinux:
+    state: disabled
+    policy: targeted
+    update_kernel_param: true
+  register: _disable_test2
+
+- name: Check kernel command-line arguments
+  ansible.builtin.command: grubby --info=DEFAULT
+  register: _grubby_test1
+
+- name: TEST 1 | Assert that kernel cmdline contains selinux=0
+  assert:
+    that:
+      - "' selinux=0' in _grubby_test1.stdout"
+
+- name: TEST 1 | Enable SELinux, without kernel arguments update
+  selinux:
+    state: disabled
+    policy: targeted
+  register: _disable_test2
+
+- name: Check kernel command-line arguments
+  ansible.builtin.command: grubby --info=DEFAULT
+  register: _grubby_test1
+
+- name: TEST 1 | Assert that kernel cmdline still contains selinux=0
+  assert:
+    that:
+      - "' selinux=0' in _grubby_test1.stdout"
+
+- name: TEST 1 | Reset SELinux configuration for next test (also kernel args)
   selinux:
     state: enforcing
+    update_kernel_param: true
     policy: targeted
+
+- name: Check kernel command-line arguments
+  ansible.builtin.command: grubby --info=DEFAULT
+  register: _grubby_test2
+
+- name: TEST 1 | Assert that kernel cmdline doesn't contain selinux=0
+  assert:
+    that:
+      - "' selinux=0' not in _grubby_test2.stdout"
 
 
 # Second Test
@@ -163,8 +227,17 @@
       - not _state_test2.reboot_required
 
 - name: TEST 2 | Get modified config file
+  slurp:
+    src: /etc/sysconfig/selinux
+  register: selinux_config_after_base64
+
+- name: TEST 2 | Register modified config
   set_fact:
-    selinux_config_after: "{{ lookup('file', '/etc/sysconfig/selinux').split('\n') }}"
+    selinux_config_after_raw: "{{ selinux_config_after_base64.content | b64decode }}"
+
+- name: TEST 2 | Split by line and register modified config
+  set_fact:
+    selinux_config_after: "{{ selinux_config_after_raw.split('\n') }}"
 
 - debug:
     var: selinux_config_after

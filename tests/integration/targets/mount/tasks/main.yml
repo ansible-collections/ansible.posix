@@ -280,7 +280,7 @@
   - name: Fail if they are the same
     fail:
       msg: Filesytem was not remounted, testing of the module failed!
-    when: last_write is defined and last_write_time2 is defined and last_write_time.stdout == last_write_time2.stdout 
+    when: last_write is defined and last_write_time2 is defined and last_write_time.stdout == last_write_time2.stdout
 
   - name: Remount filesystem with different opts using remounted option (Linux only)
     mount:
@@ -311,7 +311,7 @@
     assert:
       that:
         - "'backup_file' in mount_backup_out"
-  
+
   always:
   - name: Umount the test FS
     mount:
@@ -368,4 +368,41 @@
     loop:
     - /tmp/myfs.img
     - /tmp/myfs
+  when: ansible_system in ('Linux')
+
+- name: Block to test missing newline at the EOF of fstab
+  block:
+  - name: Create empty file
+    community.general.filesize:
+      path: /tmp/myfs1.img
+      size: 20M
+  - name: Format FS
+    community.general.filesystem:
+      fstype: ext3
+      dev: /tmp/myfs1.img
+  - name: Create custom fstab file without newline
+    copy:
+      content: '#TEST COMMENT WITHOUT NEWLINE'
+      dest: /tmp/test_fstab
+  - name: Mount the FS using the custom fstab
+    mount:
+      path: /tmp/myfs1
+      src: /tmp/myfs1.img
+      fstype: ext3
+      state: mounted
+      opts: defaults
+      fstab: /tmp/test_fstab
+  - name: Unmount the mount point in the custom fstab
+    mount:
+      path: /tmp/myfs1
+      state: absent
+      fstab: /tmp/test_fstab
+  - name: Remove the test FS and the custom fstab
+    file:
+      path: '{{ item }}'
+      state: absent
+    loop:
+    - /tmp/myfs1.img
+    - /tmp/myfs1
+    - /tmp/test_fstab
   when: ansible_system in ('Linux')

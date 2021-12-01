@@ -212,7 +212,7 @@ Notes
 Examples
 --------
 
-.. code-block:: yaml+jinja
+.. code-block:: yaml
 
     - name: Apply patch to one file
       ansible.posix.patch:

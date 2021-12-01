@@ -1,2 +1,0 @@
-bugfixes:
-  - firewalld - fix setting zone target to ``%%REJECT%%`` (https://github.com/ansible-collections/ansible.posix/pull/215).

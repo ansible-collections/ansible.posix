@@ -1,4 +1,0 @@
----
-bugfixes:
-  - synchronize - use become_user when invoking rsync on remote with sudo
-    (https://github.com/ansible-collections/ansible.posix/issues/186).

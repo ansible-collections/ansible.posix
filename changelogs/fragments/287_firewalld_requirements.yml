@@ -1,0 +1,3 @@
+---
+trivial:
+- firewalld - add python-firewall to requirements (https://github.com/ansible-collections/ansible.posix/issues/286).

@@ -92,7 +92,8 @@ def filled(msg, fchar="*"):
 
 def timestamp(self):
     if self.current is not None:
-        self.stats[self.current]['time'] = time.time() - self.stats[self.current]['time']
+        elapsed = time.time() - self.stats[self.current]['started']
+        self.stats[self.current]['elapsed'] += elapsed
 
 
 def tasktime():
@@ -151,8 +152,15 @@ class CallbackModule(CallbackBase):
         timestamp(self)
 
         # Record the start time of the current task
+        # stats[TASK_UUID]:
+        #   started: Current task start time. This value will be updated each time a task
+        #            with the same UUID is executed when `serial` is specified in a playbook.
+        #   elapsed: Elapsed time since the first serialized task was started
         self.current = task._uuid
-        self.stats[self.current] = {'time': time.time(), 'name': task.get_name()}
+        if self.current not in self.stats:
+            self.stats[self.current] = {'started': time.time(), 'elapsed': 0.0, 'name': task.get_name()}
+        else:
+            self.stats[self.current]['started'] = time.time()
         if self._display.verbosity >= 2:
             self.stats[self.current]['path'] = task.get_path()
 
@@ -178,7 +186,7 @@ class CallbackModule(CallbackBase):
         if self.sort_order is not None:
             results = sorted(
                 self.stats.items(),
-                key=lambda x: x[1]['time'],
+                key=lambda x: x[1]['elapsed'],
                 reverse=self.sort_order,
             )
 
@@ -187,7 +195,7 @@ class CallbackModule(CallbackBase):
 
         # Print the timings
         for uuid, result in results:
-            msg = u"{0:-<{2}}{1:->9}".format(result['name'] + u' ', u' {0:.02f}s'.format(result['time']), self._display.columns - 9)
+            msg = u"{0:-<{2}}{1:->9}".format(result['name'] + u' ', u' {0:.02f}s'.format(result['elapsed']), self._display.columns - 9)
             if 'path' in result:
                 msg += u"\n{0:-<{1}}".format(result['path'] + u' ', self._display.columns)
             self._display.display(msg)

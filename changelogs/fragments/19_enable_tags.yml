@@ -1,2 +1,0 @@
-minor_changes:
-- Enabled tags in galaxy.yml (https://github.com/ansible-collections/ansible.posix/issues/18).

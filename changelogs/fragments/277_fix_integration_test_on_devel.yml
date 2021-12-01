@@ -1,0 +1,3 @@
+---
+trivial:
+- Fix integration tests of synchronize and sysctl to address chaging behavior on devel branch (https://github.com/ansible-collections/overview/issues/45).

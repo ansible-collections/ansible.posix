@@ -1,0 +1,2 @@
+minor_changes:
+- selinux - optionally update kernel boot params when disabling/re-enabling SELinux (https://github.com/ansible-collections/ansible.posix/pull/142).

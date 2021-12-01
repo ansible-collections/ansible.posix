@@ -69,7 +69,10 @@ Parameters
                 </td>
                 <td>
                         <div>Determines if the filesystem should be mounted on boot.</div>
-                        <div>Only applies to Solaris systems.</div>
+                        <div>Only applies to Solaris and Linux systems.</div>
+                        <div>For Solaris systems, <code>true</code> will set <code>yes</code> as the value of mount at boot in <em>/etc/vfstab</em>.</div>
+                        <div>For Linux, FreeBSD, NetBSD and OpenBSD systems, <code>false</code> will add <code>noauto</code> to mount options in <em>/etc/fstab</em>.</div>
+                        <div>To avoid mount option conflicts, if <code>noauto</code> specified in <code>opts</code>, mount module will ignore <code>boot</code>.</div>
                 </td>
             </tr>
             <tr>
@@ -235,7 +238,7 @@ Notes
 Examples
 --------
 
-.. code-block:: yaml+jinja
+.. code-block:: yaml
 
     # Before 2.3, option 'name' was used instead of 'path'
     - name: Mount DVD read-only
@@ -293,6 +296,15 @@ Examples
         src: 192.168.1.100:/nfs/ssd/shared_data
         path: /mnt/shared_data
         opts: rw,sync,hard,intr
+        state: mounted
+        fstype: nfs
+
+    - name: Mount NFS volumes with noauto according to boot option
+      ansible.posix.mount:
+        src: 192.168.1.100:/nfs/ssd/shared_data
+        path: /mnt/shared_data
+        opts: rw,sync,hard,intr
+        boot: no
         state: mounted
         fstype: nfs
 

@@ -172,7 +172,7 @@ EXAMPLES = r'''
   ansible.posix.mount:
     src: 192.168.1.100:/nfs/ssd/shared_data
     path: /mnt/shared_data
-    opts: rw,sync,hard,intr
+    opts: rw,sync,hard
     state: mounted
     fstype: nfs
 
@@ -180,7 +180,7 @@ EXAMPLES = r'''
   ansible.posix.mount:
     src: 192.168.1.100:/nfs/ssd/shared_data
     path: /mnt/shared_data
-    opts: rw,sync,hard,intr
+    opts: rw,sync,hard
     boot: no
     state: mounted
     fstype: nfs
@@ -254,6 +254,10 @@ def _set_mount_save_old(module, args):
             '%(src)s - %(name)s %(fstype)s %(passno)s %(boot)s %(opts)s\n')
 
     for line in open(args['fstab'], 'r').readlines():
+        # Append newline if the line in fstab does not finished with newline.
+        if not line.endswith('\n'):
+            line += '\n'
+
         old_lines.append(line)
 
         if not line.strip():
