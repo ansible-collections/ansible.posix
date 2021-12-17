@@ -40,6 +40,7 @@ notes:
 requirements:
 - libselinux-python
 - libsemanage-python
+- python3-libsemanage
 author:
 - Stephen Fromm (@sfromm)
 '''
@@ -284,7 +285,7 @@ def main():
         module.fail_json(msg=missing_required_lib('libselinux-python'), exception=SELINUX_IMP_ERR)
 
     if not HAVE_SEMANAGE:
-        module.fail_json(msg=missing_required_lib('libsemanage-python'), exception=SEMANAGE_IMP_ERR)
+        module.fail_json(msg=missing_required_lib('libsemanage-python or python3-libsemanage'), exception=SEMANAGE_IMP_ERR)
 
     ignore_selinux_state = module.params['ignore_selinux_state']
 
