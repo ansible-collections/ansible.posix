@@ -1,0 +1,3 @@
+---
+bugfixes:
+- Replace distutils with included module in ansible-core 2.12 to address PEP 632 if available (https://github.com/ansible-collections/ansible.posix/issues/303).

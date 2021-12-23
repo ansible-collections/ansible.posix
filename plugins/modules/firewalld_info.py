@@ -204,8 +204,9 @@ firewalld_info:
 '''
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.six import raise_from
 from ansible.module_utils._text import to_native
-from distutils.version import StrictVersion
+from ansible_collections.ansible.posix.plugins.module_utils.version import StrictVersion
 
 
 try:
