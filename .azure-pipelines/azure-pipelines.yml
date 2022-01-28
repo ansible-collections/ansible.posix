@@ -233,8 +233,8 @@ stages:
           targets:
             - name: OS X 10.11
               test: osx/10.11
-            - name: RHEL 7.6
-              test: rhel/7.6
+            - name: RHEL 7.8
+              test: rhel/7.8
             - name: RHEL 8.2
               test: rhel/8.2
             - name: FreeBSD 11.1
@@ -252,8 +252,8 @@ stages:
           targets:
             - name: OS X 10.11
               test: osx/10.11
-            - name: RHEL 7.6
-              test: rhel/7.6
+            - name: RHEL 7.8
+              test: rhel/7.8
             - name: RHEL 8.1
               test: rhel/8.1
             - name: FreeBSD 11.1
