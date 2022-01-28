@@ -1,0 +1,3 @@
+---
+bugfixes:
+- synchronize - handle ansible_ssh_host the same as ansible_host (https://github.com/ansible-collections/ansible.posix/issues/298).

@@ -235,10 +235,11 @@ class ActionModule(ActionBase):
         src_host = '127.0.0.1'
         inventory_hostname = task_vars.get('inventory_hostname')
         dest_host_inventory_vars = task_vars['hostvars'].get(inventory_hostname)
-        dest_host = dest_host_inventory_vars.get('ansible_host', inventory_hostname)
-
+        dest_host = dest_host_inventory_vars.get('ansible_host') or \
+            dest_host_inventory_vars.get('ansible_ssh_host', inventory_hostname)
         dest_host_ids = [hostid for hostid in (dest_host_inventory_vars.get('inventory_hostname'),
-                                               dest_host_inventory_vars.get('ansible_host'))
+                                               dest_host_inventory_vars.get('ansible_host'),
+                                               dest_host_inventory_vars.get('ansible_ssh_host'))
                          if hostid is not None]
 
         localhost_ports = set()
