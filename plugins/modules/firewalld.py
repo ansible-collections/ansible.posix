@@ -109,6 +109,7 @@ options:
   forward:
     description:
       - Whether intra zone forwarding should be enabled/disabled for a zone in firewalld.
+        This parameter supports on python-firewall 0.9.0 or later.
     type: bool
   offline:
     description:
@@ -191,7 +192,7 @@ EXAMPLES = r'''
     forward: yes
     state: enabled
     permanent: yes
-    zone: dmz
+    zone: custom
 
 - ansible.posix.firewalld:
     zone: custom
@@ -228,10 +229,12 @@ EXAMPLES = r'''
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible_collections.ansible.posix.plugins.module_utils.firewalld import FirewallTransaction, fw_offline
+from ansible_collections.ansible.posix.plugins.module_utils.version import StrictVersion
 
 try:
     from firewall.client import Rich_Rule
     from firewall.client import FirewallClientZoneSettings
+    from firewall.config import VERSION as FIREWALLD_VERSION
 except ImportError:
     # The import errors are handled via FirewallTransaction, don't need to
     # duplicate that here
@@ -1050,6 +1053,9 @@ def main():
                         'To avoid unexpected behavior, please change the value to boolean.' % masquerade)
 
     if forward is not None:
+
+        if StrictVersion(FIREWALLD_VERSION) < StrictVersion('0.9.0'):
+            module.fail_json(msg=f'Intra zone forwarding requires firewalld>=0.9.0. Current version is {FIREWALLD_VERSION}.')
 
         transaction = ForwardTransaction(
             module,
