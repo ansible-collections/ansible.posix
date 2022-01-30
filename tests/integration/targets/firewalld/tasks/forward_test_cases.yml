@@ -2,50 +2,85 @@
 # (c) 2017, Adam Miller <admiller@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: firewalld forward test permanent enabled
-  firewalld:
-    forward: yes
-    permanent: true
-    state: enabled
-  register: result
+- name: query firewalld version
+  package_facts:
 
-- name: assert firewalld forward test permanent enabled worked
-  assert:
-    that:
-    - result is changed
+- name: run tests if intra zone forwarding is supported
+  block:
 
-- name: firewalld forward test permanent enabled rerun (verify not changed)
-  firewalld:
-    forward: yes
-    permanent: true
-    state: enabled
-  register: result
+  # Starting with firewalld 1.0.0 intra-zone forwarding is enabled by default.
+  # Ensure it is disabled before starting our tests.
+  - name: ensure forwarding starts disabled
+    firewalld:
+      forward: yes
+      permanent: true
+      state: disabled
 
-- name: assert firewalld forward test permanent enabled rerun worked (verify not changed)
-  assert:
-    that:
-    - result is not changed
+  - name: firewalld forward test permanent enabled
+    firewalld:
+      forward: yes
+      permanent: true
+      state: enabled
+    register: result
 
-- name: firewalld forward test permanent disabled
-  firewalld:
-    forward: no
-    permanent: true
-    state: disabled
-  register: result
+  - name: assert firewalld forward test permanent enabled worked
+    assert:
+      that:
+      - result is changed
 
-- name: assert firewalld forward test permanent disabled worked
-  assert:
-    that:
-    - result is changed
+  - name: firewalld forward test permanent enabled rerun (verify not changed)
+    firewalld:
+      forward: yes
+      permanent: true
+      state: enabled
+    register: result
 
-- name: firewalld forward test permanent disabled rerun (verify not changed)
-  firewalld:
-    forward: no
-    permanent: true
-    state: disabled
-  register: result
+  - name: assert firewalld forward test permanent enabled rerun worked (verify not changed)
+    assert:
+      that:
+      - result is not changed
 
-- name: assert firewalld forward test permanent disabled rerun worked (verify not changed)
-  assert:
-    that:
-    - result is not changed
+  - name: firewalld forward test permanent disabled
+    firewalld:
+      forward: no
+      permanent: true
+      state: disabled
+    register: result
+
+  - name: assert firewalld forward test permanent disabled worked
+    assert:
+      that:
+      - result is changed
+
+  - name: firewalld forward test permanent disabled rerun (verify not changed)
+    firewalld:
+      forward: no
+      permanent: true
+      state: disabled
+    register: result
+
+  - name: assert firewalld forward test permanent disabled rerun worked (verify not changed)
+    assert:
+      that:
+      - result is not changed
+
+  when: ansible_facts.packages.firewalld[0].version is version('0.9.0', '>=')
+
+- name: run tests if intra zone forwarding is not supported
+  block:
+
+  - name: try to enable intra zone forwarding
+    firewalld:
+      forward: yes
+      permanent: yes
+      state: enabled
+    ignore_errors: yes
+    register: result
+
+  - name: assert unsupported firewalld version
+    assert:
+      that:
+      - result is failed
+      - "'Intra zone forwarding requires firewalld>=0.9.0. Current version is' in result.msg"
+
+  when: ansible_facts.packages.firewalld[0].version is version('0.9.0', '<')

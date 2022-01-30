@@ -1,0 +1,4 @@
+---
+minor_changes:
+- firewalld - Added parameter ``forward`` to support enabling/disabling intra-zone 
+  forwarding.
