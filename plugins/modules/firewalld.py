@@ -1055,7 +1055,7 @@ def main():
     if forward is not None:
 
         if StrictVersion(FIREWALLD_VERSION) < StrictVersion('0.9.0'):
-            module.fail_json(msg=f'Intra zone forwarding requires firewalld>=0.9.0. Current version is {FIREWALLD_VERSION}.')
+            module.fail_json(msg='Intra zone forwarding requires firewalld>=0.9.0. Current version is {0}.'.format(FIREWALLD_VERSION))
 
         transaction = ForwardTransaction(
             module,
