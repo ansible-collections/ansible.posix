@@ -48,6 +48,7 @@ function retry
             return ${result}
         fi
         echo "@* -> ${result}"
+        sleep 5
     done
     echo "Command '@*' failed 3 times!"
     exit 255
@@ -74,7 +75,7 @@ else
 fi
 
 # START: HACK install dependencies
-#retry ansible-galaxy collection install community.general
+retry ansible-galaxy collection install community.general
 # END: HACK
 
 export PYTHONIOENCODING='utf-8'
