@@ -39,7 +39,7 @@
     src: '{{output_dir}}/foo.txt'
     dest: '{{output_dir}}/foo.result'
   register: sync_result
-#  delegate_to: '{{ inventory_hostname }}'
+  delegate_to: '{{ inventory_hostname }}'
 #- assert:
 #    that:
 #    - '''changed'' in sync_result'
