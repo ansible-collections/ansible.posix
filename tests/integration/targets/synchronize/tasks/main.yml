@@ -33,6 +33,7 @@
   with_items:
   - foo.txt
   - bar.txt
+  delegate_to: '{{ inventory_hostname }}'
 
 - name: synchronize file to new filename
   synchronize:
