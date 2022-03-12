@@ -32,6 +32,7 @@ options:
     description:
       - Device (or NFS volume, or something else) to be mounted on I(path).
       - Required when I(state) set to C(present) or C(mounted).
+      - Ignored when I(state) set to C(absent) or C(unmounted).
     type: path
   fstype:
     description:
@@ -68,9 +69,13 @@ options:
       - If C(unmounted), the device will be unmounted without changing I(fstab).
       - C(present) only specifies that the device is to be configured in
         I(fstab) and does not trigger or require a mount.
-      - C(absent) specifies that the device mount's entry will be removed from
-        I(fstab) and will also unmount the device and remove the mount
-        point.
+      - C(absent) specifies that the mount point entry I(path) will be removed
+        from I(fstab) and will also unmount the mounted device and remove the
+        mount point. A mounted device will be unmounted regardless of I(src) or its
+        real source. C(absent) does not unmount recursively, and the module will
+        fail if multiple devices are mounted on the same mount point. Using
+        C(absent) with a mount point that is not registered in the I(fstab) has
+        no effect. Use C(unmounted) instead.
       - C(remounted) specifies that the device will be remounted for when you
         want to force a refresh on the mount itself (added in 2.9). This will
         always return changed=true. If I(opts) is set, the options will be
