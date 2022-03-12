@@ -46,8 +46,8 @@
         - 'sync_result.msg.endswith(''+ foo.txt
 
           '')'
-      when:
-        - ansible_facts.virtualization_type != 'docker'
+  when:
+    - ansible_facts.virtualization_type != 'docker'
 
 #- block:
 #    - name: test that the file was really copied over
