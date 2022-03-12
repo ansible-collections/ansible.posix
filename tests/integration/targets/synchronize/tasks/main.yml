@@ -6,10 +6,12 @@
   file:
     path: '{{ output_dir }}'
     state: absent
+  delegate_to: '{{ inventory_hostname }}'
 - name: Create the working directory
   file:
     path: '{{ output_dir }}'
     state: directory
+  delegate_to: '{{ inventory_hostname }}'
 - name: create test new files
   copy:
     dest: '{{output_dir}}/{{item}}'
@@ -18,6 +20,7 @@
   with_items:
   - foo.txt
   - bar.txt
+  delegate_to: '{{ inventory_hostname }}'
 
 - name: Check OS distribution
   debug:
