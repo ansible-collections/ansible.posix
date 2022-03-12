@@ -20,7 +20,8 @@
   - bar.txt
 
 - name: Check facts
-  var: ansible_facts
+  debug:
+    var: ansible_facts
 
 - name: Check '{{ output_dir }}' value
   debug:
