@@ -74,7 +74,7 @@ else
 fi
 
 # START: HACK install dependencies
-retry ansible-galaxy collection install community.general
+#retry ansible-galaxy collection install community.general
 # END: HACK
 
 export PYTHONIOENCODING='utf-8'
