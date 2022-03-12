@@ -19,6 +19,10 @@
   - foo.txt
   - bar.txt
 
+- name: Check OS distribution
+  debug:
+    msg: "{{ ansible_distribution }}"
+
 #- name: synchronize file to new filename
 #  synchronize:
 #    src: '{{output_dir}}/foo.txt'
