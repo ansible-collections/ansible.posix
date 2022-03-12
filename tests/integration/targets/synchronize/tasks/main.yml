@@ -27,7 +27,7 @@
   debug:
     msg: "{{ ansible_facts.virtualization_type }}"
 
- - name: Check '{{ output_dir }}' value
+- name: Check '{{ output_dir }}' value
   debug:
     msg: "{{ output_dir }}"
 
@@ -42,6 +42,7 @@
   copy:
     src: "{{ output_dir }}/foo.txt"
     dest: "{{ output_dir }}/foo.result"
+
 
 #- name: synchronize file to new filename
 #  synchronize:
