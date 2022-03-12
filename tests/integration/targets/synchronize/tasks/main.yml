@@ -33,7 +33,6 @@
   with_items:
   - foo.txt
   - bar.txt
-  delegate_to: localhost
 
 #- name: synchronize file to new filename
 #  synchronize:
