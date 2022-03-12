@@ -6,12 +6,10 @@
   file:
     path: '{{ output_dir }}'
     state: absent
-  delegate_to: '{{ inventory_hostname }}'
 - name: Create the working directory
   file:
     path: '{{ output_dir }}'
     state: directory
-  delegate_to: '{{ inventory_hostname }}'
 - name: create test new files
   copy:
     dest: '{{output_dir}}/{{item}}'
@@ -20,7 +18,6 @@
   with_items:
   - foo.txt
   - bar.txt
-  delegate_to: '{{ inventory_hostname }}'
 
 - name: Check OS distribution
   debug:
@@ -32,16 +29,15 @@
 
 - name: test that the file was really copied over
   stat:
-    path: '{{output_dir}}/{{item}}'
+    path: "{{ output_dir }}/{{item}}"
   with_items:
   - foo.txt
   - bar.txt
-  delegate_to: '{{ inventory_hostname }}'
 
 - name: synchronize file to new filename
   synchronize:
-    src: /root/ansible_collections/ansible/posix/tests/output/.tmp/output_dir/foo.txt
-    dest: /root/ansible_collections/ansible/posix/tests/output/.tmp/output_dir/foo.result
+    src: "{{ output_dir }}/foo.txt"
+    dest: "{{ output_dir }}/foo.result"
   register: sync_result
   delegate_to: '{{ inventory_hostname }}'
 #- assert:
