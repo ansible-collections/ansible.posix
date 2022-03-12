@@ -383,10 +383,24 @@ class ActionModule(ActionBase):
                 # If no rsync_path is set, become was originally set, and dest is
                 # remote then add privilege escalation here.
                 if self._play_context.become_method == 'sudo':
-                    if self._play_context.become_user:
-                        rsync_path = 'sudo -u %s rsync' % self._play_context.become_user
+                    
+                    # if become is set, we can either rely on passwordless sudo or pass the password
+                    if self._play_context.become_pass is None:
+                        rsync_path = 'sudo '
                     else:
-                        rsync_path = 'sudo rsync'
+                        # pass the become password using the environment so that the synchronize module
+                        # can wrap ssh on the host with a shell script that injects the password into
+                        # stdin, allowing for `sudo -S` on the target machine to retrieve the password
+                        if hasattr(self._task, 'environment'):
+                            self._task.environment = []
+                        self._task.environment.append({'BECOME_PASS': self._play_context.become_pass})
+                        _tmp_args['_ssh_wrapper'] = True
+                        rsync_path = 'sudo -S '
+                    
+                    if self._play_context.become_user:
+                        rsync_path += '-u %s rsync' % self._play_context.become_user
+                    else:
+                        rsync_path += 'rsync'
                 # TODO: have to add in the rest of the become methods here
 
             # We cannot use privilege escalation on the machine running the

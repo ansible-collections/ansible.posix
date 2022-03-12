@@ -198,7 +198,7 @@ notes:
      delegate_to host when delegate_to is used).
    - The user and permissions for the synchronize `dest` are those of the `remote_user` on the destination host or the `become_user` if `become=yes` is active.
    - In Ansible 2.0 a bug in the synchronize module made become occur on the "local host".  This was fixed in Ansible 2.0.1.
-   - Currently, synchronize is limited to elevating permissions via passwordless sudo.  This is because rsync itself is connecting to the remote machine
+   - Currently, synchronize is limited to elevating permissions via sudo.  This now even works when password entry is required.
      and rsync doesn't give us a way to pass sudo credentials in.
    - Currently there are only a few connection types which support synchronize (ssh, paramiko, local, and docker) because a sync strategy has been
      determined for those connection types.  Note that the connection for these must not need a password as rsync itself is making the connection and
@@ -414,6 +414,7 @@ def main():
             rsync_opts=dict(type='list', default=[], elements='str'),
             ssh_args=dict(type='str'),
             ssh_connection_multiplexing=dict(type='bool', default=False),
+            _ssh_wrapper=dict(type='bool', default=False),
             partial=dict(type='bool', default=False),
             verify_host=dict(type='bool', default=False),
             delay_updates=dict(type='bool', default=True),
@@ -456,6 +457,7 @@ def main():
     rsync_opts = module.params['rsync_opts']
     ssh_args = module.params['ssh_args']
     ssh_connection_multiplexing = module.params['ssh_connection_multiplexing']
+    ssh_wrapper = module.params['_ssh_wrapper']
     verify_host = module.params['verify_host']
     link_dest = module.params['link_dest']
     delay_updates = module.params['delay_updates']
@@ -550,6 +552,13 @@ def main():
             ssh_cmd_str = ' '.join(shlex_quote(arg) for arg in ssh_cmd)
             if ssh_args:
                 ssh_cmd_str += ' %s' % ssh_args
+            # When `become: yes` is set but the account on the target requires a password for sudo, we have to supply
+            # it from the host side by wrapping the remote shell and inserting the password into stdin.
+            # In the ActionPlugin, the password is assigned to the BECOME_PASS environment variable, so we will not have
+            # to make it visible if anyone logs the command issued by ansible.
+            # Adapted from https://askubuntu.com/a/1263657
+            if ssh_wrapper:
+                ssh_cmd_str = '/bin/sh -c "{ echo $BECOME_PASS; cat - ; } | ' + ssh_cmd_str + ' $0 $* &"'
             cmd.append('--rsh=%s' % shlex_quote(ssh_cmd_str))
 
     if rsync_path:
