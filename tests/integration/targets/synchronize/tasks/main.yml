@@ -23,7 +23,11 @@
   debug:
     var: ansible_facts
 
-- name: Check '{{ output_dir }}' value
+- name: Check virtualization_type
+  debug:
+    msg: "{{ virtualization_type }}"
+
+ - name: Check '{{ output_dir }}' value
   debug:
     msg: "{{ output_dir }}"
 
