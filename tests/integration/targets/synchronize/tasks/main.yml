@@ -34,11 +34,11 @@
   - foo.txt
   - bar.txt
 
-- name copy synchronize file to new filename
+- name copy file to new filename
   copy:
     src: "{{ output_dir }}/foo.txt"
     dest: "{{ output_dir }}/foo.result"
-  delegate_to: '{{ inventory_hostname }}'
+#  delegate_to: '{{ inventory_hostname }}'
 
 #- name: synchronize file to new filename
 #  synchronize:
