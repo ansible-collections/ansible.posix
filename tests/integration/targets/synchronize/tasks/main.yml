@@ -19,9 +19,8 @@
   - foo.txt
   - bar.txt
 
-- name: Check OS distribution
-  debug:
-    msg: "{{ ansible_distribution }}"
+- name: Check facts
+  var: ansible_facts
 
 - name: Check '{{ output_dir }}' value
   debug:
