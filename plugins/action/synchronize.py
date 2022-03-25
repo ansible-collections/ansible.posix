@@ -347,6 +347,7 @@ class ActionModule(ActionBase):
 
                 else:
                     user = task_vars.get('ansible_user') or self._play_context.remote_user
+                user = self._templar.template(user)
 
             # Private key handling
             # Use the private_key parameter if passed else use context private_key_file
