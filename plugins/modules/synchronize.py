@@ -37,7 +37,6 @@ options:
   dest_port:
     description:
       - Port number for ssh on the destination host.
-      - Prior to Ansible 2.0, the C(ansible_ssh_port) inventory var took precedence over this value.
       - This parameter defaults to the value of C(ansible_port), the C(remote_port) config setting
         or the value from ssh client configuration if none of the former have been set.
     type: int
