@@ -1,0 +1,2 @@
+bugfixes:
+- synchronize - few documentation fixes (https://github.com/ansible-collections/ansible.posix/pull/271) 
