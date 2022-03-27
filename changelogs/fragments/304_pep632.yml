@@ -1,0 +1,3 @@
+---
+bugfixes:
+- Use vendored version of ``distutils.version`` instead of the deprecated Python standard library to address PEP 632 (https://github.com/ansible-collections/ansible.posix/issues/303).

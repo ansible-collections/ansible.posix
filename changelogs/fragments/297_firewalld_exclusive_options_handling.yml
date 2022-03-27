@@ -1,0 +1,3 @@
+---
+bugfixes:
+- firewalld - Refine the handling of exclusive options (https://github.com/ansible-collections/ansible.posix/issues/255).

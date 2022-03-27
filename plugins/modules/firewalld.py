@@ -128,8 +128,11 @@ notes:
     The module will not take care of this for you implicitly because that would undo any previously performed immediate actions which were not
     permanent. Therefore, if you require immediate access to a newly created zone it is recommended you reload firewalld immediately after the zone
     creation returns with a changed state and before you perform any other immediate, non-permanent actions on that zone.
+  - This module needs C(python-firewall) or C(python3-firewall) on managed nodes.
+    It is usually provided as a subset with C(firewalld) from the OS distributor for the OS default Python interpreter.
 requirements:
 - firewalld >= 0.2.11
+- python-firewall >= 0.2.11
 author:
 - Adam Miller (@maxamillion)
 '''
@@ -757,6 +760,10 @@ def main():
             target=('zone',),
             source=('permanent',),
         ),
+        mutually_exclusive=[
+            ['icmp_block', 'icmp_block_inversion', 'service', 'port', 'port_forward', 'rich_rule',
+             'interface', 'masquerade', 'source', 'target']
+        ],
     )
 
     permanent = module.params['permanent']
@@ -813,33 +820,11 @@ def main():
         if 'toaddr' in port_forward:
             port_forward_toaddr = port_forward['toaddr']
 
-    modification_count = 0
-    if icmp_block is not None:
-        modification_count += 1
-    if icmp_block_inversion is not None:
-        modification_count += 1
-    if service is not None:
-        modification_count += 1
-    if port is not None:
-        modification_count += 1
-    if port_forward is not None:
-        modification_count += 1
-    if rich_rule is not None:
-        modification_count += 1
-    if interface is not None:
-        modification_count += 1
-    if masquerade is not None:
-        modification_count += 1
-    if source is not None:
-        modification_count += 1
-    if target is not None:
-        modification_count += 1
-
-    if modification_count > 1:
-        module.fail_json(
-            msg='can only operate on port, service, rich_rule, masquerade, icmp_block, icmp_block_inversion, interface or source at once'
-        )
-    elif (modification_count > 0) and (desired_state in ['absent', 'present']) and (target is None):
+    modification = False
+    if any([icmp_block, icmp_block_inversion, service, port, port_forward, rich_rule,
+            interface, masquerade, source, target]):
+        modification = True
+    if modification and desired_state in ['absent', 'present'] and target is None:
         module.fail_json(
             msg='absent and present state can only be used in zone level operations'
         )
@@ -1024,7 +1009,7 @@ def main():
         msgs = msgs + transaction_msgs
 
     ''' If there are no changes within the zone we are operating on the zone itself '''
-    if modification_count == 0 and desired_state in ['absent', 'present']:
+    if not modification and desired_state in ['absent', 'present']:
 
         transaction = ZoneTransaction(
             module,

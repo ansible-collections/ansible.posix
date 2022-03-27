@@ -51,12 +51,30 @@ stages:
         parameters:
           testFormat: devel/linux/{0}/1
           targets:
+            - name: CentOS 7
+              test: centos7
+            - name: Fedora 34
+              test: fedora34
+            - name: Fedora 35
+              test: fedora35
+            - name: openSUSE 15 py3
+              test: opensuse15
+            - name: Ubuntu 18.04
+              test: ubuntu1804
+            - name: Ubuntu 20.04
+              test: ubuntu2004
+  - stage: Docker_2_12
+    displayName: Docker 2.12
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          testFormat: 2.12/linux/{0}/1
+          targets:
             - name: CentOS 6
               test: centos6
             - name: CentOS 7
               test: centos7
-            - name: CentOS 8
-              test: centos8
             - name: Fedora 33
               test: fedora33
             - name: Fedora 34
@@ -81,8 +99,6 @@ stages:
               test: centos6
             - name: CentOS 7
               test: centos7
-            - name: CentOS 8
-              test: centos8
             - name: Fedora 32
               test: fedora32
             - name: Fedora 33
@@ -107,8 +123,6 @@ stages:
               test: centos6
             - name: CentOS 7
               test: centos7
-            - name: CentOS 8
-              test: centos8
             - name: Fedora 30
               test: fedora30
             - name: Fedora 31
@@ -133,8 +147,6 @@ stages:
               test: centos6
             - name: CentOS 7
               test: centos7
-            - name: CentOS 8
-              test: centos8
             - name: Fedora 30
               test: fedora30
             - name: Fedora 31
@@ -156,6 +168,24 @@ stages:
       - template: templates/matrix.yml
         parameters:
           testFormat: devel/{0}/1
+          targets:
+            - name: MacOS 12.0
+              test: macos/12.0
+            - name: RHEL 7.9
+              test: rhel/7.9
+            - name: RHEL 8.5
+              test: rhel/8.5
+            - name: FreeBSD 12.3
+              test: freebsd/12.3
+            - name: FreeBSD 13.0
+              test: freebsd/13.0
+  - stage: Remote_2_12
+    displayName: Remote 2.12
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          testFormat: 2.12/{0}/1
           targets:
             - name: MacOS 11.1
               test: macos/11.1
@@ -195,8 +225,8 @@ stages:
           targets:
             - name: OS X 10.11
               test: osx/10.11
-            - name: RHEL 7.6
-              test: rhel/7.6
+            - name: RHEL 7.9
+              test: rhel/7.9
             - name: RHEL 8.2
               test: rhel/8.2
             - name: FreeBSD 11.1
@@ -214,8 +244,8 @@ stages:
           targets:
             - name: OS X 10.11
               test: osx/10.11
-            - name: RHEL 7.6
-              test: rhel/7.6
+            - name: RHEL 7.9
+              test: rhel/7.9
             - name: RHEL 8.1
               test: rhel/8.1
             - name: FreeBSD 11.1
@@ -230,9 +260,11 @@ stages:
       - Remote_2_9
       - Docker_2_9
       - Remote_2_10
-      - Remote_2_11
       - Docker_2_10
+      - Remote_2_11
       - Docker_2_11
+      - Remote_2_12
+      - Docker_2_12
       - Remote_devel
       - Docker_devel
     jobs:

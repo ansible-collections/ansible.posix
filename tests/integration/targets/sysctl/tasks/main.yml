@@ -123,10 +123,10 @@
         that:
           - sysctl_test2_change_test is not changed
 
-    - name: Try sysctl with an invalid value
+    - name: Try sysctl with an invalid name
       sysctl:
-        name: net.ipv4.ip_forward
-        value: foo
+        name: test.invalid
+        value: 1
       register: sysctl_test3
       ignore_errors: yes
 
@@ -196,10 +196,10 @@
           - sysctl_no_value is failed
           - "sysctl_no_value.msg == 'value cannot be None'"
 
-    - name: Try sysctl with an invalid value
+    - name: Try sysctl with an invalid name
       sysctl:
-        name: net.ipv4.ip_forward
-        value: foo
+        name: test.invalid
+        value: 1
         sysctl_set: yes
       register: sysctl_test4
       ignore_errors: yes

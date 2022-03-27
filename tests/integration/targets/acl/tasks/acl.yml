@@ -23,6 +23,16 @@
   group:
     name: "{{ test_group }}"
 
+- name: Clean up working directory and files
+  file:
+    path: "{{ output_dir }}"
+    state: absent
+
+- name: Create working directory
+  file:
+    path: "{{ output_dir }}"
+    state: directory
+
 - name: Create ansible file
   file:
     path: "{{ test_file }}"
