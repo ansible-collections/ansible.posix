@@ -1,0 +1,3 @@
+---
+trivial:
+- CI tests - add CI tests against stable-2.13 (https://github.com/ansible-collections/ansible.posix/issues/345).
