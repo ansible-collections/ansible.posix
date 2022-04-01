@@ -10,7 +10,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    callback: profile_tasks
+    name: profile_tasks
     type: aggregate
     short_description: adds time information to tasks
     description:

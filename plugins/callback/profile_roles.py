@@ -7,7 +7,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    callback: profile_roles
+    name: profile_roles
     type: aggregate
     short_description: adds timing information to roles
     description:
