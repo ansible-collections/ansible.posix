@@ -86,12 +86,12 @@ None
 
 <!-- List the versions of Ansible the collection has been tested with. Must match what is in galaxy.yml. -->
 
-* ansible-core 2.14 (devel)
+- ansible-core 2.14 (devel)
 - ansible-core 2.13 (stable)
-* ansible-core 2.12 (stable)
-* ansible-core 2.11 (stable)
-* ansible-base 2.10 (stable)
-* ansible 2.9 (stable)
+- ansible-core 2.12 (stable)
+- ansible-core 2.11 (stable)
+- ansible-base 2.10 (stable)
+- ansible 2.9 (stable)
 
 ## Roadmap
 

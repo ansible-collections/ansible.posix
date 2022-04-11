@@ -4,19 +4,18 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.module_utils.six import text_type
-from ansible.module_utils.six.moves import shlex_quote
-from ansible.plugins.shell.sh import ShellModule as ShModule
-
 DOCUMENTATION = '''
     name: fish
-    plugin_type: shell
     short_description: fish shell (/bin/fish)
     description:
       - This is here because some people are restricted to fish.
     extends_documentation_fragment:
       - shell_common
 '''
+
+from ansible.module_utils.six import text_type
+from ansible.module_utils.six.moves import shlex_quote
+from ansible.plugins.shell.sh import ShellModule as ShModule
 
 
 class ShellModule(ShModule):

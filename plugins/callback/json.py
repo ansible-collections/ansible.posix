@@ -7,7 +7,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    callback: json
+    name: json
     short_description: Ansible screen output as JSON
     description:
         - This callback converts all events into JSON output to stdout

@@ -6,8 +6,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    callback: timer
-    callback_type: aggregate
+    name: timer
+    type: aggregate
     requirements:
       - whitelist in configuration
     short_description: Adds time to play stats

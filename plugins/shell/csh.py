@@ -4,19 +4,18 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.module_utils.six import text_type
-from ansible.module_utils.six.moves import shlex_quote
-from ansible.plugins.shell import ShellBase
-
 DOCUMENTATION = '''
     name: csh
-    plugin_type: shell
     short_description: C shell (/bin/csh)
     description:
       - When you have no other option than to use csh
     extends_documentation_fragment:
       - shell_common
 '''
+
+from ansible.module_utils.six import text_type
+from ansible.module_utils.six.moves import shlex_quote
+from ansible.plugins.shell import ShellBase
 
 
 class ShellModule(ShellBase):
