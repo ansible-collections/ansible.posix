@@ -43,6 +43,10 @@ with open('task_vars.json', 'wb') as f:
 '''
 
 
+class Dummy(object):
+    pass
+
+
 class BreakPoint(Exception):
     pass
 
@@ -55,6 +59,7 @@ class TaskMock(object):
     become = None
     become_user = None
     become_method = None
+    check_mode = False
 
 
 class StdinMock(object):
