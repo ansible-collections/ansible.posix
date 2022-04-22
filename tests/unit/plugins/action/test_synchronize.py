@@ -55,6 +55,7 @@ class TaskMock(object):
     become = None
     become_user = None
     become_method = None
+    check_mode = False
 
 
 class StdinMock(object):
