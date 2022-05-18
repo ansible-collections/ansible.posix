@@ -74,7 +74,7 @@ options:
         has already a device mounted on, and its source is different than I(src),
         the module will fail to avoid unexpected unmount or mount point override.
         If the mount point is not present, the mount point will be created.
-        The I(fstab) is completely ignored.
+        The I(fstab) is completely ignored. This option is added in version 1.5.0.
       - C(absent) specifies that the device mount's entry will be removed from
         I(fstab) and will also unmount the device and remove the mount
         point.
@@ -726,7 +726,7 @@ def _is_same_mount_src(module, src, mountpoint, linux_mounts):
         # the mountpoint is a bind mount AND the source FS is the same than 'src'.
         # is_bind_mounted() is not reliable on Solaris, NetBSD and OpenBSD.
         # But we can rely on 'mount -v' on all other platforms, and Linux non-bind mounts.
-        if (is_bind_mounted(module, linux_mounts, mountpoint, src)):
+        if is_bind_mounted(module, linux_mounts, mountpoint, src):
             return True
 
     # mount with parameter -v has a close behavior on Linux, *BSD, SunOS
