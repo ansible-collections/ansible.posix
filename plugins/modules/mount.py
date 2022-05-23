@@ -850,11 +850,8 @@ def main():
             args['warnings'].append("Ignore the 'boot' due to 'opts' contains 'noauto'.")
         elif not module.params['boot']:
             args['boot'] = 'no'
-            if 'defaults' in opts:
-                args['warnings'].append("Ignore the 'boot' due to 'opts' contains 'defaults'.")
-            else:
-                opts.append('noauto')
-                args['opts'] = ','.join(opts)
+            opts.append('noauto')
+            args['opts'] = ','.join(opts)
 
     # If fstab file does not exist, we first need to create it. This mainly
     # happens when fstab option is passed to the module.

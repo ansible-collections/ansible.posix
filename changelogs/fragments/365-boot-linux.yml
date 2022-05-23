@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - mount - Handle ``boot`` option on Linux, NetBSD and OpenBSD correctly (https://github.com/ansible-collections/ansible.posix/issues/364).
