@@ -361,6 +361,25 @@
       path: /tmp/myfs
       state: absent
 
+  - name: Mount the FS with noauto option and defaults
+    mount:
+      path: /tmp/myfs
+      src: /tmp/myfs.img
+      fstype: ext3
+      state: mounted
+      boot: no
+    register: mount_info
+
+  - name: assert the mount without noauto was successful
+    assert:
+      that:
+      - "'noauto' in mount_info['opts'].split(',')"
+
+  - name: Unmount FS
+    mount:
+      path: /tmp/myfs
+      state: absent
+
   - name: Remove the test FS
     file:
       path: '{{ item }}'
