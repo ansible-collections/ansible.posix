@@ -85,7 +85,7 @@ Parameters
                     </div>
                 </td>
                 <td>
-                        <b>Default:</b><br/><div style="color: blue">0</div>
+                        <b>Default:</b><br/><div style="color: blue">"0"</div>
                 </td>
                 <td>
                         <div>Dump (see fstab(5)).</div>
@@ -153,7 +153,7 @@ Parameters
                     </div>
                 </td>
                 <td>
-                        <b>Default:</b><br/><div style="color: blue">0</div>
+                        <b>Default:</b><br/><div style="color: blue">"0"</div>
                 </td>
                 <td>
                         <div>Passno (see fstab(5)).</div>
@@ -295,7 +295,7 @@ Examples
       ansible.posix.mount:
         src: 192.168.1.100:/nfs/ssd/shared_data
         path: /mnt/shared_data
-        opts: rw,sync,hard,intr
+        opts: rw,sync,hard
         state: mounted
         fstype: nfs
 
@@ -303,7 +303,7 @@ Examples
       ansible.posix.mount:
         src: 192.168.1.100:/nfs/ssd/shared_data
         path: /mnt/shared_data
-        opts: rw,sync,hard,intr
+        opts: rw,sync,hard
         boot: no
         state: mounted
         fstype: nfs

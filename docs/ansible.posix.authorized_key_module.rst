@@ -240,6 +240,12 @@ Examples
         state: present
         key: https://github.com/charlie.keys
 
+    - name: Set authorized keys taken from url using lookup
+      ansible.posix.authorized_key:
+        user: charlie
+        state: present
+        key: "{{ lookup('url', 'https://github.com/charlie.keys', split_lines=False) }}"
+
     - name: Set authorized key in alternate location
       ansible.posix.authorized_key:
         user: charlie

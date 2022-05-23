@@ -1,3 +1,0 @@
----
-trivial:
-- CI tests - following the new sanity check guideline (https://github.com/ansible-collections/ansible.posix/issues/348).
