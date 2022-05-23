@@ -210,3 +210,53 @@ releases:
     - synchronize.yml
     - test_matrix.yml
     release_date: '2021-08-11'
+  1.4.0:
+    changes:
+      bugfixes:
+      - Fix for whitespace in source full path causing error ```code 23) at main.c(1330)
+        [sender=3.2.3]``` (https://github.com/ansible-collections/ansible.posix/pull/278)
+      - Include ``PSF-license.txt`` file for ``plugins/module_utils/_version.py``.
+      - Use vendored version of ``distutils.version`` instead of the deprecated Python
+        standard library to address PEP 632 (https://github.com/ansible-collections/ansible.posix/issues/303).
+      - firewalld - Correct usage of queryForwardPort (https://github.com/ansible-collections/ansible.posix/issues/247).
+      - firewalld - Refine the handling of exclusive options (https://github.com/ansible-collections/ansible.posix/issues/255).
+      - mount - add a newline at the end of line in ``fstab`` (https://github.com/ansible-collections/ansible.posix/issues/210).
+      - profile_tasks - Correctly calculate task execution time with serial execution
+        (https://github.com/ansible-collections/ansible.posix/issues/83).
+      - seboolean - add ``python3-libsemanage`` package dependency for RHEL8+ systems.
+      minor_changes:
+      - firewalld - Show warning message that variable type of ``masquerade`` and
+        ``icmp_block_inversion`` will be changed from ``str`` to ``boolean`` in the
+        future release (https://github.com/ansible-collections/ansible.posix/pull/254).
+      - selinux - optionally update kernel boot params when disabling/re-enabling
+        SELinux (https://github.com/ansible-collections/ansible.posix/pull/142).
+      release_summary: 'This is the minor release of the ``ansible.posix`` collection.
+
+        This changelog contains all changes to the modules in this collection that
+
+        have been added after the release of ``ansible.posix`` 1.3.0.'
+    fragments:
+    - 1.4.0.yml
+    - 211_fstab_append_newline.yml
+    - 247_firewalld.yml
+    - 254_variable_warnings.yml
+    - 255_authorized_key_url.yml
+    - 263_profile_tasks_with_serial.yml
+    - 272-copy_ignore_txt.yml
+    - 277_fix_integration_test_on_devel.yml
+    - 282_fix_unit_test_for_synchronize.yml
+    - 287_firewalld_requirements.yml
+    - 288_mounts_options.yml
+    - 297_firewalld_exclusive_options_handling.yml
+    - 299_seboolean_python3.yml
+    - 302_shippable_exit_code.yml
+    - 304_pep632.yml
+    - 346_copy_ignore_txt_for_devel.yml
+    - 347_add_branch_213.yml
+    - 349_follow_new_guidelines.yml
+    - 353_ci_fix_unittest_for_synchronize.yml
+    - disable_selinux_via_kernel_cmdline.yml
+    - psf-license.yml
+    - sanity_fixes.yml
+    - shell_escape_full_path_for_rsync.yml
+    release_date: '2022-05-23'

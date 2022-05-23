@@ -1,3 +1,0 @@
----
-bugfixes:
-- mount - add a newline at the end of line in ``fstab`` (https://github.com/ansible-collections/ansible.posix/issues/210).

@@ -1,3 +1,0 @@
----
-bugfixes:
-- seboolean - add ``python3-libsemanage`` package dependency for RHEL8+ systems.

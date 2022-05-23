@@ -1,3 +1,0 @@
----
-bugfixes:
-  - Fix for whitespace in source full path causing error ```code 23) at main.c(1330) [sender=3.2.3]``` (https://github.com/ansible-collections/ansible.posix/pull/278)

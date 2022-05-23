@@ -1,3 +1,0 @@
----
-trivial:
-- CI tests - added check_mode attribute to TaskMock class for synchronize plugin unit test (https://github.com/ansible-collections/ansible.posix/issues/352).
