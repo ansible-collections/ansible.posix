@@ -246,7 +246,7 @@
   - name: Create empty file
     community.general.filesize:
       path: /tmp/myfs.img
-      size: 20
+      size: 20M
 
   - name: Format FS
     community.general.filesystem:
