@@ -236,20 +236,20 @@
     shell: cat /etc/fstab
     register: optional_fields_content
 
-  - name: Check if the line containing the missing last two fields was changed
-    assert:
-      that:
-      - optional_fields_update['changed']
-      - ''' 0 0'' in optional_fields_content.stdout'
-      - 1 == optional_fields_content.stdout_lines | length
+#  - name: Check if the line containing the missing last two fields was changed
+#    assert:
+#      that:
+#      - optional_fields_update['changed']
+#      - ''' 0 0'' in optional_fields_content.stdout'
+#      - 1 == optional_fields_content.stdout_lines | length
 
   - name: Create empty file
-    filesize:
+    community.general.filesize:
       path: /tmp/myfs.img
       size: 20M
 
   - name: Format FS
-    filesystem:
+    community.general.filesystem:
       fstype: ext3
       dev: /tmp/myfs.img
 
