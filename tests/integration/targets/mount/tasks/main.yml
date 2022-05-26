@@ -242,167 +242,167 @@
 #      - optional_fields_update['changed']
 #      - ''' 0 0'' in optional_fields_content.stdout'
 #      - 1 == optional_fields_content.stdout_lines | length
-
-  - name: Create empty file
-    community.general.filesize:
-      path: /tmp/myfs.img
-      size: 20M
-
-  - name: Format FS
-    community.general.filesystem:
-      fstype: ext3
-      dev: /tmp/myfs.img
-
-  - name: Mount the FS for the first time
-    mount:
-      path: /tmp/myfs
-      src: /tmp/myfs.img
-      fstype: ext2
-      state: mounted
-
-  - name: Get the last write time
-    shell: 'dumpe2fs /tmp/myfs.img 2>/dev/null | grep -i last write time: |cut -d: -f2-'
-    register: last_write_time
-
-  - name: Wait 2 second
-    pause:
-      seconds: 2
-
-  - name: Test if the FS is remounted
-    mount:
-      path: /tmp/myfs
-      state: remounted
-
-  - name: Get again the last write time
-    shell: 'dumpe2fs /tmp/myfs.img 2>/dev/null | grep -i last write time: |cut -d: -f2-'
-    register: last_write_time2
-
-  - name: Fail if they are the same
-    fail:
-      msg: Filesytem was not remounted, testing of the module failed!
-    when: last_write is defined and last_write_time2 is defined and last_write_time.stdout == last_write_time2.stdout
-
-  - name: Remount filesystem with different opts using remounted option (Linux only)
-    mount:
-      path: /tmp/myfs
-      state: remounted
-      opts: rw,noexec
-
-  - name: Get remounted options (Linux only)
-    shell: mount | grep myfs | grep -E -w 'noexec' | wc -l
-    register: remounted_options
-
-  - name: Make sure the filesystem now has the new opts after using remounted (Linux only)
-    assert:
-      that:
-        - "'1' in remounted_options.stdout"
-        - "1 == remounted_options.stdout_lines | length"
-
-  - name: Mount the FS again to test backup
-    mount:
-      path: /tmp/myfs
-      src: /tmp/myfs.img
-      fstype: ext2
-      state: mounted
-      backup: yes
-    register: mount_backup_out
-
-  - name: ensure backup_file in returned output
-    assert:
-      that:
-        - "'backup_file' in mount_backup_out"
-
-  always:
-  - name: Umount the test FS
-    mount:
-      path: /tmp/myfs
-      src: /tmp/myfs.img
-      opts: loop
-      state: absent
-
-  - name: Remove the test FS
-    file:
-      path: '{{ item }}'
-      state: absent
-    loop:
-    - /tmp/myfs.img
-    - /tmp/myfs
-  when: ansible_system in ('Linux')
-
-- name: Block to test boot option for Linux
-  block:
-  - name: Create empty file
-    community.general.filesize:
-      path: /tmp/myfs.img
-      size: 20M
-
-  - name: Format FS
-    community.general.filesystem:
-      fstype: ext3
-      dev: /tmp/myfs.img
-
-  - name: Mount the FS with noauto option
-    mount:
-      path: /tmp/myfs
-      src: /tmp/myfs.img
-      fstype: ext3
-      state: mounted
-      boot: no
-      opts: rw,user,async
-    register: mount_info
-
-  - name: assert the mount without noauto was successful
-    assert:
-      that:
-      - mount_info['opts'] == 'rw,user,async,noauto'
-
-  - name: Unmount FS
-    mount:
-      path: /tmp/myfs
-      state: absent
-
-  - name: Remove the test FS
-    file:
-      path: '{{ item }}'
-      state: absent
-    loop:
-    - /tmp/myfs.img
-    - /tmp/myfs
-  when: ansible_system in ('Linux')
-
-- name: Block to test missing newline at the EOF of fstab
-  block:
-  - name: Create empty file
-    community.general.filesize:
-      path: /tmp/myfs1.img
-      size: 20M
-  - name: Format FS
-    community.general.filesystem:
-      fstype: ext3
-      dev: /tmp/myfs1.img
-  - name: Create custom fstab file without newline
-    copy:
-      content: '#TEST COMMENT WITHOUT NEWLINE'
-      dest: /tmp/test_fstab
-  - name: Mount the FS using the custom fstab
-    mount:
-      path: /tmp/myfs1
-      src: /tmp/myfs1.img
-      fstype: ext3
-      state: mounted
-      opts: defaults
-      fstab: /tmp/test_fstab
-  - name: Unmount the mount point in the custom fstab
-    mount:
-      path: /tmp/myfs1
-      state: absent
-      fstab: /tmp/test_fstab
-  - name: Remove the test FS and the custom fstab
-    file:
-      path: '{{ item }}'
-      state: absent
-    loop:
-    - /tmp/myfs1.img
-    - /tmp/myfs1
-    - /tmp/test_fstab
-  when: ansible_system in ('Linux')
+#
+#  - name: Create empty file
+#    community.general.filesize:
+#      path: /tmp/myfs.img
+#      size: 20
+#
+#  - name: Format FS
+#    community.general.filesystem:
+#      fstype: ext3
+#      dev: /tmp/myfs.img
+#
+#  - name: Mount the FS for the first time
+#    mount:
+#      path: /tmp/myfs
+#      src: /tmp/myfs.img
+#      fstype: ext2
+#      state: mounted
+#
+#  - name: Get the last write time
+#    shell: 'dumpe2fs /tmp/myfs.img 2>/dev/null | grep -i last write time: |cut -d: -f2-'
+#    register: last_write_time
+#
+#  - name: Wait 2 second
+#    pause:
+#      seconds: 2
+#
+#  - name: Test if the FS is remounted
+#    mount:
+#      path: /tmp/myfs
+#      state: remounted
+#
+#  - name: Get again the last write time
+#    shell: 'dumpe2fs /tmp/myfs.img 2>/dev/null | grep -i last write time: |cut -d: -f2-'
+#    register: last_write_time2
+#
+#  - name: Fail if they are the same
+#    fail:
+#      msg: Filesytem was not remounted, testing of the module failed!
+#    when: last_write is defined and last_write_time2 is defined and last_write_time.stdout == last_write_time2.stdout
+#
+#  - name: Remount filesystem with different opts using remounted option (Linux only)
+#    mount:
+#      path: /tmp/myfs
+#      state: remounted
+#      opts: rw,noexec
+#
+#  - name: Get remounted options (Linux only)
+#    shell: mount | grep myfs | grep -E -w 'noexec' | wc -l
+#    register: remounted_options
+#
+#  - name: Make sure the filesystem now has the new opts after using remounted (Linux only)
+#    assert:
+#      that:
+#        - "'1' in remounted_options.stdout"
+#        - "1 == remounted_options.stdout_lines | length"
+#
+#  - name: Mount the FS again to test backup
+#    mount:
+#      path: /tmp/myfs
+#      src: /tmp/myfs.img
+#      fstype: ext2
+#      state: mounted
+#      backup: yes
+#    register: mount_backup_out
+#
+#  - name: ensure backup_file in returned output
+#    assert:
+#      that:
+#        - "'backup_file' in mount_backup_out"
+#
+#  always:
+#  - name: Umount the test FS
+#    mount:
+#      path: /tmp/myfs
+#      src: /tmp/myfs.img
+#      opts: loop
+#      state: absent
+#
+#  - name: Remove the test FS
+#    file:
+#      path: '{{ item }}'
+#      state: absent
+#    loop:
+#    - /tmp/myfs.img
+#    - /tmp/myfs
+#  when: ansible_system in ('Linux')
+#
+#- name: Block to test boot option for Linux
+#  block:
+#  - name: Create empty file
+#    community.general.filesize:
+#      path: /tmp/myfs.img
+#      size: 20M
+#
+#  - name: Format FS
+#    community.general.filesystem:
+#      fstype: ext3
+#      dev: /tmp/myfs.img
+#
+#  - name: Mount the FS with noauto option
+#    mount:
+#      path: /tmp/myfs
+#      src: /tmp/myfs.img
+#      fstype: ext3
+#      state: mounted
+#      boot: no
+#      opts: rw,user,async
+#    register: mount_info
+#
+#  - name: assert the mount without noauto was successful
+#    assert:
+#      that:
+#      - mount_info['opts'] == 'rw,user,async,noauto'
+#
+#  - name: Unmount FS
+#    mount:
+#      path: /tmp/myfs
+#      state: absent
+#
+#  - name: Remove the test FS
+#    file:
+#      path: '{{ item }}'
+#      state: absent
+#    loop:
+#    - /tmp/myfs.img
+#    - /tmp/myfs
+#  when: ansible_system in ('Linux')
+#
+#- name: Block to test missing newline at the EOF of fstab
+#  block:
+#  - name: Create empty file
+#    community.general.filesize:
+#      path: /tmp/myfs1.img
+#      size: 20M
+#  - name: Format FS
+#    community.general.filesystem:
+#      fstype: ext3
+#      dev: /tmp/myfs1.img
+#  - name: Create custom fstab file without newline
+#    copy:
+#      content: '#TEST COMMENT WITHOUT NEWLINE'
+#      dest: /tmp/test_fstab
+#  - name: Mount the FS using the custom fstab
+#    mount:
+#      path: /tmp/myfs1
+#      src: /tmp/myfs1.img
+#      fstype: ext3
+#      state: mounted
+#      opts: defaults
+#      fstab: /tmp/test_fstab
+#  - name: Unmount the mount point in the custom fstab
+#    mount:
+#      path: /tmp/myfs1
+#      state: absent
+#      fstab: /tmp/test_fstab
+#  - name: Remove the test FS and the custom fstab
+#    file:
+#      path: '{{ item }}'
+#      state: absent
+#    loop:
+#    - /tmp/myfs1.img
+#    - /tmp/myfs1
+#    - /tmp/test_fstab
+#  when: ansible_system in ('Linux')
