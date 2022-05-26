@@ -244,12 +244,12 @@
       - 1 == optional_fields_content.stdout_lines | length
 
   - name: Create empty file
-    community.general.filesize:
+    filesize:
       path: /tmp/myfs.img
       size: 20M
 
   - name: Format FS
-    community.general.filesystem:
+    filesystem:
       fstype: ext3
       dev: /tmp/myfs.img
 
