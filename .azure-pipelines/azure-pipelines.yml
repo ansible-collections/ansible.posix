@@ -187,7 +187,7 @@ stages:
     jobs:
       - template: templates/matrix.yml
         parameters:
-          testFormat: devel/{0}/1
+          testFormat: devel/{0}
           targets:
             - name: MacOS 12.0
               test: macos/12.0
@@ -199,13 +199,17 @@ stages:
               test: freebsd/12.3
             - name: FreeBSD 13.0
               test: freebsd/13.0
+          groups:
+            - 1
+            - 2
+            - 3
   - stage: Remote_2_13
     displayName: Remote 2.13
     dependsOn: []
     jobs:
       - template: templates/matrix.yml
         parameters:
-          testFormat: 2.13/{0}/1
+          testFormat: 2.13/{0}
           targets:
             - name: MacOS 12.0
               test: macos/12.0
@@ -217,13 +221,16 @@ stages:
               test: freebsd/12.3
             - name: FreeBSD 13.0
               test: freebsd/13.0
+          groups:
+            - 1
+            - 2
   - stage: Remote_2_12
     displayName: Remote 2.12
     dependsOn: []
     jobs:
       - template: templates/matrix.yml
         parameters:
-          testFormat: 2.12/{0}/1
+          testFormat: 2.12/{0}
           targets:
             - name: MacOS 11.1
               test: macos/11.1
@@ -231,17 +238,20 @@ stages:
               test: rhel/7.9
             - name: RHEL 8.4
               test: rhel/8.4
-            - name: FreeBSD 12.2
-              test: freebsd/12.2
+            - name: FreeBSD 12.3
+              test: freebsd/12.3
             - name: FreeBSD 13.0
               test: freebsd/13.0
+          groups:
+            - 1
+            - 2
   - stage: Remote_2_11
     displayName: Remote 2.11
     dependsOn: []
     jobs:
       - template: templates/matrix.yml
         parameters:
-          testFormat: 2.11/{0}/1
+          testFormat: 2.11/{0}
           targets:
             - name: MacOS 11.1
               test: macos/11.1
@@ -249,17 +259,18 @@ stages:
               test: rhel/7.9
             - name: RHEL 8.3
               test: rhel/8.3
-            - name: FreeBSD 11.4
-              test: freebsd/11.4
-            - name: FreeBSD 12.2
-              test: freebsd/12.2
+            - name: FreeBSD 12.3
+              test: freebsd/12.3
+          groups:
+            - 1
+            - 2
   - stage: Remote_2_10
     displayName: Remote 2.10
     dependsOn: []
     jobs:
       - template: templates/matrix.yml
         parameters:
-          testFormat: 2.10/{0}/1
+          testFormat: 2.10/{0}
           targets:
             - name: OS X 10.11
               test: osx/10.11
@@ -267,10 +278,11 @@ stages:
               test: rhel/7.9
             - name: RHEL 8.2
               test: rhel/8.2
-            - name: FreeBSD 11.1
-              test: freebsd/11.1
-            - name: FreeBSD 12.1
-              test: freebsd/12.1
+            - name: FreeBSD 12.3
+              test: freebsd/12.3
+          groups:
+            - 1
+            - 2
 
   - stage: Remote_2_9
     displayName: Remote 2.9
@@ -278,7 +290,7 @@ stages:
     jobs:
       - template: templates/matrix.yml
         parameters:
-          testFormat: 2.9/{0}/1
+          testFormat: 2.9/{0}
           targets:
             - name: OS X 10.11
               test: osx/10.11
@@ -286,10 +298,11 @@ stages:
               test: rhel/7.9
             - name: RHEL 8.1
               test: rhel/8.1
-            - name: FreeBSD 11.1
-              test: freebsd/11.1
-            - name: FreeBSD 12.0
-              test: freebsd/12.0
+            - name: FreeBSD 12.3
+              test: freebsd/12.3
+          groups:
+            - 1
+            - 2ß
 ## Finally
 
   - stage: Summary
