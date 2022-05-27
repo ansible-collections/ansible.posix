@@ -251,6 +251,9 @@
       path: /tmp/myfs.img
       size: 20M
 
+  - debug:
+      msg: "Hello"
+
   - name: Format FS
     community.general.filesystem:
       fstype: ext3
