@@ -70,7 +70,8 @@ if [ "${SHIPPABLE_BUILD_ID:-}" ]; then
     cp -aT "${SHIPPABLE_BUILD_DIR}" "${TEST_DIR}"
     cd "${TEST_DIR}"
 else
-    export ANSIBLE_COLLECTIONS_PATHS="${PWD}/../../../"
+    export ANSIBLE_COLLECTIONS_PATHS="${HOME}/.ansible"
+    #export ANSIBLE_COLLECTIONS_PATHS="${PWD}/../../../"
 fi
 
 # START: HACK install dependencies
