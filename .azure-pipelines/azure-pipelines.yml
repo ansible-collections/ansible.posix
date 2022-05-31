@@ -57,12 +57,6 @@ stages:
               test: fedora35
             - name: Fedora 36
               test: fedora36
-            - name: openSUSE 15 py3
-              test: opensuse15
-            - name: Ubuntu 20.04
-              test: ubuntu2004
-            - name: Ubuntu 22.04
-              test: ubuntu2204
   - stage: Docker_2_13
     displayName: Docker 2.13
     dependsOn: []
@@ -75,10 +69,6 @@ stages:
               test: centos7
             - name: Fedora 35
               test: fedora35
-            - name: openSUSE 15 py3
-              test: opensuse15
-            - name: Ubuntu 20.04
-              test: ubuntu2004
   - stage: Docker_2_12
     displayName: Docker 2.12
     dependsOn: []
@@ -89,10 +79,6 @@ stages:
           targets:
             - name: CentOS 7
               test: centos7
-            - name: openSUSE 15 py3
-              test: opensuse15
-            - name: Ubuntu 20.04
-              test: ubuntu2004
   - stage: Docker_2_11
     displayName: Docker 2.11
     dependsOn: []
@@ -103,10 +89,6 @@ stages:
           targets:
             - name: CentOS 7
               test: centos7
-            - name: openSUSE 15 py3
-              test: opensuse15
-            - name: Ubuntu 20.04
-              test: ubuntu2004
   - stage: Docker_2_9
     displayName: Docker 2.9
     dependsOn: []
@@ -117,8 +99,6 @@ stages:
           targets:
             - name: CentOS 7
               test: centos7
-            - name: openSUSE 15 py3
-              test: opensuse15
 
 ## Remote
   - stage: Remote_devel
@@ -129,18 +109,12 @@ stages:
         parameters:
           testFormat: devel/{0}/1
           targets:
-            - name: MacOS 12.0
-              test: macos/12.0
             - name: RHEL 7.9
               test: rhel/7.9
             - name: RHEL 8.6
               test: rhel/8.6
             - name: RHEL 9.0
               test: rhel/9.0
-            - name: FreeBSD 12.3
-              test: freebsd/12.3
-            - name: FreeBSD 13.1
-              test: freebsd/13.1
   - stage: Remote_2_13
     displayName: Remote 2.13
     dependsOn: []
@@ -149,16 +123,10 @@ stages:
         parameters:
           testFormat: 2.13/{0}/1
           targets:
-            - name: MacOS 12.0
-              test: macos/12.0
             - name: RHEL 7.9
               test: rhel/7.9
             - name: RHEL 8.6
               test: rhel/8.6
-            - name: FreeBSD 12.3
-              test: freebsd/12.3
-            - name: FreeBSD 13.1
-              test: freebsd/13.1
   - stage: Remote_2_12
     displayName: Remote 2.12
     dependsOn: []
@@ -167,16 +135,10 @@ stages:
         parameters:
           testFormat: 2.12/{0}/1
           targets:
-            - name: MacOS 12.0
-              test: macos/12.0
             - name: RHEL 7.9
               test: rhel/7.9
             - name: RHEL 8.6
               test: rhel/8.6
-            - name: FreeBSD 12.3
-              test: freebsd/12.3
-            - name: FreeBSD 13.1
-              test: freebsd/13.1
   - stage: Remote_2_11
     displayName: Remote 2.11
     dependsOn: []
@@ -185,16 +147,10 @@ stages:
         parameters:
           testFormat: 2.11/{0}/1
           targets:
-            - name: MacOS 12.0
-              test: macos/12.0
             - name: RHEL 7.9
               test: rhel/7.9
             - name: RHEL 8.6
               test: rhel/8.6
-            - name: FreeBSD 11.4
-              test: freebsd/11.4
-            - name: FreeBSD 12.3
-              test: freebsd/12.3
   - stage: Remote_2_9
     displayName: Remote 2.9
     dependsOn: []
@@ -203,16 +159,10 @@ stages:
         parameters:
           testFormat: 2.9/{0}/1
           targets:
-            - name: MacOS 12.0
-              test: macos/12.0
             - name: RHEL 7.9
               test: rhel/7.9
             - name: RHEL 8.6
               test: rhel/8.6
-            - name: FreeBSD 11.4
-              test: freebsd/11.4
-            - name: FreeBSD 12.3
-              test: freebsd/12.3
 
 ## Finally
 
