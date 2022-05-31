@@ -87,8 +87,6 @@ stages:
         parameters:
           testFormat: 2.12/linux/{0}/1
           targets:
-            - name: CentOS 6
-              test: centos6
             - name: CentOS 7
               test: centos7
             - name: openSUSE 15 py3
