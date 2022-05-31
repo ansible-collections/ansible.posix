@@ -408,7 +408,5 @@
 #  when: ansible_system in ('Linux')
 
 - name: Create empty file
-  community.general.filesize:
-    path: /tmp/myfs.img
-    size: 20M
+  command: dd if=/dev/zero of=/tmp/myfs.img bs=1048576 count=20
   when: ansible_system in ('Linux')
