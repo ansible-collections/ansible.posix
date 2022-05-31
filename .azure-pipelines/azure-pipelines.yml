@@ -237,8 +237,6 @@ stages:
         parameters:
           testFormat: 2.9/{0}/1
           targets:
-            - name: OS X 10.11
-              test: osx/10.11
             - name: RHEL 7.9
               test: rhel/7.9
             - name: RHEL 8.1
