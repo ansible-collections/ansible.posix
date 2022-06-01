@@ -219,7 +219,7 @@
   - name: Create fstab record with missing last two fields
     copy:
       dest: /etc/fstab
-      content: '//nas/photo /home/jik/pictures cifs defaults,credentials=/etc/security/nas.creds,uid=jik,gid=users,forceuid,forcegid,noserverino,netdev
+      content: '//nas/photo /home/jik/pictures cifs defaults,credentials=/etc/security/nas.creds,uid=jik,gid=users,forceuid,forcegid,noserverino,_netdev
 
         '
 
@@ -244,8 +244,9 @@
       - 1 == optional_fields_content.stdout_lines | length
 
   - name: Create empty file
-    command: dd if=/dev/zero of=/tmp/myfs.img bs=1048576 count=20
-    when: ansible_system in ('Linux')
+    community.general.filesize:
+      path: /tmp/myfs.img
+      size: 20M
 
   - name: Format FS
     community.general.filesystem:
@@ -331,8 +332,9 @@
 - name: Block to test boot option for Linux
   block:
   - name: Create empty file
-    command: dd if=/dev/zero of=/tmp/myfs.img bs=1048576 count=20
-    when: ansible_system in ('Linux')
+    community.general.filesize:
+      path: /tmp/myfs.img
+      size: 20M
 
   - name: Format FS
     community.general.filesystem:
@@ -371,8 +373,9 @@
 - name: Block to test missing newline at the EOF of fstab
   block:
   - name: Create empty file
-    command: dd if=/dev/zero of=/tmp/myfs1.img bs=1048576 count=20
-    when: ansible_system in ('Linux')
+    community.general.filesize:
+      path: /tmp/myfs1.img
+      size: 20M
   - name: Format FS
     community.general.filesystem:
       fstype: ext3

@@ -74,7 +74,11 @@ else
 fi
 
 # START: HACK install dependencies
-retry ansible-galaxy collection install community.general
+
+if [ "${ansible_version}" == "2.9" ] || [ "${ansible_version}" == "2.10" ]; then
+    COMMUNITY_GENERAL_OPTION="-b 4.8.1"
+fi
+retry git clone --depth=1 --single-branch ${COMMUNITY_GENERAL_OPTION:-} https://github.com/ansible-collections/community.general.git "${ANSIBLE_COLLECTIONS_PATHS}/ansible_collections/community/general"
 # END: HACK
 
 export PYTHONIOENCODING='utf-8'
