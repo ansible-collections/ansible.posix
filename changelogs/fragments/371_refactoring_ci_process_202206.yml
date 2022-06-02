@@ -1,0 +1,3 @@
+---
+trivial:
+- CI - Refactor AZP to address new test infrastructure (https://github.com/ansible-collections/news-for-maintainers/issues/17).
