@@ -49,7 +49,7 @@ stages:
     jobs:
       - template: templates/matrix.yml
         parameters:
-          testFormat: devel/linux/{0}
+          testFormat: devel/linux/{0}/1
           targets:
             - name: CentOS 7
               test: centos7
@@ -131,6 +131,30 @@ stages:
               test: ubuntu1804
             - name: Ubuntu 20.04
               test: ubuntu2004
+  - stage: Docker_2_10
+    displayName: Docker 2.10
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          testFormat: 2.10/linux/{0}/1
+          targets:
+            - name: CentOS 6
+              test: centos6
+            - name: CentOS 7
+              test: centos7
+            - name: Fedora 30
+              test: fedora30
+            - name: Fedora 31
+              test: fedora31
+            - name: openSUSE 15 py2
+              test: opensuse15py2
+            - name: openSUSE 15 py3
+              test: opensuse15
+            - name: Ubuntu 16.04
+              test: ubuntu1604
+            - name: Ubuntu 18.04
+              test: ubuntu1804
   - stage: Docker_2_9
     displayName: Docker 2.9
     dependsOn: []
@@ -163,7 +187,7 @@ stages:
     jobs:
       - template: templates/matrix.yml
         parameters:
-          testFormat: devel/{0}
+          testFormat: devel/{0}/1
           targets:
             - name: MacOS 12.0
               test: macos/12.0
@@ -177,17 +201,13 @@ stages:
               test: freebsd/12.3
             - name: FreeBSD 13.1
               test: freebsd/13.1
-          groups:
-            - 1
-            - 2
-            - 3
   - stage: Remote_2_13
     displayName: Remote 2.13
     dependsOn: []
     jobs:
       - template: templates/matrix.yml
         parameters:
-          testFormat: 2.13/{0}
+          testFormat: 2.13/{0}/1
           targets:
             - name: MacOS 12.0
               test: macos/12.0
@@ -199,17 +219,13 @@ stages:
               test: freebsd/12.3
             - name: FreeBSD 13.0
               test: freebsd/13.0
-          groups:
-            - 1
-            - 2
-            - 3
   - stage: Remote_2_12
     displayName: Remote 2.12
     dependsOn: []
     jobs:
       - template: templates/matrix.yml
         parameters:
-          testFormat: 2.12/{0}
+          testFormat: 2.12/{0}/1
           targets:
             - name: MacOS 11.1
               test: macos/11.1
@@ -221,17 +237,13 @@ stages:
               test: freebsd/12.2
             - name: FreeBSD 13.0
               test: freebsd/13.0
-          groups:
-            - 1
-            - 2
-            - 3
   - stage: Remote_2_11
     displayName: Remote 2.11
     dependsOn: []
     jobs:
       - template: templates/matrix.yml
         parameters:
-          testFormat: 2.11/{0}
+          testFormat: 2.11/{0}/1
           targets:
             - name: MacOS 11.1
               test: macos/11.1
@@ -239,21 +251,29 @@ stages:
               test: rhel/7.9
             - name: RHEL 8.3
               test: rhel/8.3
-            - name: FreeBSD 11.4
-              test: freebsd/11.4
             - name: FreeBSD 12.2
               test: freebsd/12.2
-          groups:
-            - 1
-            - 2
-            - 3
+  - stage: Remote_2_10
+    displayName: Remote 2.10
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          testFormat: 2.10/{0}/1
+          targets:
+            - name: OS X 10.11
+              test: osx/10.11
+            - name: RHEL 7.9
+              test: rhel/7.9
+            - name: RHEL 8.2
+              test: rhel/8.2
   - stage: Remote_2_9
     displayName: Remote 2.9
     dependsOn: []
     jobs:
       - template: templates/matrix.yml
         parameters:
-          testFormat: 2.9/{0}
+          testFormat: 2.9/{0}/1
           targets:
             - name: OS X 10.11
               test: osx/10.11
@@ -261,14 +281,6 @@ stages:
               test: rhel/7.9
             - name: RHEL 8.1
               test: rhel/8.1
-            - name: FreeBSD 11.1
-              test: freebsd/11.1
-            - name: FreeBSD 12.0
-              test: freebsd/12.0
-          groups:
-            - 1
-            - 2
-            - 3
 
 ## Finally
 
