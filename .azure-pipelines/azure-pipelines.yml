@@ -1,3 +1,4 @@
+---
 trigger:
   batch: true
   branches:
@@ -41,75 +42,7 @@ resources:
 pool: Standard
 
 stages:
-### Sanity
-  - stage: Sanity_devel
-    displayName: Sanity devel
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Test {0}
-          testFormat: devel/sanity/{0}
-          targets:
-            - test: 1
-            - test: 2
-            - test: 3
-            - test: 4
-            - test: extra
-  - stage: Sanity_2_12
-    displayName: Sanity 2.12
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Test {0}
-          testFormat: 2.12/sanity/{0}
-          targets:
-            - test: 1
-            - test: 2
-            - test: 3
-            - test: 4
-  - stage: Sanity_2_11
-    displayName: Sanity 2.11
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Test {0}
-          testFormat: 2.11/sanity/{0}
-          targets:
-            - test: 1
-            - test: 2
-            - test: 3
-            - test: 4
-  - stage: Sanity_2_10
-    displayName: Sanity 2.10
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Test {0}
-          testFormat: 2.10/sanity/{0}
-          targets:
-            - test: 1
-            - test: 2
-            - test: 3
-            - test: 4
-  - stage: Sanity_2_9
-    displayName: Sanity 2.9
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Test {0}
-          testFormat: 2.9/sanity/{0}
-          targets:
-            - test: 1
-            - test: 2
-            - test: 3
-            - test: 4
-
-## Docker
+  ## Docker
   - stage: Docker_devel
     displayName: Docker devel
     dependsOn: []
@@ -247,7 +180,7 @@ stages:
             - name: Ubuntu 18.04
               test: ubuntu1804
 
-## Remote
+  ## Remote
   - stage: Remote_devel
     displayName: Remote devel
     dependsOn: []
@@ -349,8 +282,7 @@ stages:
             - name: RHEL 8.1
               test: rhel/8.1
 
-## Finally
-
+  ## Finally
   - stage: Summary
     condition: succeededOrFailed()
     dependsOn:
