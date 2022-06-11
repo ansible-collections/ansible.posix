@@ -1,0 +1,3 @@
+---
+trivial:
+- CI - Update CI test container version to 3.0.0 (https://github.com/ansible-collections/news-for-maintainers/issues/18).
