@@ -226,7 +226,7 @@ def _escape_fstab(v):
     if isinstance(v, int):
         return v
     else:
-        return(
+        return (
             v.
             replace('\\', '\\134').
             replace(' ', '\\040').

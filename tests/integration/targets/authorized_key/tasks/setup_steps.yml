@@ -1,5 +1,14 @@
 # -------------------------------------------------------------
 # Setup steps
+- name: Clean up the working directory and files
+  file:
+    path: '{{ output_dir }}'
+    state: absent
+
+- name: Create the working directory
+  file:
+    path: '{{ output_dir }}'
+    state: directory
 
 - name: copy an existing file in place with comments
   copy:

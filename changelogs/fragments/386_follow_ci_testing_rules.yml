@@ -1,0 +1,3 @@
+---
+trivial:
+  - CI - following the new CI testing rule ansible-test-sanity-docker-devel.

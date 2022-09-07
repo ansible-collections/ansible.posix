@@ -347,6 +347,8 @@ def keyfile(module, user, write=False, path=None, manage_dir=True, follow=False)
         basedir = os.path.dirname(keysfile)
         if not os.path.exists(basedir):
             os.makedirs(basedir)
+
+        f = None
         try:
             f = open(keysfile, "w")  # touches file so we can set ownership and perms
         finally:
