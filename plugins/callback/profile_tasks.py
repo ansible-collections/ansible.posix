@@ -174,8 +174,8 @@ class CallbackModule(CallbackBase):
         self._display.display(tasktime())
 
     def playbook_on_stats(self, stats):
-        self._display.display(tasktime())
-        self._display.display(filled("", fchar="="))
+        # Align summary report header with other callback plugin summary
+        self._display.banner("TASKS RECAP")
 
         timestamp(self)
         self.current = None
@@ -199,3 +199,4 @@ class CallbackModule(CallbackBase):
             if 'path' in result:
                 msg += u"\n{0:-<{1}}".format(result['path'] + u' ', self._display.columns)
             self._display.display(msg)
+            
