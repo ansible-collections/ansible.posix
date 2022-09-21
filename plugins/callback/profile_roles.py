@@ -116,3 +116,4 @@ class CallbackModule(CallbackBase):
         msg_total = u"{0:-<70}{1:->9}".format(u'total ', u' {0:.02f}s'.format(total_time))
         self._display.display(filled("", fchar="~"))
         self._display.display(msg_total)
+        
