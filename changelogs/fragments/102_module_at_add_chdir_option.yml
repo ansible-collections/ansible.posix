@@ -1,0 +1,2 @@
+minor_changes:
+  - at - add option ``chdir`` to permit to launch the ``at`` command from a specific directory (https://github.com/ansible-collections/ansible.posix/issues/13).
