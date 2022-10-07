@@ -347,7 +347,8 @@ class ActionModule(ActionBase):
                 else:
                     user = task_vars.get('ansible_user') or self._play_context.remote_user
 
-            user = self._templar.template(user)
+            if self._templar is not None:
+                user = self._templar.template(user)
 
             # Private key handling
             # Use the private_key parameter if passed else use context private_key_file
@@ -364,13 +365,15 @@ class ActionModule(ActionBase):
                 dest = self._process_remote(_tmp_args, dest_host, dest, user, inv_port in localhost_ports)
 
             password = dest_host_inventory_vars.get('ansible_ssh_pass', None) or dest_host_inventory_vars.get('ansible_password', None)
+            if self._templar is not None:
+                password = self._templar.template(password)
         else:
             # Still need to munge paths (to account for roles) even if we aren't
             # copying files between hosts
             src = self._get_absolute_path(path=src)
             dest = self._get_absolute_path(path=dest)
 
-        _tmp_args['_local_rsync_password'] = self._templar.template(password)
+        _tmp_args['_local_rsync_password'] = password
         _tmp_args['src'] = src
         _tmp_args['dest'] = dest
 
