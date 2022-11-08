@@ -17,7 +17,7 @@ module: rpm_ostree_upgrade
 short_description: Manage rpm-ostree upgrade transactions
 description:
     - Manage an rpm-ostree upgrade transactions
-version_added: "2.14"
+version_added: 1.5.0
 author:
 - Adam Miller (@maxamillion)
 requirements:
@@ -52,10 +52,10 @@ options:
 
 EXAMPLES = '''
 - name: Upgrade the rpm-ostree image without options, accept all defaults
-  ansible.builtin.rpm_ostree_upgrade:
+  ansible.posix.rpm_ostree_upgrade:
 
 - name: Upgrade the rpm-ostree image allowing downgrades
-  ansible.builtin.rpm_ostree_upgrade:
+  ansible.posix.rpm_ostree_upgrade:
     allow_downgrade: true
 '''
 

@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: r4e_rpm_ostree
-version_added: 2.14.0
+version_added: 1.5.0
 short_description: Ensure packages exist in a RHEL for Edge rpm-ostree based system
 description:
   - Compatibility layer for using the "package" module for RHEL for Edge systems utilizing the RHEL System Roles.
@@ -53,7 +53,7 @@ notes:
 
 EXAMPLES = '''
 - name: Install htop and ansible on rpm-ostree based overlay
-  ansible.builtin.rpm_ostree:
+  ansible.posix.r4e_rpm_ostree:
     name:
       - htop
       - ansible
