@@ -45,19 +45,26 @@ EXAMPLES = '''
 RETURN = """
 ansible_facts:
     description: Relevant Ansible Facts
-    returned: always
+    returned: when needed
     type: complex
-    sample: {'pkg_mgr': 'ansible.posix.rhel_facts'}
+    contains:
+        pkg_mgr:
+            description: System-level package manager override
+            returned: when needed
+            type: str
+            sample: {'pkg_mgr': 'ansible.posix.rhel_facts'}
 """
 
 import os
-import traceback
 
 from ansible.module_utils.basic import AnsibleModule
 
+
 def main():
+
     module = AnsibleModule(
         argument_spec=dict(),
+        supports_check_mode=True,
     )
 
     ansible_facts = {}
