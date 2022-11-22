@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: rpm_ostree_upgrade
 short_description: Manage rpm-ostree upgrade transactions
 description:
-    - Manage an rpm-ostree upgrade transactions
+    - Manage an rpm-ostree upgrade transactions.
 version_added: 1.5.0
 author:
 - Adam Miller (@maxamillion)
@@ -25,25 +25,25 @@ requirements:
 options:
     os:
         description:
-            - The OSNAME upon which to operate
+            - The OSNAME upon which to operate.
         type: str
         default: ""
         required: false
     cache_only:
         description:
-          - Perform the transaction using only pre-cached data, don't download
+          - Perform the transaction using only pre-cached data, do not download.
         type: bool
         default: false
         required: false
     allow_downgrade:
         description:
-            - Allow for the upgrade to be a chronologically older tree
+            - Allow for the upgrade to be a chronologically older tree.
         type: bool
         default: false
         required: false
     peer:
         description:
-            - Force peer-to-peer connection instead of using system message bus
+            - Force peer-to-peer connection instead of using a system message bus.
         type: bool
         default: false
         required: false

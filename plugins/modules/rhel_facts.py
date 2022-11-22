@@ -7,15 +7,11 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
 DOCUMENTATION = '''
 ---
 module: rhel_facts
 version_added: 1.5.0
-short_description: Facts module to set or override RHEL specific facts
+short_description: Facts module to set or override RHEL specific facts.
 description:
   - Compatibility layer for using the "package" module for rpm-ostree based systems via setting the "pkg_mgr" fact correctly.
 author:
