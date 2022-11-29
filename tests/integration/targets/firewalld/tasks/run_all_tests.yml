@@ -16,6 +16,9 @@
 # firewalld source operation test cases
 - include_tasks: source_test_cases.yml
 
+# firewalld zone operation test cases
+- include_tasks: zone_test_cases.yml
+
 # firewalld zone target operation test cases
 - include_tasks: zone_target_test_cases.yml
 
