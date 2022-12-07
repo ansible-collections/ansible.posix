@@ -1,0 +1,4 @@
+---
+minor_changes:
+- r4e_rpm_ostree - new module for validating package state on RHEL for Edge
+- rpm_ostree_upgrade - new module to manage upgrades for rpm-ostree based systems 
