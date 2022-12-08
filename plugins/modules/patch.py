@@ -50,10 +50,10 @@ options:
     default: present
   remote_src:
     description:
-      - If C(no), it will search for src at originating/controller machine, if C(yes) it will
+      - If C(false), it will search for src at originating/controller machine, if C(true) it will
         go to the remote/target machine for the C(src).
     type: bool
-    default: no
+    default: false
   strip:
     description:
       - Number that indicates the smallest prefix containing leading slashes
@@ -65,20 +65,20 @@ options:
     description:
       - Passes C(--backup --version-control=numbered) to patch, producing numbered backup copies.
     type: bool
-    default: no
+    default: false
   binary:
     description:
-      - Setting to C(yes) will disable patch's heuristic for transforming CRLF
+      - Setting to C(true) will disable patch's heuristic for transforming CRLF
         line endings into LF.
       - Line endings of src and dest must match.
-      - If set to C(no), C(patch) will replace CRLF in C(src) files on POSIX.
+      - If set to C(false), C(patch) will replace CRLF in C(src) files on POSIX.
     type: bool
-    default: no
+    default: false
   ignore_whitespace:
     description:
-      - Setting to C(yes) will ignore white space changes between patch and input..
+      - Setting to C(true) will ignore white space changes between patch and input.
     type: bool
-    default: no
+    default: false
 notes:
   - This module requires GNU I(patch) utility to be installed on the remote host.
 '''

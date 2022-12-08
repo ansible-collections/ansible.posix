@@ -82,13 +82,13 @@ options:
     description:
       - Should this configuration be in the running firewalld configuration or persist across reboots.
       - As of Ansible 2.3, permanent operations can operate on firewalld configs when it is not running (requires firewalld >= 0.3.9).
-      - Note that if this is C(no), immediate is assumed C(yes).
+      - Note that if this is C(false), immediate is assumed C(true).
     type: bool
   immediate:
     description:
       - Should this configuration be applied immediately, if set as permanent.
     type: bool
-    default: no
+    default: false
   state:
     description:
       - Enable or disable a setting.
@@ -141,29 +141,29 @@ EXAMPLES = r'''
 - name: permit traffic in default zone for https service
   ansible.posix.firewalld:
     service: https
-    permanent: yes
+    permanent: true
     state: enabled
 
 - name: do not permit traffic in default zone on port 8081/tcp
   ansible.posix.firewalld:
     port: 8081/tcp
-    permanent: yes
+    permanent: true
     state: disabled
 
 - ansible.posix.firewalld:
     port: 161-162/udp
-    permanent: yes
+    permanent: true
     state: enabled
 
 - ansible.posix.firewalld:
     zone: dmz
     service: http
-    permanent: yes
+    permanent: true
     state: enabled
 
 - ansible.posix.firewalld:
     rich_rule: rule service name="ftp" audit limit value="1/m" accept
-    permanent: yes
+    permanent: true
     state: enabled
 
 - ansible.posix.firewalld:
@@ -174,44 +174,44 @@ EXAMPLES = r'''
 - ansible.posix.firewalld:
     zone: trusted
     interface: eth2
-    permanent: yes
+    permanent: true
     state: enabled
 
 - ansible.posix.firewalld:
-    masquerade: yes
+    masquerade: true
     state: enabled
-    permanent: yes
+    permanent: true
     zone: dmz
 
 - ansible.posix.firewalld:
     zone: custom
     state: present
-    permanent: yes
+    permanent: true
 
 - ansible.posix.firewalld:
     zone: drop
     state: enabled
-    permanent: yes
-    icmp_block_inversion: yes
+    permanent: true
+    icmp_block_inversion: true
 
 - ansible.posix.firewalld:
     zone: drop
     state: enabled
-    permanent: yes
+    permanent: true
     icmp_block: echo-request
 
 - ansible.posix.firewalld:
     zone: internal
     state: present
-    permanent: yes
+    permanent: true
     target: ACCEPT
 
 - name: Redirect port 443 to 8443 with Rich Rule
   ansible.posix.firewalld:
     rich_rule: rule family=ipv4 forward-port port=443 protocol=tcp to-port=8443
     zone: public
-    permanent: yes
-    immediate: yes
+    permanent: true
+    immediate: true
     state: enabled
 '''
 

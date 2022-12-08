@@ -17,7 +17,7 @@ options:
     active_zones:
         description: Gather information about active zones.
         type: bool
-        default: no
+        default: false
     zones:
         description:
             - Gather information about specific zones.
@@ -36,7 +36,7 @@ author:
 EXAMPLES = r'''
 - name: Gather information about active zones
   ansible.posix.firewalld_info:
-    active_zones: yes
+    active_zones: true
 
 - name: Gather information about specific zones
   ansible.posix.firewalld_info:
