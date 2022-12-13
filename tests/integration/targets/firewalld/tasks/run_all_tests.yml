@@ -21,3 +21,6 @@
 
 # firewalld port forwarding operation test cases
 - include_tasks: port_forward_test_cases.yml
+
+# firewalld interface operation test cases
+- include_tasks: interface_test_cases.yml
