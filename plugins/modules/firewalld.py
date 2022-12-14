@@ -973,26 +973,27 @@ def main():
         msgs = msgs + transaction_msgs
 
     if masquerade is not None:
+        # Type of masquerade will be changed to boolean in a future release.
+        masquerade_status = True
+        try:
+            masquerade_status = boolean(masquerade, True)
+        except TypeError:
+            module.warn('The value of the masquerade option is "%s". '
+                        'The type of the option will be changed from string to boolean in a future release. '
+                        'To avoid unexpected behavior, please change the value to boolean.' % masquerade)
 
+        expected_state = 'enabled' if (desired_state == 'enabled') == masquerade_status else 'disabled'
         transaction = MasqueradeTransaction(
             module,
             action_args=(),
             zone=zone,
-            desired_state=desired_state,
+            desired_state=expected_state,
             permanent=permanent,
             immediate=immediate,
         )
 
         changed, transaction_msgs = transaction.run()
         msgs = msgs + transaction_msgs
-
-        # Type of masquerade will be changed to boolean in a future release.
-        try:
-            boolean(masquerade, True)
-        except TypeError:
-            module.warn('The value of the masquerade option is "%s". '
-                        'The type of the option will be changed from string to boolean in a future release. '
-                        'To avoid unexpected behavior, please change the value to boolean.' % masquerade)
 
     if target is not None:
 
