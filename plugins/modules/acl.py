@@ -44,6 +44,7 @@ options:
     description:
     - The actual user or group that the ACL applies to when matching entity types user or group are selected.
     type: str
+    default: ''
   etype:
     description:
     - The entity type of the ACL to apply, see C(setfacl) documentation for more info.

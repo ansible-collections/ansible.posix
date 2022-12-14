@@ -1,0 +1,2 @@
+trivial:
+  - "Fix currently failing sanity tests by properly specifying falsy defaults in module documentation (https://github.com/ansible-collections/ansible.posix/pull/403)."
