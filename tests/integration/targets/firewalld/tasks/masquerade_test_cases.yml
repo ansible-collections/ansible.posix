@@ -1,4 +1,4 @@
-# Test playbook for the firewalld module
+# Test playbook for the firewalld module - masquerade operations
 # (c) 2022, Gregory Furlong <gnfzdz@fzdz.io>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 

@@ -24,3 +24,6 @@
 
 # firewalld masquerade operation test cases
 - include_tasks: masquerade_test_cases.yml
+
+# firewalld icmp block inversion operation test cases
+- include_tasks: icmp_block_inversion_test_cases.yml

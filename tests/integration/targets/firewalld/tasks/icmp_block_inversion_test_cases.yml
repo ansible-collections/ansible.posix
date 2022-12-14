@@ -1,0 +1,172 @@
+# Test playbook for the firewalld module - icmp block inversion operations
+# (c) 2022, Gregory Furlong <gnfzdz@fzdz.io>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Icmp block inversion enabled when icmp block inversion is truthy and state is enabled
+  block:
+  - name: Testing enable icmp block inversion
+    ansible.posix.firewalld:
+      zone:       trusted
+      icmp_block_inversion: yes
+      permanent:  yes
+      state:      enabled
+    register: result
+
+  - name: assert icmp block inversion is enabled
+    assert:
+      that:
+      - result is changed
+
+  - name: Testing enable icmp block inversion (verify not changed)
+    ansible.posix.firewalld:
+      zone:       trusted
+      icmp_block_inversion: yes
+      permanent:  yes
+      state:      enabled
+    register: result
+
+  - name: assert icmp block inversion is enabled (verify not changed)
+    assert:
+      that:
+      - result is not changed
+
+- name: Icmp block inversion disabled when icmp block inversion is falsy and state is enabled
+  block:
+  - name: Testing disable icmp block inversion
+    ansible.posix.firewalld:
+      zone:       trusted
+      icmp_block_inversion: no
+      permanent:  yes
+      state:      enabled
+    register: result
+
+  - name: assert icmp block inversion is disabled
+    assert:
+      that:
+      - result is changed
+
+  - name: Testing disable icmp block inversion (verify not changed)
+    ansible.posix.firewalld:
+      zone:       trusted
+      icmp_block_inversion: no
+      permanent:  yes
+      state:      enabled
+    register: result
+
+  - name: assert icmp block inversion is disabled (verify not changed)
+    assert:
+      that:
+      - result is not changed
+
+- name: Icmp block inversion enabled when icmp block inversion is falsy and state is disabled
+  block:
+  - name: Testing enable icmp block inversion
+    ansible.posix.firewalld:
+      zone:       trusted
+      icmp_block_inversion: no
+      permanent:  yes
+      state:      disabled
+    register: result
+
+  - name: assert icmp block inversion is enabled
+    assert:
+      that:
+      - result is changed
+
+  - name: Testing enable icmp block inversion (verify not changed)
+    ansible.posix.firewalld:
+      zone:       trusted
+      icmp_block_inversion: no
+      permanent:  yes
+      state:      disabled
+    register: result
+
+  - name: assert icmp block inversion is enabled (verify not changed)
+    assert:
+      that:
+      - result is not changed
+
+- name: Icmp block inversion disabled when icmp block inversion is truthy and state is disabled
+  block:
+  - name: Testing disable icmp block inversion
+    ansible.posix.firewalld:
+      zone:       trusted
+      icmp_block_inversion: yes
+      permanent:  yes
+      state:      disabled
+    register: result
+
+  - name: assert icmp block inversion is disabled
+    assert:
+      that:
+      - result is changed
+
+  - name: Testing disable icmp block inversion (verify not changed)
+    ansible.posix.firewalld:
+      zone:       trusted
+      icmp_block_inversion: yes
+      permanent:  yes
+      state:      disabled
+    register: result
+
+  - name: assert icmp block inversion is disabled (verify not changed)
+    assert:
+      that:
+      - result is not changed
+
+# Validate backwards compatible behavior until icmp block inversion is switched from string to boolean type
+- name: Icmp block inversion enabled when icmp block inversion is non-boolean string and state is enabled
+  block:
+  - name: Testing enable icmp block inversion
+    ansible.posix.firewalld:
+      zone:       trusted
+      icmp_block_inversion: 'some string'
+      permanent:  yes
+      state:      enabled
+    register: result
+
+  - name: assert icmp block inversion is enabled
+    assert:
+      that:
+      - result is changed
+
+  - name: Testing enable icmp block inversion (verify not changed)
+    ansible.posix.firewalld:
+      zone:       trusted
+      icmp_block_inversion: 'some string'
+      permanent:  yes
+      state:      enabled
+    register: result
+
+  - name: assert icmp block inversion is enabled (verify not changed)
+    assert:
+      that:
+      - result is not changed
+
+- name: Icmp block inversion disabled when icmp block inversion is non-boolean string and state is disabled
+  block:
+  - name: Testing disable icmp block inversion
+    ansible.posix.firewalld:
+      zone:       trusted
+      icmp_block_inversion: 'some string'
+      permanent:  yes
+      state:      disabled
+    register: result
+
+  - name: assert icmp block inversion is disabled
+    assert:
+      that:
+      - result is changed
+
+  - name: Testing disable icmp block inversion (verify not changed)
+    ansible.posix.firewalld:
+      zone:       trusted
+      icmp_block_inversion: 'some string'
+      permanent:  yes
+      state:      disabled
+    register: result
+
+  - name: assert icmp block inversion is disabled (verify not changed)
+    assert:
+      that:
+      - result is not changed
