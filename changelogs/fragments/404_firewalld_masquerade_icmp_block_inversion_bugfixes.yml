@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - firewalld - Consider value of masquerade and icmp_block_inversion parameters when a boolean like value is passed
