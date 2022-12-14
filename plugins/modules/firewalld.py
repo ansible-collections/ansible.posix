@@ -222,6 +222,7 @@ from ansible_collections.ansible.posix.plugins.module_utils.firewalld import Fir
 try:
     from firewall.client import Rich_Rule
     from firewall.client import FirewallClientZoneSettings
+    from firewall.config import FALLBACK_ZONE
 except ImportError:
     # The import errors are handled via FirewallTransaction, don't need to
     # duplicate that here
@@ -695,6 +696,45 @@ class ZoneTransaction(FirewallTransaction):
         zone_obj = self.fw.config().getZoneByName(self.zone)
         zone_obj.remove()
 
+class DefaultZoneTransaction(FirewallTransaction):
+    """
+    DefaultZoneTransaction
+    """
+
+    def __init__(self, module, action_args=None, zone=None, desired_state=None, permanent=False, immediate=False):
+        super(DefaultZoneTransaction, self).__init__(
+            module, action_args=action_args, desired_state=desired_state, zone=zone, permanent=permanent, immediate=immediate
+        )
+        self.upstream_default_zone = FALLBACK_ZONE
+        self.enabled_msg = "Updated default zone to %s" % self.zone
+        self.disabled_msg = "Reverted default zone from %s to upstream default %s" % (self.zone, self.upstream_default_zone)
+        self.tx_not_permanent_error_msg = "Zone operations must be permanent. " \
+            "Make sure you didn't set the 'permanent' flag to 'false' or the 'immediate' flag to 'true'."
+
+    def get_enabled_immediate(self):
+        self.module.fail_json(msg=self.tx_not_permanent_error_msg)
+
+    def get_enabled_permanent(self):
+        default_zone = self.fw.get_default_zone() if fw_offline else self.fw.getDefaultZone()
+        return self.zone == default_zone
+
+    def set_enabled_immediate(self):
+        self.module.fail_json(msg=self.tx_not_permanent_error_msg)
+
+    def set_enabled_permanent(self):
+        if fw_offline:
+            self.fw.set_default_zone(self.zone)
+        else:
+            self.fw.setDefaultZone(self.zone)
+
+    def set_disabled_immediate(self):
+        self.module.fail_json(msg=self.tx_not_permanent_error_msg)
+
+    def set_disabled_permanent(self):
+        if fw_offline:
+            self.fw.set_default_zone(self.upstream_default_zone)
+        else:
+            self.fw.setDefaultZone(self.upstream_default_zone)
 
 class ForwardPortTransaction(FirewallTransaction):
     """
@@ -732,7 +772,6 @@ class ForwardPortTransaction(FirewallTransaction):
         fw_settings.removeForwardPort(port, proto, toport, toaddr)
         self.update_fw_settings(fw_zone, fw_settings)
 
-
 def main():
 
     module = AnsibleModule(
@@ -751,6 +790,7 @@ def main():
             timeout=dict(type='int', default=0),
             interface=dict(type='str'),
             masquerade=dict(type='str'),
+            default=dict(type='bool'),
             offline=dict(type='bool'),
             target=dict(type='str', choices=['default', 'ACCEPT', 'DROP', '%%REJECT%%']),
         ),
@@ -758,11 +798,12 @@ def main():
         required_by=dict(
             interface=('zone',),
             target=('zone',),
+            default=('zone',),
             source=('permanent',),
         ),
         mutually_exclusive=[
             ['icmp_block', 'icmp_block_inversion', 'service', 'port', 'port_forward', 'rich_rule',
-             'interface', 'masquerade', 'source', 'target']
+             'interface', 'masquerade', 'source', 'target','default']
         ],
     )
 
@@ -772,6 +813,7 @@ def main():
     timeout = module.params['timeout']
     interface = module.params['interface']
     masquerade = module.params['masquerade']
+    default = module.params['default']
 
     # Sanity checks
     FirewallTransaction.sanity_check(module)
@@ -1001,6 +1043,20 @@ def main():
             action_args=(target,),
             zone=zone,
             desired_state=desired_state,
+            permanent=permanent,
+            immediate=immediate,
+        )
+
+        changed, transaction_msgs = transaction.run()
+        msgs = msgs + transaction_msgs
+
+    if default is not None:
+        expected_state = 'enabled' if (desired_state == 'enabled') == default else 'disabled'
+        transaction = DefaultZoneTransaction(
+            module,
+            action_args=(),
+            zone=zone,
+            desired_state=expected_state,
             permanent=permanent,
             immediate=immediate,
         )
