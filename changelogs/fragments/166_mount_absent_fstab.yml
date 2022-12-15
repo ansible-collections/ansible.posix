@@ -1,0 +1,2 @@
+minor_changes:
+  - mount - Add ``absent_from_fstab`` state (https://github.com/ansible-collections/ansible.posix/pull/166).
