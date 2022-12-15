@@ -87,9 +87,12 @@ options:
         instead to work around this issue.  C(remounted) expects the mount point
         to be present in the I(fstab). To remount a mount point not registered
         in I(fstab), use C(ephemeral) instead, especially with BSD nodes.
+      - C(absent_from_fstab) specifies that the device mount's entry will be
+        removed from I(fstab). This option does not unmount it or delete the
+        mountpoint.
     type: str
     required: true
-    choices: [ absent, mounted, present, unmounted, remounted, ephemeral ]
+    choices: [ absent, absent_from_fstab, mounted, present, unmounted, remounted, ephemeral ]
   fstab:
     description:
       - File to use instead of C(/etc/fstab).
@@ -245,7 +248,7 @@ def _escape_fstab(v):
     if isinstance(v, int):
         return v
     else:
-        return(
+        return (
             v.
             replace('\\', '\\134').
             replace(' ', '\\040').
@@ -763,7 +766,7 @@ def main():
             passno=dict(type='str', no_log=False, default='0'),
             src=dict(type='path'),
             backup=dict(type='bool', default=False),
-            state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted', 'remounted', 'ephemeral']),
+            state=dict(type='str', required=True, choices=['absent', 'absent_from_fstab', 'mounted', 'present', 'unmounted', 'remounted', 'ephemeral']),
         ),
         supports_check_mode=True,
         required_if=(
@@ -868,7 +871,9 @@ def main():
     name = module.params['path']
     changed = False
 
-    if state == 'absent':
+    if state == 'absent_from_fstab':
+        name, changed = unset_mount(module, args)
+    elif state == 'absent':
         name, changed = unset_mount(module, args)
 
         if changed and not module.check_mode:

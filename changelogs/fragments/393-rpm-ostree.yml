@@ -1,0 +1,5 @@
+---
+minor_changes:
+  - rhel_facts - new facts module to handle RHEL specific facts
+  - rhel_rpm_ostree - new module to handle RHEL rpm-ostree specific package management functionality
+  - rpm_ostree_upgrade - new module to automate rpm-ostree upgrades
