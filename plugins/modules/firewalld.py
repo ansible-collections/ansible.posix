@@ -106,6 +106,11 @@ options:
     description:
       - The masquerade setting you would like to enable/disable to/from zones within firewalld.
     type: str
+  default:
+    description:
+      - Indicates that the targeted zone should be set as firewalld's default zone.
+      - This change must always be both immediate (when firewalld is running) and permanent.
+    type: bool
   offline:
     description:
       - Whether to run this module even when firewalld is offline.
@@ -212,6 +217,13 @@ EXAMPLES = r'''
     zone: public
     permanent: yes
     immediate: yes
+    state: enabled
+
+- name: Set the default zone to 'trusted'
+  ansible.builtin.firewalld:
+    zone: trusted
+    permanent: true
+    default: true
     state: enabled
 '''
 
@@ -696,6 +708,7 @@ class ZoneTransaction(FirewallTransaction):
         zone_obj = self.fw.config().getZoneByName(self.zone)
         zone_obj.remove()
 
+
 class DefaultZoneTransaction(FirewallTransaction):
     """
     DefaultZoneTransaction
@@ -708,18 +721,18 @@ class DefaultZoneTransaction(FirewallTransaction):
         self.upstream_default_zone = FALLBACK_ZONE
         self.enabled_msg = "Updated default zone to %s" % self.zone
         self.disabled_msg = "Reverted default zone from %s to upstream default %s" % (self.zone, self.upstream_default_zone)
-        self.tx_not_permanent_error_msg = "Zone operations must be permanent. " \
-            "Make sure you didn't set the 'permanent' flag to 'false' or the 'immediate' flag to 'true'."
+        if (not permanent) or not (fw_offline or immediate):
+            self.module.fail_json(msg="Default zone changes must be permanent and when daemon is online must also be immediate")
 
     def get_enabled_immediate(self):
-        self.module.fail_json(msg=self.tx_not_permanent_error_msg)
+        return self.fw.getDefaultZone() == self.zone
 
     def get_enabled_permanent(self):
         default_zone = self.fw.get_default_zone() if fw_offline else self.fw.getDefaultZone()
         return self.zone == default_zone
 
     def set_enabled_immediate(self):
-        self.module.fail_json(msg=self.tx_not_permanent_error_msg)
+        pass  # permanent default zone change will also apply immediately to a running daemon
 
     def set_enabled_permanent(self):
         if fw_offline:
@@ -728,13 +741,14 @@ class DefaultZoneTransaction(FirewallTransaction):
             self.fw.setDefaultZone(self.zone)
 
     def set_disabled_immediate(self):
-        self.module.fail_json(msg=self.tx_not_permanent_error_msg)
+        pass  # permanent default zone change will also apply immediately to a running daemon
 
     def set_disabled_permanent(self):
         if fw_offline:
             self.fw.set_default_zone(self.upstream_default_zone)
         else:
             self.fw.setDefaultZone(self.upstream_default_zone)
+
 
 class ForwardPortTransaction(FirewallTransaction):
     """
@@ -772,6 +786,7 @@ class ForwardPortTransaction(FirewallTransaction):
         fw_settings.removeForwardPort(port, proto, toport, toaddr)
         self.update_fw_settings(fw_zone, fw_settings)
 
+
 def main():
 
     module = AnsibleModule(
@@ -803,7 +818,7 @@ def main():
         ),
         mutually_exclusive=[
             ['icmp_block', 'icmp_block_inversion', 'service', 'port', 'port_forward', 'rich_rule',
-             'interface', 'masquerade', 'source', 'target','default']
+             'interface', 'masquerade', 'source', 'target', 'default']
         ],
     )
 
