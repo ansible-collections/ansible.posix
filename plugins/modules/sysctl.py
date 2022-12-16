@@ -56,6 +56,13 @@ options:
             - Verify token value with the sysctl command and set with -w if necessary
         type: bool
         default: 'no'
+    unsafe_writes:
+        description:
+            - This option is not used.
+
+extends_documentation_fragment:
+  - ansible.builtin.files
+
 author:
 - David CHANIAL (@davixx)
 '''
@@ -93,6 +100,22 @@ EXAMPLES = r'''
     sysctl_set: yes
     state: present
     reload: yes
+
+# Set file mode 0644 to /tmp/test_sysctl.conf
+- ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    sysctl_file: /tmp/test_sysctl.conf
+    reload: no
+    mode: '0644'
+
+# Set file mode rw-r--r-- to /tmp/test_sysctl.conf
+- ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    sysctl_file: /tmp/test_sysctl.conf
+    reload: no
+    mode: u=rw,g=r,o=r
 '''
 
 # ==============================================================
@@ -184,6 +207,13 @@ class SysctlModule(object):
             elif not self._values_is_equal(self.proc_value, self.args['value']):
                 self.changed = True
                 self.set_proc = True
+
+        # Set file permissions if there are differences.
+        # - Ansible 2.9.x does not support 'path' like load_file_common_arguments (params, path=PATH).
+        #   so set 'sysctl_file' as 'path' in module.params.
+        self.module.params['path'] = self.sysctl_file
+        file_args = self.module.load_file_common_arguments(self.module.params)
+        self.changed = self.module.set_fs_attributes_if_different(file_args, self.changed)
 
         # Do the work
         if not self.module.check_mode:
@@ -394,8 +424,9 @@ def main():
             reload=dict(default=True, type='bool'),
             sysctl_set=dict(default=False, type='bool'),
             ignoreerrors=dict(default=False, type='bool'),
-            sysctl_file=dict(default='/etc/sysctl.conf', type='path')
+            sysctl_file=dict(default='/etc/sysctl.conf', type='path'),
         ),
+        add_file_common_args=True,
         supports_check_mode=True,
         required_if=[('state', 'present', ['value'])],
     )

@@ -1,0 +1,3 @@
+minor_changes:
+- sysctl - add a basic file system attribute setting option to allow the sysctl module
+  to set the file attributes to ``sysctl_file`` (https://github.com/ansible-collections/ansible.posix/issues/108).
