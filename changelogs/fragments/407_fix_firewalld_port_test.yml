@@ -1,0 +1,3 @@
+---
+trivial:
+- Fix firewalld port test cases to avoid port duplicatation.
