@@ -4,7 +4,7 @@
 
 - name: firewalld port range test permanent enabled
   firewalld:
-    port: 5500-6950/tcp
+    port: 5500-6850/tcp
     permanent: true
     state: enabled
   register: result
@@ -16,7 +16,7 @@
 
 - name: firewalld port range test permanent enabled rerun (verify not changed)
   firewalld:
-    port: 5500-6950/tcp
+    port: 5500-6850/tcp
     permanent: true
     state: enabled
   register: result
@@ -57,7 +57,7 @@
     state: disabled
   loop:
     - 6900/tcp
-    - 5500-6950/tcp
+    - 5500-6850/tcp
 
 - name: firewalld port test permanent enabled
   firewalld:
