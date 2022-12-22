@@ -115,13 +115,13 @@ options:
         mount module will ignore C(boot).
       - This parameter is ignored when I(state) is set to C(ephemeral).
     type: bool
-    default: yes
+    default: true
   backup:
     description:
       - Create a backup file including the timestamp information so you can get
         the original file back if you somehow clobbered it incorrectly.
     type: bool
-    default: no
+    default: false
 notes:
   - As of Ansible 2.3, the I(name) option has been changed to I(path) as
     default, but I(name) still works as well.
@@ -195,7 +195,7 @@ EXAMPLES = r'''
     src: 192.168.1.100:/nfs/ssd/shared_data
     path: /mnt/shared_data
     opts: rw,sync,hard
-    boot: no
+    boot: false
     state: mounted
     fstype: nfs
 

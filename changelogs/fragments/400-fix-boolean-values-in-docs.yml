@@ -1,0 +1,3 @@
+---
+trivial:
+  - Change boolean values in documentation to ``true/false`` (https://github.com/ansible-collections/ansible.posix/pull/400).

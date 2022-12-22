@@ -53,36 +53,36 @@ options:
     description:
       - Mirrors the rsync archive flag, enables recursive, links, perms, times, owner, group flags and -D.
     type: bool
-    default: yes
+    default: true
   checksum:
     description:
       - Skip based on checksum, rather than mod-time & size; Note that that "archive" option is still enabled by default - the "checksum" option will
         not disable it.
     type: bool
-    default: no
+    default: false
   compress:
     description:
       - Compress file data during the transfer.
       - In most cases, leave this enabled unless it causes problems.
     type: bool
-    default: yes
+    default: true
   existing_only:
     description:
       - Skip creating new files on receiver.
     type: bool
-    default: no
+    default: false
   delete:
     description:
       - Delete files in I(dest) that do not exist (after transfer, not before) in the I(src) path.
-      - This option requires I(recursive=yes).
+      - This option requires I(recursive=true).
       - This option ignores excluded files and behaves like the rsync opt C(--delete-after).
     type: bool
-    default: no
+    default: false
   dirs:
     description:
       - Transfer directories without recursing.
     type: bool
-    default: no
+    default: false
   recursive:
     description:
       - Recurse into directories.
@@ -97,7 +97,7 @@ options:
     description:
       - Copy symlinks as the item that they point to (the referent) is copied, rather than the symlink.
     type: bool
-    default: no
+    default: false
   perms:
     description:
       - Preserve permissions.
@@ -132,26 +132,26 @@ options:
     description:
       - Put user@ for the remote paths.
       - If you have a custom ssh config to define the remote user for a host
-        that does not match the inventory user, you should set this parameter to C(no).
+        that does not match the inventory user, you should set this parameter to C(false).
     type: bool
-    default: yes
+    default: true
   use_ssh_args:
     description:
       - In Ansible 2.10 and lower, it uses the ssh_args specified in C(ansible.cfg).
       - In Ansible 2.11 and onwards, when set to C(true), it uses all SSH connection configurations like
         C(ansible_ssh_args), C(ansible_ssh_common_args), and C(ansible_ssh_extra_args).
     type: bool
-    default: no
+    default: false
   ssh_connection_multiplexing:
     description:
       - SSH connection multiplexing for rsync is disabled by default to prevent misconfigured ControlSockets from resulting in failed SSH connections.
         This is accomplished by setting the SSH C(ControlSocket) to C(none).
-      - Set this option to C(yes) to allow multiplexing and reduce SSH connection overhead.
-      - Note that simply setting this option to C(yes) is not enough;
+      - Set this option to C(true) to allow multiplexing and reduce SSH connection overhead.
+      - Note that simply setting this option to C(true) is not enough;
         You must also configure SSH connection multiplexing in your SSH client config by setting values for
         C(ControlMaster), C(ControlPersist) and C(ControlPath).
     type: bool
-    default: no
+    default: false
   rsync_opts:
     description:
       - Specify additional rsync options by passing in an array.
@@ -163,12 +163,12 @@ options:
     description:
       - Tells rsync to keep the partial file which should make a subsequent transfer of the rest of the file much faster.
     type: bool
-    default: no
+    default: false
   verify_host:
     description:
       - Verify destination host key.
     type: bool
-    default: no
+    default: false
   private_key:
     description:
       - Specify the private key to use for SSH-based rsync connections (e.g. C(~/.ssh/id_rsa)).
@@ -184,7 +184,7 @@ options:
       - This option puts the temporary file from each updated file into a holding directory until the end of the transfer,
         at which time all the files are renamed into place in rapid succession.
     type: bool
-    default: yes
+    default: true
     version_added: '1.3.0'
 
 notes:
@@ -252,27 +252,27 @@ EXAMPLES = r'''
   ansible.posix.synchronize:
     src: some/relative/path
     dest: /some/absolute/path
-    archive: no
+    archive: false
 
 - name: Synchronization with --archive options enabled except for --recursive
   ansible.posix.synchronize:
     src: some/relative/path
     dest: /some/absolute/path
-    recursive: no
+    recursive: false
 
 - name: Synchronization with --archive options enabled except for --times, with --checksum option enabled
   ansible.posix.synchronize:
     src: some/relative/path
     dest: /some/absolute/path
-    checksum: yes
-    times: no
+    checksum: true
+    times: false
 
 - name: Synchronization without --archive options enabled except use --links
   ansible.posix.synchronize:
     src: some/relative/path
     dest: /some/absolute/path
-    archive: no
-    links: yes
+    archive: false
+    links: true
 
 - name: Synchronization of two paths both on the control machine
   ansible.posix.synchronize:
@@ -302,8 +302,8 @@ EXAMPLES = r'''
   ansible.posix.synchronize:
     src: some/relative/path
     dest: /some/absolute/path
-    delete: yes
-    recursive: yes
+    delete: true
+    recursive: true
 
 # This specific command is granted su privileges on the destination
 - name: Synchronize using an alternate rsync command
