@@ -1,0 +1,3 @@
+---
+trivial:
+  - CI - Update AZP CI matrix (https://github.com/ansible-collections/ansible.posix/issues/408).
