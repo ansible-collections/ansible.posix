@@ -260,3 +260,37 @@ releases:
     - sanity_fixes.yml
     - shell_escape_full_path_for_rsync.yml
     release_date: '2022-05-23'
+  1.5.1:
+    changes:
+      bugfixes:
+      - Removed contentious terminology to match reference documentation in profile_tasks.
+      - firewall - Fixed to output a more complete missing library message.
+      - synchronize - Fixed hosts involved in rsync require the same password
+      minor_changes:
+      - mount - Add ``absent_from_fstab`` state (https://github.com/ansible-collections/ansible.posix/pull/166).
+      - mount - Add ``ephemeral`` value for the ``state`` parameter, that allows to
+        mount a filesystem without altering the ``fstab`` file (https://github.com/ansible-collections/ansible.posix/pull/267).
+      - r4e_rpm_ostree - new module for validating package state on RHEL for Edge
+      - rhel_facts - new facts module to handle RHEL specific facts
+      - rhel_rpm_ostree - new module to handle RHEL rpm-ostree specific package management
+        functionality
+      - rpm_ostree_upgrade - new module to automate rpm-ostree upgrades
+      - rpm_ostree_upgrade - new module to manage upgrades for rpm-ostree based systems
+    fragments:
+    - 166_mount_absent_fstab.yml
+    - 267_mount_ephemeral.yml
+    - 366_update_version_number_for_galaxy.yml
+    - 371_refactoring_ci_process_202206.yml
+    - 373_firewall_fix_missing_library_message.yml
+    - 375_update_azp_container.yml
+    - 380_update_usage_profile_tasks.yml
+    - 386_follow_ci_testing_rules.yml
+    - 389_ci_add_stable_214.yml
+    - 390_hosts_involved_same_password.yml
+    - 393-rpm-ostree.yml
+    - 393_rhel_for_edge.yml
+    - 400-fix-boolean-values-in-docs.yml
+    - 401_document_module_default_values.yml
+    - 407_fix_firewalld_port_test.yml
+    - 409_update_azp_matrix.yml
+    release_date: '2023-01-20'

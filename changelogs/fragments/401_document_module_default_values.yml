@@ -1,4 +1,0 @@
----
-trivial:
-- acl - document default value for the ``entry`` parameter
-- rhel_rpm_ostree - document default value for the ``name`` parameter
