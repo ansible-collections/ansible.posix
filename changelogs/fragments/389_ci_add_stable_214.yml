@@ -1,3 +1,0 @@
----
-trivial:
-- CI - Add stable-2.14 to AZP (https://github.com/ansible-collections/ansible.posix/issues/388).
