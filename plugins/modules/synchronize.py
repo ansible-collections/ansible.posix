@@ -212,7 +212,7 @@ notes:
    - link_destination is subject to the same limitations as the underlying rsync daemon. Hard links are only preserved if the relative subtrees
      of the source and destination are the same. Attempts to hardlink into a directory that is a subdirectory of the source will be prevented.
 seealso:
-- module: copy
+- module: ansible.builtin.copy
 - module: community.windows.win_robocopy
 author:
 - Timothy Appnel (@tima)
