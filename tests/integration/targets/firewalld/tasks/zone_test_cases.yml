@@ -1,0 +1,47 @@
+- name: firewalld create zone custom
+  firewalld:
+    zone: custom
+    permanent: True
+    state: present
+  register: result
+
+- name: assert firewalld custom zone created worked
+  assert:
+    that:
+    - result is changed
+
+- name: firewalld create zone custom rerun (verify not changed)
+  firewalld:
+    zone: custom
+    permanent: True
+    state: present
+  register: result
+
+- name: assert firewalld custom zone created worked (verify not changed)
+  assert:
+    that:
+    - result is not changed
+
+- name: firewalld remove zone custom
+  firewalld:
+    zone: custom
+    permanent: True
+    state: absent
+  register: result
+
+- name: assert firewalld custom zone removed worked
+  assert:
+    that:
+    - result is changed
+
+- name: firewalld remove custom zone rerun (verify not changed)
+  firewalld:
+    zone: custom
+    permanent: True
+    state: absent
+  register: result
+
+- name: assert firewalld custom zone removed worked (verify not changed)
+  assert:
+    that:
+    - result is not changed

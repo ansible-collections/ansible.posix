@@ -675,25 +675,33 @@ class ZoneTransaction(FirewallTransaction):
         self.module.fail_json(msg=self.tx_not_permanent_error_msg)
 
     def get_enabled_permanent(self):
-        zones = self.fw.config().listZones()
-        zone_names = [self.fw.config().getZone(z).get_property("name") for z in zones]
-        if self.zone in zone_names:
-            return True
+        if self.fw_offline:
+            zones = self.fw.config.get_zones()
+            zone_names = [self.fw.config.get_zone(z).name for z in zones]
         else:
-            return False
+            zones = self.fw.config().listZones()
+            zone_names = [self.fw.config().getZone(z).get_property("name") for z in zones]
+        return self.zone in zone_names
 
     def set_enabled_immediate(self):
         self.module.fail_json(msg=self.tx_not_permanent_error_msg)
 
     def set_enabled_permanent(self):
-        self.fw.config().addZone(self.zone, FirewallClientZoneSettings())
+        if self.fw_offline:
+            self.fw.config.new_zone(self.zone, FirewallClientZoneSettings().settings)
+        else:
+            self.fw.config().addZone(self.zone, FirewallClientZoneSettings())
 
     def set_disabled_immediate(self):
         self.module.fail_json(msg=self.tx_not_permanent_error_msg)
 
     def set_disabled_permanent(self):
-        zone_obj = self.fw.config().getZoneByName(self.zone)
-        zone_obj.remove()
+        if self.fw_offline:
+            zone = self.fw.config.get_zone(self.zone)
+            self.fw.config.remove_zone(zone)
+        else:
+            zone_obj = self.fw.config().getZoneByName(self.zone)
+            zone_obj.remove()
 
 
 class ForwardPortTransaction(FirewallTransaction):
