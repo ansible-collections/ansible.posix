@@ -10,6 +10,9 @@
 # firewalld service operation test cases
 - include_tasks: service_test_cases.yml
 
+# firewalld protocol operation test cases
+- include_tasks: protocol_test_cases.yml
+
 # firewalld port operation test cases
 - include_tasks: port_test_cases.yml
 
