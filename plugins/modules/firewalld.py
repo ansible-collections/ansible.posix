@@ -821,7 +821,7 @@ def main():
             source=('permanent',),
         ),
         mutually_exclusive=[
-            ['icmp_block', 'icmp_block_inversion', 'service', 'protocol' 'port', 'port_forward', 'rich_rule',
+            ['icmp_block', 'icmp_block_inversion', 'service', 'protocol', 'port', 'port_forward', 'rich_rule',
              'interface', 'masquerade', 'source', 'target']
         ],
     )
