@@ -37,7 +37,7 @@ options:
   src:
     description:
       - Path of the patch file as accepted by the GNU patch tool. If
-        C(remote_src) is 'no', the patch source file is looked up from the
+        C(remote_src) is C(false), the patch source file is looked up from the
         module's I(files) directory.
     type: path
     required: true
