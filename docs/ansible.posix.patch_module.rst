@@ -84,9 +84,9 @@ Parameters
                         </ul>
                 </td>
                 <td>
-                        <div>Setting to <code>true</code> will disable patch&#x27;s heuristic for transforming CRLF line endings into LF.</div>
+                        <div>Setting to <code>yes</code> will disable patch&#x27;s heuristic for transforming CRLF line endings into LF.</div>
                         <div>Line endings of src and dest must match.</div>
-                        <div>If set to <code>false</code>, <code>patch</code> will replace CRLF in <code>src</code> files on POSIX.</div>
+                        <div>If set to <code>no</code>, <code>patch</code> will replace CRLF in <code>src</code> files on POSIX.</div>
                 </td>
             </tr>
             <tr>
@@ -122,7 +122,7 @@ Parameters
                         </ul>
                 </td>
                 <td>
-                        <div>Setting to <code>true</code> will ignore white space changes between patch and input.</div>
+                        <div>Setting to <code>yes</code> will ignore white space changes between patch and input..</div>
                 </td>
             </tr>
             <tr>
@@ -141,7 +141,7 @@ Parameters
                         </ul>
                 </td>
                 <td>
-                        <div>If <code>false</code>, it will search for src at originating/controller machine, if <code>true</code> it will go to the remote/target machine for the <code>src</code>.</div>
+                        <div>If <code>no</code>, it will search for src at originating/controller machine, if <code>yes</code> it will go to the remote/target machine for the <code>src</code>.</div>
                 </td>
             </tr>
             <tr>
@@ -157,7 +157,7 @@ Parameters
                 <td>
                 </td>
                 <td>
-                        <div>Path of the patch file as accepted by the GNU patch tool. If <code>remote_src</code> is <code>false</code>, the patch source file is looked up from the module&#x27;s <em>files</em> directory.</div>
+                        <div>Path of the patch file as accepted by the GNU patch tool. If <code>remote_src</code> is &#x27;no&#x27;, the patch source file is looked up from the module&#x27;s <em>files</em> directory.</div>
                         <div style="font-size: small; color: darkgreen"><br/>aliases: patchfile</div>
                 </td>
             </tr>
