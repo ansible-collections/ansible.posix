@@ -40,6 +40,8 @@
             state: stopped
 
         - import_tasks: run_all_tests.yml
+          # FIXME currently fails when the daemon is running AND executed inside a container
+        - import_tasks: zone_default_test_cases.yml
       when: check_output.rc == 0
 
   when:

@@ -1,0 +1,115 @@
+# Test playbook for the firewalld module - zone default operations
+# (c) 2022, Gregory Furlong <gnfzdz@fzdz.io>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Set default zone to trusted (default - true / state - enabled)
+  block:
+  - name: Update default zone to trusted
+    ansible.posix.firewalld:
+      zone: trusted
+      default: True
+      permanent: True
+      state: enabled
+    register: result
+
+  - name: Default zone is trusted
+    ansible.builtin.assert:
+      that:
+        - result is changed
+
+  - name: Update default zone to trusted (verify not changed)
+    ansible.posix.firewalld:
+      zone: trusted
+      default: True
+      permanent: True
+      state: enabled
+    register: result
+
+  - name: Default zone is trusted (verify not changed)
+    ansible.builtin.assert:
+      that:
+        - result is not changed
+
+- name: Revert default zone to upstream default (default - false / state - enabled)
+  block:
+  - name: Revert default zone to upstream default
+    ansible.posix.firewalld:
+      zone: trusted
+      default: False
+      permanent: True
+      state: enabled
+    register: result
+
+  - name: Default zone is reverted
+    ansible.builtin.assert:
+      that:
+        - result is changed
+
+  - name: Revert default zone to upstream default (verify not changed)
+    ansible.posix.firewalld:
+      zone: trusted
+      default: False
+      permanent: True
+      state: enabled
+    register: result
+
+  - name: Default zone is reverted (verify not changed)
+    ansible.builtin.assert:
+      that:
+        - result is not changed
+
+- name: Set default zone to trusted (default - false / state - disabled)
+  block:
+  - name: Update default zone to trusted
+    ansible.posix.firewalld:
+      zone: trusted
+      default: False
+      permanent: True
+      state: disabled
+    register: result
+
+  - name: Default zone is trusted
+    ansible.builtin.assert:
+      that:
+        - result is changed
+
+  - name: Update default zone to trusted (verify not changed)
+    ansible.posix.firewalld:
+      zone: trusted
+      default: False
+      permanent: True
+      state: disabled
+    register: result
+
+  - name: Default zone is trusted (verify not changed)
+    ansible.builtin.assert:
+      that:
+        - result is not changed
+
+- name: Revert default zone to upstream default (default - true / state - disabled)
+  block:
+  - name: Revert default zone to upstream default
+    ansible.posix.firewalld:
+      zone: trusted
+      default: True
+      permanent: True
+      state: disabled
+    register: result
+
+  - name: Default zone is reverted
+    ansible.builtin.assert:
+      that:
+        - result is changed
+
+  - name: Revert default zone to upstream default (verify not changed)
+    ansible.posix.firewalld:
+      zone: trusted
+      default: True
+      permanent: True
+      state: disabled
+    register: result
+
+  - name: Default zone is reverted (verify not changed)
+    ansible.builtin.assert:
+      that:
+        - result is not changed

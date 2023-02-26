@@ -106,6 +106,11 @@ options:
     description:
       - The masquerade setting you would like to enable/disable to/from zones within firewalld.
     type: str
+  default:
+    description:
+      - Indicates that the targeted zone should be set as firewalld's default zone.
+      - This change must always be both immediate (when firewalld is running) and permanent.
+    type: bool
   offline:
     description:
       - Whether to run this module even when firewalld is offline.
@@ -213,6 +218,13 @@ EXAMPLES = r'''
     permanent: true
     immediate: true
     state: enabled
+
+- name: Set the default zone to 'trusted'
+  ansible.builtin.firewalld:
+    zone: trusted
+    permanent: true
+    default: true
+    state: enabled
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -222,6 +234,7 @@ from ansible_collections.ansible.posix.plugins.module_utils.firewalld import Fir
 try:
     from firewall.client import Rich_Rule
     from firewall.client import FirewallClientZoneSettings
+    from firewall.config import FALLBACK_ZONE
 except ImportError:
     # The import errors are handled via FirewallTransaction, don't need to
     # duplicate that here
@@ -704,6 +717,47 @@ class ZoneTransaction(FirewallTransaction):
             zone_obj.remove()
 
 
+class DefaultZoneTransaction(FirewallTransaction):
+    """
+    DefaultZoneTransaction
+    """
+
+    def __init__(self, module, action_args=None, zone=None, desired_state=None, permanent=False, immediate=False):
+        super(DefaultZoneTransaction, self).__init__(
+            module, action_args=action_args, desired_state=desired_state, zone=zone, permanent=permanent, immediate=immediate
+        )
+        self.upstream_default_zone = FALLBACK_ZONE
+        self.enabled_msg = "Updated default zone to %s" % self.zone
+        self.disabled_msg = "Reverted default zone from %s to upstream default %s" % (self.zone, self.upstream_default_zone)
+        if (not permanent) or not (fw_offline or immediate):
+            self.module.fail_json(msg="Default zone changes must be permanent and when daemon is online must also be immediate")
+
+    def get_enabled_immediate(self):
+        return self.fw.getDefaultZone() == self.zone
+
+    def get_enabled_permanent(self):
+        default_zone = self.fw.get_default_zone() if fw_offline else self.fw.getDefaultZone()
+        return self.zone == default_zone
+
+    def set_enabled_immediate(self):
+        pass  # permanent default zone change will also apply immediately to a running daemon
+
+    def set_enabled_permanent(self):
+        if fw_offline:
+            self.fw.set_default_zone(self.zone)
+        else:
+            self.fw.setDefaultZone(self.zone)
+
+    def set_disabled_immediate(self):
+        pass  # permanent default zone change will also apply immediately to a running daemon
+
+    def set_disabled_permanent(self):
+        if fw_offline:
+            self.fw.set_default_zone(self.upstream_default_zone)
+        else:
+            self.fw.setDefaultZone(self.upstream_default_zone)
+
+
 class ForwardPortTransaction(FirewallTransaction):
     """
     ForwardPortTransaction
@@ -759,6 +813,7 @@ def main():
             timeout=dict(type='int', default=0),
             interface=dict(type='str'),
             masquerade=dict(type='str'),
+            default=dict(type='bool'),
             offline=dict(type='bool'),
             target=dict(type='str', choices=['default', 'ACCEPT', 'DROP', '%%REJECT%%']),
         ),
@@ -766,11 +821,12 @@ def main():
         required_by=dict(
             interface=('zone',),
             target=('zone',),
+            default=('zone',),
             source=('permanent',),
         ),
         mutually_exclusive=[
             ['icmp_block', 'icmp_block_inversion', 'service', 'port', 'port_forward', 'rich_rule',
-             'interface', 'masquerade', 'source', 'target']
+             'interface', 'masquerade', 'source', 'target', 'default']
         ],
     )
 
@@ -780,6 +836,7 @@ def main():
     timeout = module.params['timeout']
     interface = module.params['interface']
     masquerade = module.params['masquerade']
+    default = module.params['default']
 
     # Sanity checks
     FirewallTransaction.sanity_check(module)
@@ -1009,6 +1066,20 @@ def main():
             action_args=(target,),
             zone=zone,
             desired_state=desired_state,
+            permanent=permanent,
+            immediate=immediate,
+        )
+
+        changed, transaction_msgs = transaction.run()
+        msgs = msgs + transaction_msgs
+
+    if default is not None:
+        expected_state = 'enabled' if (desired_state == 'enabled') == default else 'disabled'
+        transaction = DefaultZoneTransaction(
+            module,
+            action_args=(),
+            zone=zone,
+            desired_state=expected_state,
             permanent=permanent,
             immediate=immediate,
         )
