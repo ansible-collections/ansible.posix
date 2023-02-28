@@ -121,6 +121,21 @@ Parameters
             <tr>
                 <td colspan="2">
                     <div class="ansibleOptionAnchor" id="parameter-"></div>
+                    <b>forward</b>
+                    <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
+                    <div style="font-size: small">
+                        <span style="color: purple">string</span>
+                    </div>
+                </td>
+                <td>
+                </td>
+                <td>
+                        <div>Whether intra zone forwarding should be enabled/disabled for a zone in firewalld.</div>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <div class="ansibleOptionAnchor" id="parameter-"></div>
                     <b>offline</b>
                     <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
                     <div style="font-size: small">
@@ -452,6 +467,12 @@ Examples
 
     - ansible.posix.firewalld:
         masquerade: yes
+        state: enabled
+        permanent: yes
+        zone: dmz
+
+    - ansible.posix.firewalld:
+        forward: yes
         state: enabled
         permanent: yes
         zone: dmz

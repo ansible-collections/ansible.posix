@@ -106,6 +106,11 @@ options:
     description:
       - The masquerade setting you would like to enable/disable to/from zones within firewalld.
     type: str
+  forward:
+    description:
+      - Whether intra zone forwarding should be enabled/disabled for a zone in firewalld.
+        This parameter supports on python-firewall 0.9.0 or later.
+    type: bool
   offline:
     description:
       - Whether to run this module even when firewalld is offline.
@@ -184,6 +189,12 @@ EXAMPLES = r'''
     zone: dmz
 
 - ansible.posix.firewalld:
+    forward: yes
+    state: enabled
+    permanent: yes
+    zone: custom
+
+- ansible.posix.firewalld:
     zone: custom
     state: present
     permanent: true
@@ -218,10 +229,12 @@ EXAMPLES = r'''
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible_collections.ansible.posix.plugins.module_utils.firewalld import FirewallTransaction, fw_offline
+from ansible_collections.ansible.posix.plugins.module_utils.version import StrictVersion
 
 try:
     from firewall.client import Rich_Rule
     from firewall.client import FirewallClientZoneSettings
+    from firewall.config import VERSION as FIREWALLD_VERSION
 except ImportError:
     # The import errors are handled via FirewallTransaction, don't need to
     # duplicate that here
@@ -383,6 +396,49 @@ class MasqueradeTransaction(FirewallTransaction):
     def set_disabled_permanent(self):
         fw_zone, fw_settings = self.get_fw_zone_settings()
         fw_settings.setMasquerade(False)
+        self.update_fw_settings(fw_zone, fw_settings)
+
+
+class ForwardTransaction(FirewallTransaction):
+    """
+    ForwardTransaction
+    """
+
+    def __init__(self, module, action_args=None, zone=None, desired_state=None, permanent=False, immediate=False):
+        super(ForwardTransaction, self).__init__(
+            module, action_args=action_args, desired_state=desired_state, zone=zone, permanent=permanent, immediate=immediate
+        )
+
+        self.enabled_msg = "Enabled intra zone forwarding on zone %s" % self.zone
+        self.disabled_msg = "Disabled intra zone forwarding on zone %s" % self.zone
+
+    def get_enabled_immediate(self):
+        if self.fw.queryForward(self.zone) is True:
+            return True
+        else:
+            return False
+
+    def get_enabled_permanent(self):
+        fw_zone, fw_settings = self.get_fw_zone_settings()
+        if fw_settings.getForward() is True:
+            return True
+        else:
+            return False
+
+    def set_enabled_immediate(self):
+        self.fw.addForward(self.zone)
+
+    def set_enabled_permanent(self):
+        fw_zone, fw_settings = self.get_fw_zone_settings()
+        fw_settings.setForward(True)
+        self.update_fw_settings(fw_zone, fw_settings)
+
+    def set_disabled_immediate(self):
+        self.fw.removeForward(self.zone)
+
+    def set_disabled_permanent(self):
+        fw_zone, fw_settings = self.get_fw_zone_settings()
+        fw_settings.setForward(False)
         self.update_fw_settings(fw_zone, fw_settings)
 
 
@@ -759,6 +815,7 @@ def main():
             timeout=dict(type='int', default=0),
             interface=dict(type='str'),
             masquerade=dict(type='str'),
+            forward=dict(type='bool'),
             offline=dict(type='bool'),
             target=dict(type='str', choices=['default', 'ACCEPT', 'DROP', '%%REJECT%%']),
         ),
@@ -770,7 +827,7 @@ def main():
         ),
         mutually_exclusive=[
             ['icmp_block', 'icmp_block_inversion', 'service', 'port', 'port_forward', 'rich_rule',
-             'interface', 'masquerade', 'source', 'target']
+             'interface', 'masquerade', 'forward', 'source', 'target']
         ],
     )
 
@@ -780,6 +837,7 @@ def main():
     timeout = module.params['timeout']
     interface = module.params['interface']
     masquerade = module.params['masquerade']
+    forward = module.params['forward']
 
     # Sanity checks
     FirewallTransaction.sanity_check(module)
@@ -830,7 +888,7 @@ def main():
 
     modification = False
     if any([icmp_block, icmp_block_inversion, service, port, port_forward, rich_rule,
-            interface, masquerade, source, target]):
+            interface, masquerade, forward, source, target]):
         modification = True
     if modification and desired_state in ['absent', 'present'] and target is None:
         module.fail_json(
@@ -1001,6 +1059,23 @@ def main():
             module.warn('The value of the masquerade option is "%s". '
                         'The type of the option will be changed from string to boolean in a future release. '
                         'To avoid unexpected behavior, please change the value to boolean.' % masquerade)
+
+    if forward is not None:
+
+        if StrictVersion(FIREWALLD_VERSION) < StrictVersion('0.9.0'):
+            module.fail_json(msg='Intra zone forwarding requires firewalld>=0.9.0. Current version is {0}.'.format(FIREWALLD_VERSION))
+
+        transaction = ForwardTransaction(
+            module,
+            action_args=(),
+            zone=zone,
+            desired_state=desired_state,
+            permanent=permanent,
+            immediate=immediate,
+        )
+
+        changed, transaction_msgs = transaction.run()
+        msgs = msgs + transaction_msgs
 
     if target is not None:
 

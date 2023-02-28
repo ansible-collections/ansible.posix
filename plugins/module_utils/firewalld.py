@@ -127,9 +127,16 @@ class FirewallTransaction(object):
     def get_fw_zone_settings(self):
         if self.fw_offline:
             fw_zone = self.fw.config.get_zone(self.zone)
-            fw_settings = FirewallClientZoneSettings(
-                list(self.fw.config.get_zone_config(fw_zone))
-            )
+
+            # If firewalld version is 0.9.0 or higher retrieve the configuration
+            # using the get_zone_config_dict call, otherwise the returned value
+            # for the 'forward' field is always zero.
+            if LooseVersion(FW_VERSION) >= LooseVersion("0.9.0"):
+                fw_settings = FirewallClientZoneSettings(self.fw.config.get_zone_config_dict(fw_zone))
+            else:
+                fw_settings = FirewallClientZoneSettings(
+                    list(self.fw.config.get_zone_config(fw_zone))
+                )
         else:
             fw_zone = self.fw.config().getZoneByName(self.zone)
             fw_settings = fw_zone.getSettings()
