@@ -284,9 +284,6 @@ class ActionModule(ActionBase):
         # told (via delegate_to) that a different host is the source of the
         # rsync
         if not use_delegate and remote_transport:
-            # Create a connection to localhost to run rsync on
-            new_stdin = self._connection._new_stdin
-
             # Unlike port, there can be only one shell
             localhost_shell = None
             for host in C.LOCALHOST:
@@ -315,7 +312,11 @@ class ActionModule(ActionBase):
                 localhost_executable = C.DEFAULT_EXECUTABLE
             self._play_context.executable = localhost_executable
 
-            new_connection = connection_loader.get('local', self._play_context, new_stdin)
+            try:
+                new_connection = connection_loader.get('local', self._play_context)
+            except TypeError:
+                # Needed for ansible-core < 2.15
+                new_connection = connection_loader.get('local', self._play_context, self._connection._new_stdin)
             self._connection = new_connection
             # Override _remote_is_local as an instance attribute specifically for the synchronize use case
             # ensuring we set local tmpdir correctly
