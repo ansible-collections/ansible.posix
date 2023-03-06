@@ -24,6 +24,10 @@ options:
       - Name of a port or port range to add/remove to/from firewalld.
       - Must be in the form PORT/PROTOCOL or PORT-PORT/PROTOCOL for port ranges.
     type: str
+  protocol:
+    description:
+      - Name of a protocol to add/remove to/from firewalld.
+    type: str
   port_forward:
     description:
       - Port and protocol to forward using firewalld.
@@ -213,6 +217,12 @@ EXAMPLES = r'''
     permanent: true
     immediate: true
     state: enabled
+
+- name: permit ospf traffic
+  ansible.posix.firewalld:
+    protocol: ospf
+    permanent: true
+    state: enabled
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -340,6 +350,47 @@ class ServiceTransaction(FirewallTransaction):
     def set_disabled_permanent(self, service, timeout):
         fw_zone, fw_settings = self.get_fw_zone_settings()
         fw_settings.removeService(service)
+        self.update_fw_settings(fw_zone, fw_settings)
+
+
+class ProtocolTransaction(FirewallTransaction):
+    """
+    ProtocolTransaction
+    """
+
+    def __init__(self, module, action_args=None, zone=None, desired_state=None, permanent=False, immediate=False):
+        super(ProtocolTransaction, self).__init__(
+            module, action_args=action_args, desired_state=desired_state, zone=zone, permanent=permanent, immediate=immediate
+        )
+
+    def get_enabled_immediate(self, protocol, timeout):
+        if protocol in self.fw.getProtocols(self.zone):
+            return True
+        else:
+            return False
+
+    def get_enabled_permanent(self, protocol, timeout):
+        fw_zone, fw_settings = self.get_fw_zone_settings()
+
+        if protocol in fw_settings.getProtocols():
+            return True
+        else:
+            return False
+
+    def set_enabled_immediate(self, protocol, timeout):
+        self.fw.addProtocol(self.zone, protocol, timeout)
+
+    def set_enabled_permanent(self, protocol, timeout):
+        fw_zone, fw_settings = self.get_fw_zone_settings()
+        fw_settings.addProtocol(protocol)
+        self.update_fw_settings(fw_zone, fw_settings)
+
+    def set_disabled_immediate(self, protocol, timeout):
+        self.fw.removeProtocol(self.zone, protocol)
+
+    def set_disabled_permanent(self, protocol, timeout):
+        fw_zone, fw_settings = self.get_fw_zone_settings()
+        fw_settings.removeProtocol(protocol)
         self.update_fw_settings(fw_zone, fw_settings)
 
 
@@ -748,6 +799,7 @@ def main():
             icmp_block=dict(type='str'),
             icmp_block_inversion=dict(type='str'),
             service=dict(type='str'),
+            protocol=dict(type='str'),
             port=dict(type='str'),
             port_forward=dict(type='list', elements='dict'),
             rich_rule=dict(type='str'),
@@ -769,7 +821,7 @@ def main():
             source=('permanent',),
         ),
         mutually_exclusive=[
-            ['icmp_block', 'icmp_block_inversion', 'service', 'port', 'port_forward', 'rich_rule',
+            ['icmp_block', 'icmp_block_inversion', 'service', 'protocol', 'port', 'port_forward', 'rich_rule',
              'interface', 'masquerade', 'source', 'target']
         ],
     )
@@ -798,6 +850,7 @@ def main():
     icmp_block = module.params['icmp_block']
     icmp_block_inversion = module.params['icmp_block_inversion']
     service = module.params['service']
+    protocol = module.params['protocol']
     rich_rule = module.params['rich_rule']
     source = module.params['source']
     zone = module.params['zone']
@@ -829,7 +882,7 @@ def main():
             port_forward_toaddr = port_forward['toaddr']
 
     modification = False
-    if any([icmp_block, icmp_block_inversion, service, port, port_forward, rich_rule,
+    if any([icmp_block, icmp_block_inversion, service, protocol, port, port_forward, rich_rule,
             interface, masquerade, source, target]):
         modification = True
     if modification and desired_state in ['absent', 'present'] and target is None:
@@ -892,6 +945,21 @@ def main():
         msgs = msgs + transaction_msgs
         if changed is True:
             msgs.append("Changed service %s to %s" % (service, desired_state))
+    if protocol is not None:
+
+        transaction = ProtocolTransaction(
+            module,
+            action_args=(protocol, timeout),
+            zone=zone,
+            desired_state=desired_state,
+            permanent=permanent,
+            immediate=immediate,
+        )
+
+        changed, transaction_msgs = transaction.run()
+        msgs = msgs + transaction_msgs
+        if changed is True:
+            msgs.append("Changed protocol %s to %s" % (protocol, desired_state))
 
     if source is not None:
 
