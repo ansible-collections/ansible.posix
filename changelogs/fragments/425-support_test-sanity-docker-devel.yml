@@ -1,0 +1,2 @@
+trivial:
+  - ansible.posix - removed unused module import from the code.
