@@ -37,6 +37,11 @@ EXAMPLES = r'''
 - name: Gather information about active zones
   ansible.posix.firewalld_info:
     active_zones: true
+  register: result
+
+- name: Print default zone for debugging
+  ansible.builtin.debug:
+    var: result.firewalld_info.default_zone
 
 - name: Gather information about specific zones
   ansible.posix.firewalld_info:
@@ -44,6 +49,7 @@ EXAMPLES = r'''
       - public
       - external
       - internal
+  register: result
 '''
 
 RETURN = r'''
@@ -78,7 +84,7 @@ firewalld_info:
             returned: success
             type: str
             sample: 0.8.2
-        default_zones:
+        default_zone:
             description:
               - The zone name of default zone.
             returned: success
