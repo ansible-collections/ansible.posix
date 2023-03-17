@@ -348,6 +348,7 @@ EXAMPLES = r'''
 
 import os
 import errno
+import re
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes, to_native
@@ -578,8 +579,19 @@ def main():
                 module.fail_json(msg='Hardlinking into a subdirectory of the source would cause recursion. %s and %s' % (destination_path, dest))
             cmd.append('--link-dest=%s' % link_path)
 
-    changed_marker = '<<CHANGED>>'
-    cmd.append('--out-format=%s' % shlex_quote(changed_marker + '%i %n%L'))
+    # find the last specified out-format
+    out_format = ''
+    for rsync_opt in rsync_opts:
+        if rsync_opt.startswith('--out-format='):
+            out_format = rsync_opt.replace('--out-format=', '', 1)
+
+    # force a known out-format so we can test for changes and return a known format of diff
+    diff_marker = 'DIFF'
+    if out_format == '' or module._diff:
+        diff_detail = '%n%L'
+    else:
+        diff_detail = ''
+    cmd.append('--out-format=%s' % shlex_quote('%s//%s//%%i//%s' % (out_format, diff_marker, diff_detail)))
 
     # expand the paths
     if '@' not in source:
@@ -611,18 +623,36 @@ def main():
     if rc:
         return module.fail_json(msg=err, rc=rc, cmd=cmdstr)
 
-    if link_dest:
-        # a leading period indicates no change
-        changed = (changed_marker + '.') not in out
-    else:
-        changed = changed_marker in out
+    changed = False
+    diff = []
+    out_lines = []
+    # remove forced out-format suffix, check for file changes
+    for line in out.split('\n'):
+        match = re.match('(.*)//%s//(...*?)//(.*)$' % diff_marker, line)
+        if match:
+            default_diff = '%s %s' % (match.group(2), match.group(3))
 
-    out_clean = out.replace(changed_marker, '')
-    out_lines = out_clean.split('\n')
+            if module._diff:
+                diff.append(default_diff)
+
+            if out_format == '':
+                out_lines.append(default_diff)
+            else:
+                out_lines.append(match.group(1))
+
+            # a period in the first position indicates no changes to the file's contents
+            # a period in every other position from the third onward indicates no attribute changes
+            if not re.match(r'\..\.*$', match.group(2)):
+                changed = True
+        else:
+            out_lines.append(line)
+
+    out_clean = '\n'.join(out_lines)
     while '' in out_lines:
         out_lines.remove('')
+
     if module._diff:
-        diff = {'prepared': out_clean}
+        diff = {'prepared': '\n'.join(diff)}
         return module.exit_json(changed=changed, msg=out_clean,
                                 rc=rc, cmd=cmdstr, stdout_lines=out_lines,
                                 diff=diff)
