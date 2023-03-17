@@ -1,2 +1,0 @@
-minor_changes:
-  - synchronize - user-defined ``--out-format`` in ``rsync_opts`` is now honored in the returned output. (https://github.com/ansible-collections/ansible.posix/pull/428)
