@@ -1,0 +1,2 @@
+bugfixes:
+  - rhel_facts - Call exit_json with all keyword arguments
