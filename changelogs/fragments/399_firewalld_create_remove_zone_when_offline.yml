@@ -1,3 +1,0 @@
----
-bugfixes:
-  - Fixed a bug where firewalld module fails to create/remove zones when the daemon is stopped

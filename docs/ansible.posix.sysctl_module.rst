@@ -85,7 +85,7 @@ Parameters
                         </ul>
                 </td>
                 <td>
-                        <div>If <code>yes</code>, performs a <em>/sbin/sysctl -p</em> if the <code>sysctl_file</code> is updated. If <code>no</code>, does not reload <em>sysctl</em> even if the <code>sysctl_file</code> is updated.</div>
+                        <div>If <code>true</code>, performs a <em>/sbin/sysctl -p</em> if the <code>sysctl_file</code> is updated. If <code>false</code>, does not reload <em>sysctl</em> even if the <code>sysctl_file</code> is updated.</div>
                 </td>
             </tr>
             <tr>
@@ -139,7 +139,7 @@ Parameters
                         </ul>
                 </td>
                 <td>
-                        <div>Verify token value with the sysctl command and set with -w if necessary</div>
+                        <div>Verify token value with the sysctl command and set with -w if necessary.</div>
                 </td>
             </tr>
             <tr>
@@ -186,21 +186,21 @@ Examples
         name: kernel.panic
         value: '3'
         sysctl_file: /tmp/test_sysctl.conf
-        reload: no
+        reload: false
 
     # Set ip forwarding on in /proc and verify token value with the sysctl command
     - ansible.posix.sysctl:
         name: net.ipv4.ip_forward
         value: '1'
-        sysctl_set: yes
+        sysctl_set: true
 
     # Set ip forwarding on in /proc and in the sysctl file and reload if necessary
     - ansible.posix.sysctl:
         name: net.ipv4.ip_forward
         value: '1'
-        sysctl_set: yes
+        sysctl_set: true
         state: present
-        reload: yes
+        reload: true
 
 
 

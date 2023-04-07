@@ -1,2 +1,0 @@
-trivial:
-  - "synchronize - fix broken ``seealso`` module reference (https://github.com/ansible-collections/ansible.posix/pull/413)."

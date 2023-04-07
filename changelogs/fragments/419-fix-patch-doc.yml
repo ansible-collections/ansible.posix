@@ -1,2 +1,0 @@
-trivial:
-  - patch - fix format syntax and boolean values on document (https://github.com/ansible-collections/ansible.posix/pull/419).

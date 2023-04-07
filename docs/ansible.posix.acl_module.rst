@@ -49,8 +49,8 @@ Parameters
                         </ul>
                 </td>
                 <td>
-                        <div>If the target is a directory, setting this to <code>yes</code> will make it the default ACL for entities created inside the directory.</div>
-                        <div>Setting <code>default</code> to <code>yes</code> causes an error if the path is a file.</div>
+                        <div>If the target is a directory, setting this to <code>true</code> will make it the default ACL for entities created inside the directory.</div>
+                        <div>Setting <code>default</code> to <code>true</code> causes an error if the path is a file.</div>
                 </td>
             </tr>
             <tr>
@@ -63,6 +63,7 @@ Parameters
                     </div>
                 </td>
                 <td>
+                        <b>Default:</b><br/><div style="color: blue">""</div>
                 </td>
                 <td>
                         <div>The actual user or group that the ACL applies to when matching entity types user or group are selected.</div>
@@ -285,7 +286,7 @@ Examples
         entity: joe
         etype: user
         permissions: rw
-        default: yes
+        default: true
         state: present
 
     - name: Same as previous but using entry shorthand

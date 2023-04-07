@@ -1,4 +1,0 @@
----
-
-trivial:
-  - firewalld_info - fixed typo in return value and improved examples in documentation

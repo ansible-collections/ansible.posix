@@ -89,7 +89,12 @@ Examples
 
     - name: Gather information about active zones
       ansible.posix.firewalld_info:
-        active_zones: yes
+        active_zones: true
+      register: result
+
+    - name: Print default zone for debugging
+      ansible.builtin.debug:
+        var: result.firewalld_info.default_zone
 
     - name: Gather information about specific zones
       ansible.posix.firewalld_info:
@@ -97,6 +102,7 @@ Examples
           - public
           - external
           - internal
+      register: result
 
 
 
@@ -163,7 +169,7 @@ Common return values are documented `here <https://docs.ansible.com/ansible/late
                     <td class="elbow-placeholder">&nbsp;</td>
                 <td colspan="3">
                     <div class="ansibleOptionAnchor" id="return-"></div>
-                    <b>default_zones</b>
+                    <b>default_zone</b>
                     <a class="ansibleOptionLink" href="#return-" title="Permalink to this return value"></a>
                     <div style="font-size: small">
                       <span style="color: purple">string</span>

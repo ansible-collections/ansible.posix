@@ -294,3 +294,30 @@ releases:
     - 407_fix_firewalld_port_test.yml
     - 409_update_azp_matrix.yml
     release_date: '2023-01-20'
+  1.5.2:
+    changes:
+      bugfixes:
+      - Fixed a bug where firewalld module fails to create/remove zones when the daemon
+        is stopped
+      - rhel_facts - Call exit_json with all keyword arguments
+      minor_changes:
+      - Add jsonl callback plugin to ansible.posix collection
+      - firewalld - add `protocol` parameter
+      release_summary: 'This is the minor release of the ``ansible.posix`` collection.
+
+        This changelog contains all changes to the modules and plugins
+
+        in this collection that have been added after the release of
+
+        ``ansible.posix`` 1.5.1.'
+    fragments:
+    - 1.5.2.yml
+    - 399_firewalld_create_remove_zone_when_offline.yml
+    - 413-synchronize-seealso.yml
+    - 417-add-protocol-parameter.yml
+    - 419-fix-patch-doc.yml
+    - 425-support_test-sanity-docker-devel.yml
+    - 426-firewalld_info-doc-update.yml
+    - 434-fix-rhel_facts-exit_json.yml
+    - 535-add-jsonl-callback.yml
+    release_date: '2023-04-07'
