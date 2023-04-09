@@ -10,7 +10,7 @@ from ansible.module_utils.basic import missing_required_lib
 __metaclass__ = type
 
 
-FW_VERSION = None
+FW_VERSION = 9999
 fw = None
 fw_offline = False
 import_failure = True
