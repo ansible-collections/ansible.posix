@@ -139,8 +139,8 @@ Parameters
                 </td>
                 <td>
                         <div>Whether this module should manage the directory of the authorized key file.</div>
-                        <div>If set to <code>yes</code>, the module will create the directory, as well as set the owner and permissions of an existing directory.</div>
-                        <div>Be sure to set <code>manage_dir=no</code> if you are using an alternate directory for authorized_keys, as set with <code>path</code>, since you could lock yourself out of SSH access.</div>
+                        <div>If set to <code>true</code>, the module will create the directory, as well as set the owner and permissions of an existing directory.</div>
+                        <div>Be sure to set <code>manage_dir=false</code> if you are using an alternate directory for authorized_keys, as set with <code>path</code>, since you could lock yourself out of SSH access.</div>
                         <div>See the example below.</div>
                 </td>
             </tr>
@@ -212,9 +212,9 @@ Parameters
                 </td>
                 <td>
                         <div>This only applies if using a https url as the source of the keys.</div>
-                        <div>If set to <code>no</code>, the SSL certificates will not be validated.</div>
-                        <div>This should only set to <code>no</code> used on personally controlled sites using self-signed certificates as it avoids verifying the source site.</div>
-                        <div>Prior to 2.1 the code worked as if this was set to <code>yes</code>.</div>
+                        <div>If set to <code>false</code>, the SSL certificates will not be validated.</div>
+                        <div>This should only set to <code>false</code> used on personally controlled sites using self-signed certificates as it avoids verifying the source site.</div>
+                        <div>Prior to 2.1 the code worked as if this was set to <code>true</code>.</div>
                 </td>
             </tr>
     </table>
@@ -252,7 +252,7 @@ Examples
         state: present
         key: "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
         path: /etc/ssh/authorized_keys/charlie
-        manage_dir: False
+        manage_dir: false
 
     - name: Set up multiple authorized keys
       ansible.posix.authorized_key:
@@ -275,14 +275,14 @@ Examples
         user: charlie
         state: present
         key: https://github.com/user.keys
-        validate_certs: False
+        validate_certs: false
 
     - name: Set authorized key, removing all the authorized keys already set
       ansible.posix.authorized_key:
         user: root
         key: "{{ lookup('file', 'public_keys/doe-jane') }}"
         state: present
-        exclusive: True
+        exclusive: true
 
     - name: Set authorized key for user ubuntu copying it from current user
       ansible.posix.authorized_key:
@@ -460,7 +460,7 @@ Common return values are documented `here <https://docs.ansible.com/ansible/late
                 </td>
                 <td>success</td>
                 <td>
-                            <div>This only applies if using a https url as the source of the keys. If set to <code>no</code>, the SSL certificates will not be validated.</div>
+                            <div>This only applies if using a https url as the source of the keys. If set to <code>false</code>, the SSL certificates will not be validated.</div>
                     <br/>
                         <div style="font-size: smaller"><b>Sample:</b></div>
                         <div style="font-size: smaller; color: blue; word-wrap: break-word; word-break: break-all;">True</div>
