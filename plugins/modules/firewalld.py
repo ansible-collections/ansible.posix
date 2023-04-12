@@ -907,12 +907,21 @@ def main():
             msgs.append("Changed icmp-block %s to %s" % (icmp_block, desired_state))
 
     if icmp_block_inversion is not None:
+        # Type of icmp_block_inversion will be changed to boolean in a future release.
+        icmp_block_inversion_status = True
+        try:
+            icmp_block_inversion_status = boolean(icmp_block_inversion, True)
+        except TypeError:
+            module.warn('The value of the icmp_block_inversion option is "%s". '
+                        'The type of the option will be changed from string to boolean in a future release. '
+                        'To avoid unexpected behavior, please change the value to boolean.' % icmp_block_inversion)
+        expected_state = 'enabled' if (desired_state == 'enabled') == icmp_block_inversion_status else 'disabled'
 
         transaction = IcmpBlockInversionTransaction(
             module,
             action_args=(),
             zone=zone,
-            desired_state=desired_state,
+            desired_state=expected_state,
             permanent=permanent,
             immediate=immediate,
         )
@@ -921,14 +930,6 @@ def main():
         msgs = msgs + transaction_msgs
         if changed is True:
             msgs.append("Changed icmp-block-inversion %s to %s" % (icmp_block_inversion, desired_state))
-
-        # Type of icmp_block_inversion will be changed to boolean in a future release.
-        try:
-            boolean(icmp_block_inversion, True)
-        except TypeError:
-            module.warn('The value of the icmp_block_inversion option is "%s". '
-                        'The type of the option will be changed from string to boolean in a future release. '
-                        'To avoid unexpected behavior, please change the value to boolean.' % icmp_block_inversion)
 
     if service is not None:
 
@@ -1050,26 +1051,27 @@ def main():
         msgs = msgs + transaction_msgs
 
     if masquerade is not None:
+        # Type of masquerade will be changed to boolean in a future release.
+        masquerade_status = True
+        try:
+            masquerade_status = boolean(masquerade, True)
+        except TypeError:
+            module.warn('The value of the masquerade option is "%s". '
+                        'The type of the option will be changed from string to boolean in a future release. '
+                        'To avoid unexpected behavior, please change the value to boolean.' % masquerade)
 
+        expected_state = 'enabled' if (desired_state == 'enabled') == masquerade_status else 'disabled'
         transaction = MasqueradeTransaction(
             module,
             action_args=(),
             zone=zone,
-            desired_state=desired_state,
+            desired_state=expected_state,
             permanent=permanent,
             immediate=immediate,
         )
 
         changed, transaction_msgs = transaction.run()
         msgs = msgs + transaction_msgs
-
-        # Type of masquerade will be changed to boolean in a future release.
-        try:
-            boolean(masquerade, True)
-        except TypeError:
-            module.warn('The value of the masquerade option is "%s". '
-                        'The type of the option will be changed from string to boolean in a future release. '
-                        'To avoid unexpected behavior, please change the value to boolean.' % masquerade)
 
     if target is not None:
 
