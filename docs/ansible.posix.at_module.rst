@@ -171,7 +171,7 @@ Examples
         command: ls -d / >/dev/null
         count: 20
         units: minutes
-        unique: yes
+        unique: true
 
 
 

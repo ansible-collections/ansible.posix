@@ -5,6 +5,50 @@ ansible.posix Release Notes
 .. contents:: Topics
 
 
+v1.5.2
+======
+
+Release Summary
+---------------
+
+This is the minor release of the ``ansible.posix`` collection.
+This changelog contains all changes to the modules and plugins
+in this collection that have been added after the release of
+``ansible.posix`` 1.5.1.
+
+Minor Changes
+-------------
+
+- Add jsonl callback plugin to ansible.posix collection
+- firewalld - add `protocol` parameter
+
+Bugfixes
+--------
+
+- Fixed a bug where firewalld module fails to create/remove zones when the daemon is stopped
+- rhel_facts - Call exit_json with all keyword arguments
+
+v1.5.1
+======
+
+Minor Changes
+-------------
+
+- mount - Add ``absent_from_fstab`` state (https://github.com/ansible-collections/ansible.posix/pull/166).
+- mount - Add ``ephemeral`` value for the ``state`` parameter, that allows to mount a filesystem without altering the ``fstab`` file (https://github.com/ansible-collections/ansible.posix/pull/267).
+- r4e_rpm_ostree - new module for validating package state on RHEL for Edge
+- rhel_facts - new facts module to handle RHEL specific facts
+- rhel_rpm_ostree - new module to handle RHEL rpm-ostree specific package management functionality
+- rpm_ostree_upgrade - new module to automate rpm-ostree upgrades
+- rpm_ostree_upgrade - new module to manage upgrades for rpm-ostree based systems
+
+Bugfixes
+--------
+
+- Removed contentious terminology to match reference documentation in profile_tasks.
+- firewall - Fixed to output a more complete missing library message.
+- synchronize - Fixed hosts involved in rsync require the same password
+
 v1.4.0
 ======
 

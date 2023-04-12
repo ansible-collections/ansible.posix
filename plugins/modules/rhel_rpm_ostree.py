@@ -35,6 +35,7 @@ options:
     aliases: [ pkg ]
     type: list
     elements: str
+    default: []
   state:
     description:
       - Whether to install (C(present) or C(installed), C(latest)), or remove (C(absent) or C(removed)) a package.

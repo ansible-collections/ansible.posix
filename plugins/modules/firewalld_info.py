@@ -17,7 +17,7 @@ options:
     active_zones:
         description: Gather information about active zones.
         type: bool
-        default: no
+        default: false
     zones:
         description:
             - Gather information about specific zones.
@@ -36,7 +36,12 @@ author:
 EXAMPLES = r'''
 - name: Gather information about active zones
   ansible.posix.firewalld_info:
-    active_zones: yes
+    active_zones: true
+  register: result
+
+- name: Print default zone for debugging
+  ansible.builtin.debug:
+    var: result.firewalld_info.default_zone
 
 - name: Gather information about specific zones
   ansible.posix.firewalld_info:
@@ -44,6 +49,7 @@ EXAMPLES = r'''
       - public
       - external
       - internal
+  register: result
 '''
 
 RETURN = r'''
@@ -78,7 +84,7 @@ firewalld_info:
             returned: success
             type: str
             sample: 0.8.2
-        default_zones:
+        default_zone:
             description:
               - The zone name of default zone.
             returned: success
@@ -204,7 +210,6 @@ firewalld_info:
 '''
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.six import raise_from
 from ansible.module_utils._text import to_native
 from ansible_collections.ansible.posix.plugins.module_utils.version import StrictVersion
 

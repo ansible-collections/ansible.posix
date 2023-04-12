@@ -225,7 +225,6 @@ class ActionModule(ActionBase):
 
         # Parameter name needed by the ansible module
         _tmp_args['_local_rsync_path'] = task_vars.get('ansible_rsync_path') or 'rsync'
-        _tmp_args['_local_rsync_password'] = task_vars.get('ansible_ssh_pass') or task_vars.get('ansible_password')
 
         # rsync thinks that one end of the connection is localhost and the
         # other is the host we're running the task for  (Note: We use
@@ -333,8 +332,9 @@ class ActionModule(ActionBase):
         if src is None or dest is None:
             return dict(failed=True, msg="synchronize requires both src and dest parameters are set")
 
-        # Determine if we need a user@
+        # Determine if we need a user@ and a password
         user = None
+        password = task_vars.get('ansible_ssh_pass', None) or task_vars.get('ansible_password', None)
         if not dest_is_local:
             # Src and dest rsync "path" handling
             if boolean(_tmp_args.get('set_remote_user', 'yes'), strict=False):
@@ -344,9 +344,11 @@ class ActionModule(ActionBase):
                         user = task_vars.get('ansible_user') or self._play_context.remote_user
                     if not user:
                         user = C.DEFAULT_REMOTE_USER
-
                 else:
                     user = task_vars.get('ansible_user') or self._play_context.remote_user
+
+            if self._templar is not None:
+                user = self._templar.template(user)
 
             # Private key handling
             # Use the private_key parameter if passed else use context private_key_file
@@ -361,12 +363,17 @@ class ActionModule(ActionBase):
                 # src is a local path, dest is a remote path: <user>@<host>
                 src = self._process_origin(src_host, src, user)
                 dest = self._process_remote(_tmp_args, dest_host, dest, user, inv_port in localhost_ports)
+
+            password = dest_host_inventory_vars.get('ansible_ssh_pass', None) or dest_host_inventory_vars.get('ansible_password', None)
+            if self._templar is not None:
+                password = self._templar.template(password)
         else:
             # Still need to munge paths (to account for roles) even if we aren't
             # copying files between hosts
             src = self._get_absolute_path(path=src)
             dest = self._get_absolute_path(path=dest)
 
+        _tmp_args['_local_rsync_password'] = password
         _tmp_args['src'] = src
         _tmp_args['dest'] = dest
 

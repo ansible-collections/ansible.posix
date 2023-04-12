@@ -92,7 +92,7 @@ Parameters
                         </ul>
                 </td>
                 <td>
-                        <div>Set to <code>yes</code> if the boolean setting should survive a reboot.</div>
+                        <div>Set to <code>true</code> if the boolean setting should survive a reboot.</div>
                 </td>
             </tr>
             <tr>
@@ -135,8 +135,8 @@ Examples
     - name: Set httpd_can_network_connect flag on and keep it persistent across reboots
       ansible.posix.seboolean:
         name: httpd_can_network_connect
-        state: yes
-        persistent: yes
+        state: true
+        persistent: true
 
 
 

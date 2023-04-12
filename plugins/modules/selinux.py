@@ -32,7 +32,7 @@ options:
     description:
       - If set to I(true), will update also the kernel boot parameters when disabling/enabling SELinux.
       - The C(grubby) tool must be present on the target system for this to work.
-    default: no
+    default: false
     type: bool
     version_added: '1.4.0'
   configfile:

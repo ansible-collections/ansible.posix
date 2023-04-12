@@ -1,3 +1,9 @@
+- name: Install dependencies
+  ansible.builtin.package:
+    name: e2fsprogs
+    state: present
+  when: ansible_system == 'Linux'
+
 - name: Create the mount point
   file:
     state: directory
@@ -406,3 +412,270 @@
     - /tmp/myfs1
     - /tmp/test_fstab
   when: ansible_system in ('Linux')
+
+- name: Block to test ephemeral option
+  environment:
+    PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+  block:
+  - name: Create empty file A
+    community.general.filesize:
+      path: /tmp/myfs_A.img
+      size: 20M
+
+  - name: Create empty file B
+    community.general.filesize:
+      path: /tmp/myfs_B.img
+      size: 20M
+
+  - name: Register facts on Linux
+    ansible.builtin.set_fact:
+      ephemeral_device_A: /tmp/myfs_A.img
+      ephemeral_device_B: /tmp/myfs_B.img
+      ephemeral_fstype: ext3
+      ephemeral_fstab: /etc/fstab
+    when: ansible_system == 'Linux'
+
+  - name: Register facts on Solaris/SunOS
+    ansible.builtin.set_fact:
+      ephemeral_device_A: /dev/lofi/1
+      ephemeral_device_B: /dev/lofi/2
+      ephemeral_create_loop_dev_cmd: >
+        lofiadm -a /tmp/myfs_A.img /dev/lofi/1 &&
+        lofiadm -a /tmp/myfs_B.img /dev/lofi/2
+      ephemeral_remove_loop_dev_cmd: >
+        lofiadm -d /dev/lofi/1 &&
+        lofiadm -d /dev/lofi/2 || true
+      ephemeral_fstype: ufs
+      ephemeral_fstab: /etc/vfstab
+    when: ansible_system == 'SunOS'
+
+  - name: Register facts on FreeBSD
+    ansible.builtin.set_fact:
+      ephemeral_device_A: /dev/md1
+      ephemeral_device_B: /dev/md2
+      ephemeral_create_loop_dev_cmd: >
+        mdconfig -a -t vnode -f /tmp/myfs_A.img -u /dev/md1 &&
+        mdconfig -a -t vnode -f /tmp/myfs_B.img -u /dev/md2
+      ephemeral_remove_loop_dev_cmd: >
+        mdconfig -d -u /dev/md1 &&
+        mdconfig -d -u /dev/md2
+      ephemeral_fstype: ufs
+      ephemeral_fstab: /etc/fstab
+    when: ansible_system == 'FreeBSD'
+
+  - name: Register facts on NetBSD
+    ansible.builtin.set_fact:
+      ephemeral_device_A: /dev/vnd1
+      ephemeral_device_B: /dev/vnd2
+      ephemeral_create_loop_dev_cmd: >
+        vnconfig /dev/vnd1 /tmp/myfs_A.img &&
+        vnconfig /dev/vnd2 /tmp/myfs_B.img
+      ephemeral_remove_loop_dev_cmd: >
+        vnconfig -u /dev/vnd1 &&
+        vnconfig -u /dev/vnd2
+      ephemeral_fstype: ufs
+      ephemeral_fstab: /etc/fstab
+    when: ansible_system == 'NetBSD'
+
+  - name: Register format fs command on Non-Linux and Non-OpenBSD
+    ansible.builtin.set_fact:
+      ephemeral_format_fs_cmd: >
+        yes | newfs {{ ephemeral_device_A }} &&
+        yes | newfs {{ ephemeral_device_B }}
+    when: ansible_system in ('SunOS', 'FreeBSD', 'NetBSD')
+
+  - name: Register facts on OpenBSD
+    ansible.builtin.set_fact:
+      ephemeral_device_A: /dev/vnd1c
+      ephemeral_device_B: /dev/vnd2c
+      ephemeral_create_loop_dev_cmd: >
+        vnconfig vnd1 /tmp/myfs_A.img &&
+        vnconfig vnd2 /tmp/myfs_B.img
+      ephemeral_remove_loop_dev_cmd: >
+        vnconfig -u vnd1 &&
+        vnconfig -u vnd2
+      ephemeral_format_fs_cmd: >
+        yes | newfs /dev/rvnd1c &&
+        yes | newfs /dev/rvnd2c
+      ephemeral_fstype: ffs
+      ephemeral_fstab: /etc/fstab
+    when: ansible_system == 'OpenBSD'
+
+##### FORMAT FS ON LINUX
+
+  - name: Block to format FS on Linux
+    block:
+    - name: Format FS A on Linux
+      community.general.filesystem:
+        fstype: ext3
+        dev: /tmp/myfs_A.img
+
+    - name: Format FS B on Linux
+      community.general.filesystem:
+        fstype: ext3
+        dev: /tmp/myfs_B.img
+    when: ansible_system == 'Linux'
+
+##### FORMAT FS ON SOLARIS AND BSD
+
+  - name: Create loop devices on Solaris and BSD
+    ansible.builtin.shell: "{{ ephemeral_create_loop_dev_cmd }}"
+    when: ephemeral_create_loop_dev_cmd is defined
+
+  - name: Format FS A and B on Solaris and BSD
+    ansible.builtin.shell: "{{ ephemeral_format_fs_cmd }}"
+    when: ephemeral_format_fs_cmd is defined
+
+##### TESTS
+
+  - name: Create fstab if it does not exist
+    ansible.builtin.file:
+      path: "{{ ephemeral_fstab }}"
+      state: touch
+
+  - name: Get checksum of /etc/fstab before mounting anything
+    stat:
+      path: '{{ ephemeral_fstab }}'
+    register: fstab_stat_before_mount
+
+  - name: Mount the FS A with ephemeral state
+    mount:
+      path: /tmp/myfs
+      src: '{{ ephemeral_device_A }}'
+      fstype: '{{ ephemeral_fstype }}'
+      opts: rw
+      state: ephemeral
+    register: ephemeral_mount_info
+
+  - name: Put something in the directory so we can do additional checks later on
+    copy:
+      content: 'Testing'
+      dest: /tmp/myfs/test_file
+
+  - name: Get checksum of /etc/fstab after an ephemeral mount
+    stat:
+      path: '{{ ephemeral_fstab }}'
+    register: fstab_stat_after_mount
+
+  - name: Get mountinfo
+    shell: mount -v | awk '{print $3}' | grep '^/tmp/myfs$' | wc -l
+    register: check_mountinfo
+    changed_when: no
+
+  - name: Assert the mount occured and the fstab is unchanged
+    assert:
+      that:
+      - check_mountinfo.stdout|int == 1
+      - ephemeral_mount_info['changed']
+      - fstab_stat_before_mount['stat']['checksum'] == fstab_stat_after_mount['stat']['checksum']
+
+  - name: Get first mount record
+    shell: mount -v | grep '/tmp/myfs'
+    register: ephemeral_mount_record_1
+    changed_when: no
+
+  - name: Try to mount FS A where FS A is already mounted (should trigger remount and changed)
+    mount:
+      path: /tmp/myfs
+      src: '{{ ephemeral_device_A }}'
+      fstype: '{{ ephemeral_fstype }}'
+      opts: ro
+      state: ephemeral
+    register: ephemeral_mount_info
+
+  - name: Get second mount record (should be different than the first)
+    shell: mount -v | grep '/tmp/myfs'
+    register: ephemeral_mount_record_2
+    changed_when: no
+
+  - name: Get mountinfo
+    shell: mount -v | awk '{print $3}' | grep '^/tmp/myfs$' | wc -l
+    register: check_mountinfo
+    changed_when: no
+
+  - name: Assert the FS A is still mounted, the options changed and the fstab unchanged
+    assert:
+      that:
+        - check_mountinfo.stdout|int == 1
+        - ephemeral_mount_record_1.stdout != ephemeral_mount_record_2.stdout
+        - ephemeral_mount_info['changed']
+        - fstab_stat_before_mount['stat']['checksum'] == fstab_stat_after_mount['stat']['checksum']
+
+  - name: Try to mount file B on file A mountpoint (should fail)
+    mount:
+      path: /tmp/myfs
+      src: '{{ ephemeral_device_B }}'
+      fstype: '{{ ephemeral_fstype }}'
+      state: ephemeral
+    register: ephemeral_mount_b_info
+    ignore_errors: true
+
+  - name: Get third mount record (should be the same than the second)
+    shell: mount -v | grep '/tmp/myfs'
+    register: ephemeral_mount_record_3
+    changed_when: no
+
+  - name: Get mountinfo
+    shell: mount -v | awk '{print $3}' | grep '^/tmp/myfs$' | wc -l
+    register: check_mountinfo
+    changed_when: no
+
+  - name: Try to stat our test file
+    stat:
+      path: /tmp/myfs/test_file
+    register: test_file_stat
+
+  - name: Assert that mounting FS B over FS A failed
+    assert:
+      that:
+        - check_mountinfo.stdout|int == 1
+        - ephemeral_mount_record_2.stdout == ephemeral_mount_record_3.stdout
+        - test_file_stat['stat']['exists']
+        - ephemeral_mount_b_info is failed
+
+  - name: Unmount FS with state = unmounted
+    mount:
+      path: /tmp/myfs
+      state: unmounted
+
+  - name: Get fstab checksum after unmounting an ephemeral mount with state = unmounted
+    stat:
+      path: '{{ ephemeral_fstab }}'
+    register: fstab_stat_after_unmount
+
+  - name: Get mountinfo
+    shell: mount -v | awk '{print $3}' | grep '^/tmp/myfs$' | wc -l
+    register: check_mountinfo
+    changed_when: no
+
+  - name: Try to stat our test file
+    stat:
+      path: /tmp/myfs/test_file
+    register: test_file_stat
+
+  - name: Assert that fstab is unchanged after unmounting an ephemeral mount with state = unmounted
+    assert:
+      that:
+      - check_mountinfo.stdout|int == 0
+      - not test_file_stat['stat']['exists']
+      - fstab_stat_before_mount['stat']['checksum'] == fstab_stat_after_unmount['stat']['checksum']
+
+  always:
+    - name: Unmount potential failure relicas
+      mount:
+        path: /tmp/myfs
+        state: unmounted
+
+    - name: Remove loop devices on Solaris and BSD
+      ansible.builtin.shell: "{{ ephemeral_remove_loop_dev_cmd }}"
+      when: ephemeral_remove_loop_dev_cmd is defined
+
+    - name: Remove the test FS
+      file:
+        path: '{{ item }}'
+        state: absent
+      loop:
+        - /tmp/myfs_A.img
+        - /tmp/myfs_B.img
+        - /tmp/myfs
+  when: ansible_system in ('Linux', 'SunOS', 'FreeBSD', 'NetBSD', 'OpenBSD')

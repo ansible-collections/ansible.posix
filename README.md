@@ -33,6 +33,9 @@ Name | Description
 [ansible.posix.firewalld_info](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.firewalld_info_module.rst)|Gather information about firewalld
 [ansible.posix.mount](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.mount_module.rst)|Control active and configured mount points
 [ansible.posix.patch](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.patch_module.rst)|Apply patch files using the GNU patch tool
+[ansible.posix.rhel_facts](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.rhel_facts_module.rst)|Facts module to set or override RHEL specific facts.
+[ansible.posix.rhel_rpm_ostree](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.rhel_rpm_ostree_module.rst)|Ensure packages exist in a RHEL for Edge rpm-ostree based system
+[ansible.posix.rpm_ostree_upgrade](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.rpm_ostree_upgrade_module.rst)|Manage rpm-ostree upgrade transactions
 [ansible.posix.seboolean](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.seboolean_module.rst)|Toggles SELinux booleans
 [ansible.posix.selinux](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.selinux_module.rst)|Change policy and state of SELinux
 [ansible.posix.synchronize](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.synchronize_module.rst)|A wrapper around rsync to make common tasks in your playbooks quick and easy

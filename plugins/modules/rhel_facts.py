@@ -69,7 +69,7 @@ def main():
     if os.path.exists("/run/ostree-booted"):
         ansible_facts['pkg_mgr'] = 'ansible.posix.rhel_rpm_ostree'
 
-    module.exit_json(ansible_facts, changed=False)
+    module.exit_json(ansible_facts=ansible_facts, changed=False)
 
 
 if __name__ == '__main__':
