@@ -1,0 +1,3 @@
+---
+trivial:
+  - CI - update AZP to support stable-2.15 branch (https://github.com/ansible-collections/ansible.posix/issues/444).
