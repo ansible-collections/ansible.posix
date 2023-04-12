@@ -520,6 +520,7 @@ class InterfaceTransaction(FirewallTransaction):
                 old_zone_obj = self.fw.config.get_zone(zone)
                 if interface in old_zone_obj.interfaces:
                     iface_zone_objs.append(old_zone_obj)
+
             if len(iface_zone_objs) > 1:
                 # Even it shouldn't happen, it's actually possible that
                 # the same interface is in several zone XML files
@@ -529,18 +530,17 @@ class InterfaceTransaction(FirewallTransaction):
                         len(iface_zone_objs)
                     )
                 )
-            old_zone_obj = iface_zone_objs[0]
-            if old_zone_obj.name != self.zone:
-                old_zone_settings = FirewallClientZoneSettings(
-                    self.fw.config.get_zone_config(old_zone_obj)
-                )
+            elif len(iface_zone_objs) == 1 and iface_zone_objs[0].name != self.zone:
+                old_zone_obj = iface_zone_objs[0]
+                old_zone_config = self.fw.config.get_zone_config(old_zone_obj)
+                old_zone_settings = FirewallClientZoneSettings(list(old_zone_config))
                 old_zone_settings.removeInterface(interface)    # remove from old
                 self.fw.config.set_zone_config(
                     old_zone_obj,
                     old_zone_settings.settings
                 )
-                fw_settings.addInterface(interface)             # add to new
-                self.fw.config.set_zone_config(fw_zone, fw_settings.settings)
+            fw_settings.addInterface(interface)             # add to new
+            self.fw.config.set_zone_config(fw_zone, fw_settings.settings)
         else:
             old_zone_name = self.fw.config().getZoneOfInterface(interface)
             if old_zone_name != self.zone:
