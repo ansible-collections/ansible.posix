@@ -157,7 +157,7 @@ options:
       - Specify additional rsync options by passing in an array.
       - Note that an empty string in C(rsync_opts) will end up transfer the current working directory.
     type: list
-    default:
+    default: []
     elements: str
   partial:
     description:
@@ -419,6 +419,7 @@ def main():
             delay_updates=dict(type='bool', default=True),
             mode=dict(type='str', default='push', choices=['pull', 'push']),
             link_dest=dict(type='list', elements='str'),
+            use_ssh_args=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
     )
