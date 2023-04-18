@@ -69,6 +69,7 @@ class CallbackModule(CallbackBase):
             'play': {
                 'name': play.get_name(),
                 'id': to_text(play._uuid),
+                'path': to_text(play.get_path()),
                 'duration': {
                     'start': current_time()
                 }
@@ -81,6 +82,7 @@ class CallbackModule(CallbackBase):
             'task': {
                 'name': task.get_name(),
                 'id': to_text(task._uuid),
+                'path': to_text(task.get_path()),
                 'duration': {
                     'start': current_time()
                 }
