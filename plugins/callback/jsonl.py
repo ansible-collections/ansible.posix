@@ -26,6 +26,16 @@ DOCUMENTATION = '''
           - key: show_custom_stats
             section: defaults
         type: bool
+      json_indent:
+        name: Use indenting for the JSON output
+        description: 'If specified, use this many spaces for indenting in the JSON output. If not specified or <= 0, write to a single line.'
+        default: 0
+        env:
+          - name: ANSIBLE_JSON_INDENT
+        ini:
+          - key: json_indent
+            section: defaults
+        type: integer
     notes:
       - When using a strategy such as free, host_pinned, or a custom strategy, host results will
         be added to new task results in ``.plays[].tasks[]``. As such, there will exist duplicate
@@ -62,6 +72,12 @@ class CallbackModule(CallbackBase):
         self.results = []
         self._task_map = {}
         self._is_lockstep = False
+
+        self.set_options()
+
+        self._json_indent = self.get_option('json_indent')
+        if self._json_indent <= 0:
+            self._json_indent = None
 
     def _new_play(self, play):
         self._is_lockstep = play.strategy in LOCKSTEP_CALLBACKS
@@ -158,7 +174,7 @@ class CallbackModule(CallbackBase):
     def _write_event(self, event_name, output):
         output['_event'] = event_name
         output['_timestamp'] = current_time()
-        self._display.display(json.dumps(output, cls=AnsibleJSONEncoder, separators=',:', sort_keys=True))
+        self._display.display(json.dumps(output, cls=AnsibleJSONEncoder, indent=self._json_indent, separators=',:', sort_keys=True))
 
     def _record_task_result(self, event_name, on_info, result, **kwargs):
         """This function is used as a partial to add failed/skipped info in a single method"""
