@@ -858,10 +858,10 @@ def main():
 
     if module.params['port'] is not None:
         if '/' in module.params['port']:
-            port, protocol = module.params['port'].strip().split('/')
+            port, port_protocol = module.params['port'].strip().split('/')
         else:
-            protocol = None
-        if not protocol:
+            port_protocol = None
+        if not port_protocol:
             module.fail_json(msg='improper port format (missing protocol?)')
     else:
         port = None
@@ -981,7 +981,7 @@ def main():
 
         transaction = PortTransaction(
             module,
-            action_args=(port, protocol, timeout),
+            action_args=(port, port_protocol, timeout),
             zone=zone,
             desired_state=desired_state,
             permanent=permanent,
@@ -993,7 +993,7 @@ def main():
         if changed is True:
             msgs.append(
                 "Changed port %s to %s" % (
-                    "%s/%s" % (port, protocol), desired_state
+                    "%s/%s" % (port, port_protocol), desired_state
                 )
             )
 
