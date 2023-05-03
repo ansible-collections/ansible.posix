@@ -864,7 +864,7 @@ def main():
         if not port_protocol:
             module.fail_json(msg='improper port format (missing protocol?)')
     else:
-        port = None
+        port_protocol = None
 
     port_forward_toaddr = ''
     port_forward = None
