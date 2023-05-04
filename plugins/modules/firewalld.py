@@ -856,6 +856,7 @@ def main():
     zone = module.params['zone']
     target = module.params['target']
 
+    port = None
     if module.params['port'] is not None:
         if '/' in module.params['port']:
             port, port_protocol = module.params['port'].strip().split('/')
