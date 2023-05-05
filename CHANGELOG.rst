@@ -5,6 +5,28 @@ ansible.posix Release Notes
 .. contents:: Topics
 
 
+v1.5.4
+======
+
+Minor Changes
+-------------
+
+- json and jsonl - Add the ``ANSIBLE_JSON_INDENT`` parameter
+- json and jsonl - Add the ``path`` attribute into the play and task output
+
+Security Fixes
+--------------
+
+- firewalld - fix variable scope issue that lead to permanent transactions enabling all ports to be opened on specified protocol
+
+Bugfixes
+--------
+
+- Support new sanity test for the ansible-core devel branch CI test (https://github.com/ansible-collections/ansible.posix/issues/446).
+- firewall - Fix issue where adding an interface to a zone would fail when the daemon is offline
+- firewall - Fix issue where opening a specific port resulted in opening the whole protocol of the specified port
+- firewalld - Consider value of masquerade and icmp_block_inversion parameters when a boolean like value is passed
+
 v1.5.2
 ======
 
