@@ -170,7 +170,7 @@
 
     - name: Try sysctl with no name
       sysctl:
-        name:
+        name: ""
         value: 1
         sysctl_set: yes
       ignore_errors: True
@@ -180,7 +180,7 @@
       assert:
         that:
           - sysctl_no_name is failed
-          - "sysctl_no_name.msg == 'name cannot be None'"
+          - "sysctl_no_name.msg == 'name cannot be blank'"
 
     - name: Try sysctl with no value
       sysctl:
