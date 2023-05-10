@@ -1,3 +1,0 @@
----
-bugfixes:
-  - firewall - Fix issue where opening a specific port resulted in opening the whole protocol of the specified port
