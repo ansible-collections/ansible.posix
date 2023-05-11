@@ -1,2 +1,0 @@
-minor_changes:
-  - json and jsonl - Add the ``ANSIBLE_JSON_INDENT`` parameter

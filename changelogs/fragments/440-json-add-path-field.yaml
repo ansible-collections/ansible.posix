@@ -1,2 +1,0 @@
-minor_changes:
-  - json and jsonl - Add the ``path`` attribute into the play and task output

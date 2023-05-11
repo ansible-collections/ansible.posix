@@ -1,3 +1,0 @@
----
-bugfixes:
-  - Support new sanity test for the ansible-core devel branch CI test (https://github.com/ansible-collections/ansible.posix/issues/446).

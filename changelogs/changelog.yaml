@@ -321,3 +321,29 @@ releases:
     - 434-fix-rhel_facts-exit_json.yml
     - 535-add-jsonl-callback.yml
     release_date: '2023-04-07'
+  1.5.4:
+    changes:
+      bugfixes:
+      - Fix sysctl integration test failing on newer versions of core. Previously
+        NoneType was allowable, now it fails to convert to a str type.
+      - Support new sanity test for the ansible-core devel branch CI test (https://github.com/ansible-collections/ansible.posix/issues/446).
+      - firewall - Fix issue where adding an interface to a zone would fail when the
+        daemon is offline
+      - firewall - Fix issue where opening a specific port resulted in opening the
+        whole protocol of the specified port
+      - firewalld - Consider value of masquerade and icmp_block_inversion parameters
+        when a boolean like value is passed
+      minor_changes:
+      - json and jsonl - Add the ``ANSIBLE_JSON_INDENT`` parameter
+      - json and jsonl - Add the ``path`` attribute into the play and task output
+    fragments:
+    - 343-fix-profile_tasks-callback-documentation.yml
+    - 402_firewall_fix_offline_interface_add.yml
+    - 404_firewalld_masquerade_icmp_block_inversion_bugfixes.yml
+    - 440-json-add-path-field.yaml
+    - 441-json-add-indent-parameter.yaml
+    - 445_ci_support_stable-215.yml
+    - 448_support_new_sanity_test.yml
+    - 451_firewall_fix_protocol_parameter.yml
+    - 456_sysctl_fix_nonetype.yml
+    release_date: '2023-05-10'
