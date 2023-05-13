@@ -75,6 +75,7 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.six import binary_type
 from ansible.module_utils._text import to_bytes, to_text
+from ansible_collections.ansible.posix.plugins.module_utils._respawn import respawn_module, HAS_RESPAWN_UTIL
 
 
 def get_runtime_status(ignore_selinux_state=False):
@@ -280,6 +281,12 @@ def main():
         ),
         supports_check_mode=True,
     )
+
+    if not HAVE_SELINUX and not HAVE_SEMANAGE and HAS_RESPAWN_UTIL:
+        # Only respawn the module if both libraries are missing.
+        # If only one is available, then usage of the "wrong" (i.e. not the system one)
+        # python interpreter is likely not the problem.
+        respawn_module("selinux")
 
     if not HAVE_SELINUX:
         module.fail_json(msg=missing_required_lib('libselinux-python'), exception=SELINUX_IMP_ERR)

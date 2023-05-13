@@ -1,0 +1,4 @@
+---
+minor_changes:
+  - "seboolean - respawn module to use the system python interpreter when the ``selinux`` python module is not available for ``ansible_python_interpreter``
+    (https://github.com/ansible-collections/ansible.posix/pull/460)."
