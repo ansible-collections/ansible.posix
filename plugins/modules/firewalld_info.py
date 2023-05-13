@@ -211,6 +211,7 @@ firewalld_info:
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
+from ansible_collections.ansible.posix.plugins.module_utils._respawn import respawn_module, HAS_RESPAWN_UTIL
 from ansible_collections.ansible.posix.plugins.module_utils.version import StrictVersion
 
 
@@ -322,6 +323,12 @@ def main():
     )
 
     # Exit with failure message if requirements modules are not installed.
+    if not HAS_DBUS and not HAS_FIREWALLD and HAS_RESPAWN_UTIL:
+        # Only respawn the module if both libraries are missing.
+        # If only one is available, then usage of the "wrong" (i.e. not the system one)
+        # python interpreter is likely not the problem.
+        respawn_module("firewall")
+
     if not HAS_DBUS:
         module.fail_json(msg=missing_required_lib('python-dbus'))
     if not HAS_FIREWALLD:
