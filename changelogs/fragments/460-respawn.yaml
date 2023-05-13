@@ -4,3 +4,5 @@ minor_changes:
     (https://github.com/ansible-collections/ansible.posix/pull/460)."
   - "selinux - respawn module to use the system python interpreter when the ``selinux`` python module is not available for ``ansible_python_interpreter``
     (https://github.com/ansible-collections/ansible.posix/pull/460)."
+  - "firewalld - respawn module to use the system python interpreter when the ``firewall`` python module is not available for ``ansible_python_interpreter``
+    (https://github.com/ansible-collections/ansible.posix/pull/460)."

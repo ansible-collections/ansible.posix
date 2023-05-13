@@ -10,11 +10,6 @@
         state: present
       # This doesn't work for CentOS 6 because firewalld doesn't exist in CentOS6
 
-    - name: Check to make sure the firewalld python module is available.
-      shell: "{{ansible_python.executable}} -c 'import firewall'"
-      register: check_output
-      ignore_errors: true
-
     - name: Enable dbus-broker daemon
       service:
         name: dbus-broker
@@ -30,7 +25,6 @@
             state: started
 
         - import_tasks: run_all_tests.yml
-      when: check_output.rc == 0
 
     - name: Test Offline Operations
       block:
@@ -40,7 +34,6 @@
             state: stopped
 
         - import_tasks: run_all_tests.yml
-      when: check_output.rc == 0
 
   when:
   - ansible_facts.os_family == "RedHat" and ansible_facts.distribution_major_version is version('7', '>=')

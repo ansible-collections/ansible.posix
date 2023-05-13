@@ -5,6 +5,7 @@
 
 from __future__ import absolute_import, division, print_function
 from ansible_collections.ansible.posix.plugins.module_utils.version import LooseVersion
+from ansible_collections.ansible.posix.plugins.module_utils._respawn import respawn_module, HAS_RESPAWN_UTIL
 from ansible.module_utils.basic import missing_required_lib
 
 __metaclass__ = type
@@ -314,6 +315,8 @@ class FirewallTransaction(object):
                         installed version (%s) likely too old. Requires firewalld >= 0.2.11" % FW_VERSION)
 
         if import_failure:
+            if HAS_RESPAWN_UTIL:
+                respawn_module("firewall")
             module.fail_json(
                 msg=missing_required_lib('firewall') + '. Version 0.2.11 or newer required (0.3.9 or newer for offline operations)'
             )
