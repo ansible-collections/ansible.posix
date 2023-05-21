@@ -17,7 +17,7 @@
 
 - block:
 
-  - include: acl.yml
+  - include_tasks: acl.yml
     when: ansible_system == 'Linux'  # TODO enable acls mount option on FreeBSD to test it there too
 
   always:
