@@ -145,9 +145,7 @@ function cleanup
         fi
 
         if [ "${process_coverage}" ]; then
-            # use python 3.9 for coverage to avoid running out of memory during coverage xml processing
-            # only use it for coverage to avoid the additional overhead of setting up a virtual environment for a potential no-op job
-            virtualenv --python /usr/bin/python3.9 ~/ansible-venv
+            python3 -m venv ~/ansible-venv
             set +ux
             . ~/ansible-venv/bin/activate
             set -ux
