@@ -84,13 +84,15 @@ options:
     type: str
   permanent:
     description:
-      - Should this configuration be in the running firewalld configuration or persist across reboots.
+      - Whether to apply this change to the permanent firewalld configuration.
       - As of Ansible 2.3, permanent operations can operate on firewalld configs when it is not running (requires firewalld >= 0.3.9).
-      - Note that if this is C(false), immediate is assumed C(true).
+      - Note that if this is C(false), I(immediate) defaults to C(true).
     type: bool
+    default: false
   immediate:
     description:
-      - Should this configuration be applied immediately, if set as permanent.
+      - Whether to apply this change to the runtime firewalld configuration.
+      - Defaults to C(true) if I(permanent=false).
     type: bool
     default: false
   state:
@@ -112,8 +114,9 @@ options:
     type: str
   offline:
     description:
-      - Whether to run this module even when firewalld is offline.
+      - Ignores I(immediate) if I(permanent=true) and firewalld is not running.
     type: bool
+    default: false
   target:
     description:
       - firewalld Zone target
@@ -142,6 +145,14 @@ author:
 '''
 
 EXAMPLES = r'''
+- name: permanently enable https service, also enable it immediately if possible
+  ansible.posix.firewalld:
+    service: https
+    state: enabled
+    permanent: true
+    immediate: true
+    offline: true
+
 - name: permit traffic in default zone for https service
   ansible.posix.firewalld:
     service: https
@@ -806,12 +817,12 @@ def main():
             zone=dict(type='str'),
             immediate=dict(type='bool', default=False),
             source=dict(type='str'),
-            permanent=dict(type='bool'),
+            permanent=dict(type='bool', default=False),
             state=dict(type='str', required=True, choices=['absent', 'disabled', 'enabled', 'present']),
             timeout=dict(type='int', default=0),
             interface=dict(type='str'),
             masquerade=dict(type='str'),
-            offline=dict(type='bool'),
+            offline=dict(type='bool', default=False),
             target=dict(type='str', choices=['default', 'ACCEPT', 'DROP', '%%REJECT%%']),
         ),
         supports_check_mode=True,
@@ -832,19 +843,29 @@ def main():
     timeout = module.params['timeout']
     interface = module.params['interface']
     masquerade = module.params['masquerade']
+    offline = module.params['offline']
 
     # Sanity checks
     FirewallTransaction.sanity_check(module)
 
-    # If neither permanent or immediate is provided, assume immediate (as
-    # written in the module's docs)
+    # `offline`, `immediate`, and `permanent` have a weird twisty relationship.
+    if offline:
+        # specifying offline without permanent makes no sense
+        if not permanent:
+            module.fail_json(msg='offline cannot be enabled unless permanent changes are allowed')
+
+        # offline overrides immediate to false if firewalld is offline
+        if fw_offline:
+            immediate = False
+
+    # immediate defaults to true if permanent is not enabled
     if not permanent and not immediate:
         immediate = True
 
-    # Verify required params are provided
     if immediate and fw_offline:
         module.fail_json(msg='firewall is not currently running, unable to perform immediate actions without a running firewall daemon')
 
+    # Verify required params are provided
     changed = False
     msgs = []
     icmp_block = module.params['icmp_block']

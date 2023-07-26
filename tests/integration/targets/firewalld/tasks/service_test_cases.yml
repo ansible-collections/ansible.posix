@@ -20,6 +20,8 @@
   firewalld:
     service: https
     permanent: true
+    immediate: true
+    offline: true
     state: enabled
   register: result
 
@@ -32,6 +34,8 @@
   firewalld:
     service: https
     permanent: true
+    immediate: true
+    offline: true
     state: enabled
   register: result
 
@@ -44,6 +48,8 @@
   firewalld:
     service: https
     permanent: true
+    immediate: true
+    offline: true
     state: disabled
   register: result
 
@@ -56,6 +62,8 @@
   firewalld:
     service: https
     permanent: true
+    immediate: true
+    offline: true
     state: disabled
   register: result
 
