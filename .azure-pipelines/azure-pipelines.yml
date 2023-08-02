@@ -36,7 +36,7 @@ variables:
 resources:
   containers:
     - container: default
-      image: quay.io/ansible/azure-pipelines-test-container:3.0.0
+      image: quay.io/ansible/azure-pipelines-test-container:4.0.1
 
 pool: Standard
 
@@ -217,8 +217,6 @@ stages:
               test: rhel/8.8
             - name: RHEL 9.2
               test: rhel/9.2
-            - name: FreeBSD 12.4
-              test: freebsd/12.4
             - name: FreeBSD 13.2
               test: freebsd/13.2
   - stage: Remote_2_15
@@ -317,8 +315,6 @@ stages:
         parameters:
           testFormat: 2.10/{0}/1
           targets:
-            - name: OS X 10.11
-              test: osx/10.11
             - name: RHEL 7.9
               test: rhel/7.9
             - name: RHEL 8.2
@@ -331,8 +327,6 @@ stages:
         parameters:
           testFormat: 2.9/{0}/1
           targets:
-            - name: OS X 10.11
-              test: osx/10.11
             - name: RHEL 7.9
               test: rhel/7.9
             - name: RHEL 8.1
