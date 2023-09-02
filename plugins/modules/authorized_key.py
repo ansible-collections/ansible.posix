@@ -28,8 +28,10 @@ options:
     required: true
   path:
     description:
-      - Alternate path to the authorized_keys file.
-      - When unset, this value defaults to I(~/.ssh/authorized_keys).
+      - Alternative path to the authorized_keys file.
+      - The default value is the C(.ssh/authorized_keys) of the home of the user specified in the O(user) parameter.
+      - Most of the time, it's not necessary to set this key.
+      - Use the path to your target authorized_keys if you need to explicitly point on it.
     type: path
   manage_dir:
     description:
