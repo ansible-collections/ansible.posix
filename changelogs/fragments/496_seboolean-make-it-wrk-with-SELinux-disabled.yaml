@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - seboolean - make it work with disabled SELinux
