@@ -51,16 +51,29 @@ stages:
         parameters:
           testFormat: devel/linux/{0}/1
           targets:
-            - name: CentOS 7
-              test: centos7
             - name: Fedora 38
               test: fedora38
-            - name: openSUSE 15 py3
-              test: opensuse15
             - name: Ubuntu 20.04
               test: ubuntu2004
             - name: Ubuntu 22.04
               test: ubuntu2204
+  - stage: Docker_2_16
+    displayName: Docker 2.16
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          testFormat: 2.16/linux/{0}/1
+          targets:
+            - name: CentOS 7
+              test: centos7
+            - name: Fedora 38
+              test: fedora38
+            - name: Ubuntu 20.04
+              test: ubuntu2004
+            - name: Ubuntu 22.04
+              test: ubuntu2204
+
   - stage: Docker_2_15
     displayName: Docker 2.15
     dependsOn: []
@@ -141,44 +154,6 @@ stages:
               test: ubuntu1804
             - name: Ubuntu 20.04
               test: ubuntu2004
-  - stage: Docker_2_11
-    displayName: Docker 2.11
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          testFormat: 2.11/linux/{0}/1
-          targets:
-            - name: CentOS 6
-              test: centos6
-            - name: CentOS 7
-              test: centos7
-            - name: openSUSE 15 py2
-              test: opensuse15py2
-            - name: openSUSE 15 py3
-              test: opensuse15
-            - name: Ubuntu 18.04
-              test: ubuntu1804
-  - stage: Docker_2_10
-    displayName: Docker 2.10
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          testFormat: 2.10/linux/{0}/1
-          targets:
-            - name: CentOS 6
-              test: centos6
-            - name: CentOS 7
-              test: centos7
-            - name: openSUSE 15 py2
-              test: opensuse15py2
-            - name: openSUSE 15 py3
-              test: opensuse15
-            - name: Ubuntu 16.04
-              test: ubuntu1604
-            - name: Ubuntu 18.04
-              test: ubuntu1804
   - stage: Docker_2_9
     displayName: Docker 2.9
     dependsOn: []
@@ -209,16 +184,21 @@ stages:
         parameters:
           testFormat: devel/{0}/1
           targets:
-            - name: MacOS 13.2
-              test: macos/13.2
-            - name: RHEL 7.9
-              test: rhel/7.9
+            - name: RHEL 9.3
+              test: rhel/9.3
+  - stage: Remote_2_16
+    displayName: Remote 2.16
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          testFormat: 2.16/{0}/1
+          targets:
             - name: RHEL 8.8
               test: rhel/8.8
             - name: RHEL 9.2
               test: rhel/9.2
-            - name: FreeBSD 13.2
-              test: freebsd/13.2
+
   - stage: Remote_2_15
     displayName: Remote 2.15
     dependsOn: []
@@ -227,18 +207,12 @@ stages:
         parameters:
           testFormat: 2.15/{0}/1
           targets:
-            - name: MacOS 13.2
-              test: macos/13.2
             - name: RHEL 7.9
               test: rhel/7.9
             - name: RHEL 8.7
               test: rhel/8.7
             - name: RHEL 9.1
               test: rhel/9.1
-            - name: FreeBSD 12.4
-              test: freebsd/12.4
-            - name: FreeBSD 13.1
-              test: freebsd/13.1
   - stage: Remote_2_14
     displayName: Remote 2.14
     dependsOn: []
@@ -247,18 +221,10 @@ stages:
         parameters:
           testFormat: 2.14/{0}/1
           targets:
-            - name: MacOS 12.0
-              test: macos/12.0
             - name: RHEL 7.9
               test: rhel/7.9
             - name: RHEL 8.6
               test: rhel/8.6
-            - name: RHEL 9.0
-              test: rhel/9.0
-            - name: FreeBSD 12.3
-              test: freebsd/12.3
-            - name: FreeBSD 13.1
-              test: freebsd/13.1
   - stage: Remote_2_13
     displayName: Remote 2.13
     dependsOn: []
@@ -267,16 +233,10 @@ stages:
         parameters:
           testFormat: 2.13/{0}/1
           targets:
-            - name: MacOS 12.0
-              test: macos/12.0
             - name: RHEL 7.9
               test: rhel/7.9
             - name: RHEL 8.5
               test: rhel/8.5
-            - name: FreeBSD 12.3
-              test: freebsd/12.3
-            - name: FreeBSD 13.0
-              test: freebsd/13.0
   - stage: Remote_2_12
     displayName: Remote 2.12
     dependsOn: []
@@ -285,40 +245,10 @@ stages:
         parameters:
           testFormat: 2.12/{0}/1
           targets:
-            - name: MacOS 11.1
-              test: macos/11.1
             - name: RHEL 7.9
               test: rhel/7.9
             - name: RHEL 8.4
               test: rhel/8.4
-            - name: FreeBSD 13.0
-              test: freebsd/13.0
-  - stage: Remote_2_11
-    displayName: Remote 2.11
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          testFormat: 2.11/{0}/1
-          targets:
-            - name: MacOS 11.1
-              test: macos/11.1
-            - name: RHEL 7.9
-              test: rhel/7.9
-            - name: RHEL 8.3
-              test: rhel/8.3
-  - stage: Remote_2_10
-    displayName: Remote 2.10
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          testFormat: 2.10/{0}/1
-          targets:
-            - name: RHEL 7.9
-              test: rhel/7.9
-            - name: RHEL 8.2
-              test: rhel/8.2
   - stage: Remote_2_9
     displayName: Remote 2.9
     dependsOn: []
@@ -339,10 +269,6 @@ stages:
     dependsOn:
       - Remote_2_9
       - Docker_2_9
-      - Remote_2_10
-      - Docker_2_10
-      - Remote_2_11
-      - Docker_2_11
       - Remote_2_12
       - Docker_2_12
       - Remote_2_13
@@ -351,6 +277,8 @@ stages:
       - Docker_2_14
       - Remote_2_15
       - Docker_2_15
+      - Remote_2_16
+      - Docker_2_16
       - Remote_devel
       - Docker_devel
     jobs:
