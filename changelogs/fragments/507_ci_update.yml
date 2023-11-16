@@ -1,0 +1,3 @@
+---
+trivial:
+  - "Move RHEL version to 9.3 and 8.8 on Remote test(https://github.com/ansible-collections/ansible.posix/issues/506)."
