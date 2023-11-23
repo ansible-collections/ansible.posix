@@ -40,6 +40,18 @@ DOCUMENTATION = '''
         ini:
           - section: callback_profile_tasks
             key: sort_order
+      summary_only:
+        description:
+          - Only show summary, not individual task profiles.
+            Especially usefull in combination with C(DISPLAY_SKIPPED_HOSTS=false) and/or C(ANSIBLE_DISPLAY_OK_HOSTS=false).
+        type: bool
+        default: False
+        env:
+          - name: PROFILE_TASKS_SUMMARY_ONLY
+        ini:
+          - section: callback_profile_tasks
+            key: summary_only
+        version_added: 1.5.0
 '''
 
 EXAMPLES = '''
@@ -120,6 +132,7 @@ class CallbackModule(CallbackBase):
         self.current = None
 
         self.sort_order = None
+        self.summary_only = None
         self.task_output_limit = None
 
         super(CallbackModule, self).__init__()
@@ -137,6 +150,8 @@ class CallbackModule(CallbackBase):
             elif self.sort_order == 'none':
                 self.sort_order = None
 
+        self.summary_only = self.get_option('summary_only')
+
         self.task_output_limit = self.get_option('output_limit')
         if self.task_output_limit is not None:
             if self.task_output_limit == 'all':
@@ -144,11 +159,15 @@ class CallbackModule(CallbackBase):
             else:
                 self.task_output_limit = int(self.task_output_limit)
 
+    def _display_tasktime(self):
+        if not self.summary_only:
+            self._display.display(tasktime())
+
     def _record_task(self, task):
         """
         Logs the start of each task
         """
-        self._display.display(tasktime())
+        self._display_tasktime()
         timestamp(self)
 
         # Record the start time of the current task
@@ -171,10 +190,10 @@ class CallbackModule(CallbackBase):
         self._record_task(task)
 
     def playbook_on_setup(self):
-        self._display.display(tasktime())
+        self._display_tasktime()
 
     def playbook_on_stats(self, stats):
-        self._display.display(tasktime())
+        self._display_tasktime()
         self._display.display(filled("", fchar="="))
 
         timestamp(self)
