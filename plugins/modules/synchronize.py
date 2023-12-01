@@ -26,13 +26,13 @@ options:
     description:
       - Path on the source host that will be synchronized to the destination.
       - The path can be absolute or relative.
-    type: str
+    type: path
     required: true
   dest:
     description:
       - Path on the destination host that will be synchronized from the source.
       - The path can be absolute or relative.
-    type: str
+    type: path
     required: true
   dest_port:
     description:
@@ -135,13 +135,6 @@ options:
         that does not match the inventory user, you should set this parameter to C(false).
     type: bool
     default: true
-  use_ssh_args:
-    description:
-      - In Ansible 2.10 and lower, it uses the ssh_args specified in C(ansible.cfg).
-      - In Ansible 2.11 and onwards, when set to C(true), it uses all SSH connection configurations like
-        C(ansible_ssh_args), C(ansible_ssh_common_args), and C(ansible_ssh_extra_args).
-    type: bool
-    default: false
   ssh_connection_multiplexing:
     description:
       - SSH connection multiplexing for rsync is disabled by default to prevent misconfigured ControlSockets from resulting in failed SSH connections.
@@ -157,7 +150,7 @@ options:
       - Specify additional rsync options by passing in an array.
       - Note that an empty string in C(rsync_opts) will end up transfer the current working directory.
     type: list
-    default:
+    default: []
     elements: str
   partial:
     description:
@@ -178,7 +171,7 @@ options:
       - Add a destination to hard link against during the rsync.
     type: list
     default:
-    elements: str
+    elements: path
   delay_updates:
     description:
       - This option puts the temporary file from each updated file into a holding directory until the end of the transfer,
@@ -186,6 +179,30 @@ options:
     type: bool
     default: true
     version_added: '1.3.0'
+  use_ssh_args:
+    description:
+      - In Ansible 2.10 and lower, it uses the ssh_args specified in C(ansible.cfg).
+      - In Ansible 2.11 and onwards, when set to C(true), it uses all SSH connection configurations like
+        C(ansible_ssh_args), C(ansible_ssh_common_args), and C(ansible_ssh_extra_args).
+    type: bool
+    default: false
+  _local_rsync_path:
+    description: Internal use only.
+    type: path
+    default: 'rsync'
+    required: false
+  _local_rsync_password:
+    description: Internal use only, never logged.
+    type: str
+    required: false
+  _substitute_controller:
+    description: Internal use only.
+    type: bool
+    default: false
+  _ssh_args:
+    description: Internal use only. See C(use_ssh_args) for ssh arg settings.
+    type: str
+    required: false
 
 notes:
    - rsync must be installed on both the local and remote host.
@@ -235,7 +252,7 @@ EXAMPLES = r'''
     src: rsync://somehost.com/path/
     dest: /some/absolute/path/
 
-- name:  Synchronization using rsync protocol on delegate host (push)
+- name: Synchronization using rsync protocol on delegate host (push)
   ansible.posix.synchronize:
     src: /some/absolute/path/
     dest: rsync://somehost.com/path/
@@ -362,11 +379,11 @@ def substitute_controller(path):
     if not client_addr:
         ssh_env_string = os.environ.get('SSH_CLIENT', None)
         try:
-            client_addr, _ = ssh_env_string.split(None, 1)
+            client_addr, _ = ssh_env_string.split(None, 1)  # pylint: disable=disallowed-name
         except AttributeError:
             ssh_env_string = os.environ.get('SSH_CONNECTION', None)
             try:
-                client_addr, _ = ssh_env_string.split(None, 1)
+                client_addr, _ = ssh_env_string.split(None, 1)  # pylint: disable=disallowed-name
             except AttributeError:
                 pass
         if not client_addr:
@@ -388,8 +405,8 @@ def is_rsh_needed(source, dest):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            src=dict(type='str', required=True),
-            dest=dict(type='str', required=True),
+            src=dict(type='path', required=True),
+            dest=dict(type='path', required=True),
             dest_port=dict(type='int'),
             delete=dict(type='bool', default=False),
             private_key=dict(type='path'),
@@ -412,13 +429,14 @@ def main():
             set_remote_user=dict(type='bool', default=True),
             rsync_timeout=dict(type='int', default=0),
             rsync_opts=dict(type='list', default=[], elements='str'),
-            ssh_args=dict(type='str'),
+            _ssh_args=dict(type='str'),
+            use_ssh_args=dict(type='bool', default=False),
             ssh_connection_multiplexing=dict(type='bool', default=False),
             partial=dict(type='bool', default=False),
             verify_host=dict(type='bool', default=False),
             delay_updates=dict(type='bool', default=True),
             mode=dict(type='str', default='push', choices=['pull', 'push']),
-            link_dest=dict(type='list', elements='str'),
+            link_dest=dict(type='list', elements='path'),
         ),
         supports_check_mode=True,
     )
@@ -454,7 +472,7 @@ def main():
     owner = module.params['owner']
     group = module.params['group']
     rsync_opts = module.params['rsync_opts']
-    ssh_args = module.params['ssh_args']
+    ssh_args = module.params['_ssh_args']
     ssh_connection_multiplexing = module.params['ssh_connection_multiplexing']
     verify_host = module.params['verify_host']
     link_dest = module.params['link_dest']
@@ -572,7 +590,7 @@ def main():
         # hardlink is actually a change
         cmd.append('-vv')
         for x in link_dest:
-            link_path = os.path.abspath(os.path.expanduser(x))
+            link_path = os.path.abspath(x)
             destination_path = os.path.abspath(os.path.dirname(dest))
             if destination_path.find(link_path) == 0:
                 module.fail_json(msg='Hardlinking into a subdirectory of the source would cause recursion. %s and %s' % (destination_path, dest))
@@ -580,12 +598,6 @@ def main():
 
     changed_marker = '<<CHANGED>>'
     cmd.append('--out-format=%s' % shlex_quote(changed_marker + '%i %n%L'))
-
-    # expand the paths
-    if '@' not in source:
-        source = os.path.expanduser(source)
-    if '@' not in dest:
-        dest = os.path.expanduser(dest)
 
     cmd.append(shlex_quote(source))
     cmd.append(shlex_quote(dest))

@@ -1,8 +1,0 @@
-plugins/modules/synchronize.py pylint:blacklisted-name
-plugins/modules/synchronize.py use-argspec-type-path
-plugins/modules/synchronize.py validate-modules:doc-default-does-not-match-spec
-plugins/modules/synchronize.py validate-modules:nonexistent-parameter-documented
-plugins/modules/synchronize.py validate-modules:parameter-type-not-in-doc
-plugins/modules/synchronize.py validate-modules:undocumented-parameter
-tests/utils/shippable/check_matrix.py replace-urlopen
-tests/utils/shippable/timing.py shebang
