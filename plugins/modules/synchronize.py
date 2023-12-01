@@ -8,7 +8,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 DOCUMENTATION = r'''
 ---
 module: synchronize
@@ -186,6 +185,12 @@ options:
     type: bool
     default: true
     version_added: '1.3.0'
+  quiet:
+    description:
+      - This option specifies quiet option which on true suppresses the output.
+    type: bool
+    default: no
+    version_added: '1.3.0'
 
 notes:
    - rsync must be installed on both the local and remote host.
@@ -343,6 +348,12 @@ EXAMPLES = r'''
         src: /tmp/localpath/
         dest: /tmp/remotepath
         rsync_path: /usr/gnu/bin/rsync
+
+- name: Synchronization with quiet option enabled
+  ansible.posix.synchronize:
+    src: some/relative/path
+    dest: /some/absolute/path
+    quiet: yes
 '''
 
 
@@ -419,6 +430,7 @@ def main():
             delay_updates=dict(type='bool', default=True),
             mode=dict(type='str', default='push', choices=['pull', 'push']),
             link_dest=dict(type='list', elements='str'),
+            quiet=dict(type='bool', default=False)
         ),
         supports_check_mode=True,
     )
@@ -459,6 +471,7 @@ def main():
     verify_host = module.params['verify_host']
     link_dest = module.params['link_dest']
     delay_updates = module.params['delay_updates']
+    quiet = module.params['quiet']
 
     if '/' not in rsync:
         rsync = module.get_bin_path(rsync, required=True)
@@ -589,6 +602,9 @@ def main():
 
     cmd.append(shlex_quote(source))
     cmd.append(shlex_quote(dest))
+    if quiet:
+        cmd.append('--quiet')
+
     cmdstr = ' '.join(cmd)
 
     # If we are using password authentication, write the password into the pipe
@@ -621,14 +637,17 @@ def main():
     out_lines = out_clean.split('\n')
     while '' in out_lines:
         out_lines.remove('')
-    if module._diff:
-        diff = {'prepared': out_clean}
-        return module.exit_json(changed=changed, msg=out_clean,
-                                rc=rc, cmd=cmdstr, stdout_lines=out_lines,
-                                diff=diff)
 
-    return module.exit_json(changed=changed, msg=out_clean,
-                            rc=rc, cmd=cmdstr, stdout_lines=out_lines)
+    result = dict(changed=changed, rc=rc, cmd=cmdstr, stdout_lines=out_lines, msg=out_clean)
+
+    if quiet:
+        changes = out.count(changed_marker) if changed else 0
+        result['msg'] = "%s files/directories have been synchronized" % changes
+
+    if module._diff:
+        result['diff'] = {'prepared': out_clean}
+
+    return module.exit_json(**result)
 
 
 if __name__ == '__main__':
