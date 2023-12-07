@@ -1,3 +1,4 @@
+---
 trigger:
   batch: true
   branches:
@@ -13,7 +14,7 @@ pr:
       - stable-*
 
 schedules:
-  - cron: 0 9 * * *
+  - cron: "0 9 * * *"
     displayName: Nightly
     always: true
     branches:
@@ -41,7 +42,6 @@ resources:
 pool: Standard
 
 stages:
-
   - stage: Sanity_devel
     displayName: Ansible devel sanity
     dependsOn: []
@@ -49,14 +49,14 @@ stages:
       - template: templates/matrix.yml
         parameters:
           nameFormat: "{0}"
-          testFormat: "devel/{0}"
+          testFormat: devel/{0}
           targets:
             - name: Sanity
               test: sanity
             - name: Units
               test: units
-#           - name: Lint
-#             test: lint
+            - name: Lint
+              test: lint
   - stage: Sanity_2_16
     displayName: Ansible 2.16 sanity
     dependsOn: []
@@ -64,12 +64,14 @@ stages:
       - template: templates/matrix.yml
         parameters:
           nameFormat: "{0}"
-          testFormat: "2.16/{0}"
+          testFormat: 2.16/{0}
           targets:
             - name: Sanity
               test: sanity
             - name: Units
               test: units
+            - name: Lint
+              test: lint
   - stage: Sanity_2_15
     displayName: Ansible 2.15 sanity
     dependsOn: []
@@ -77,7 +79,7 @@ stages:
       - template: templates/matrix.yml
         parameters:
           nameFormat: "{0}"
-          testFormat: "2.15/{0}"
+          testFormat: 2.15/{0}
           targets:
             - name: Sanity
               test: sanity
@@ -90,26 +92,13 @@ stages:
       - template: templates/matrix.yml
         parameters:
           nameFormat: "{0}"
-          testFormat: "2.14/{0}"
+          testFormat: 2.14/{0}
           targets:
             - name: Sanity
               test: sanity
             - name: Units
               test: units
-  - stage: Sanity_2_9
-    displayName: Ansible 2.9 sanity
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: "{0}"
-          testFormat: "2.9/{0}"
-          targets:
-            - name: Sanity
-              test: sanity
-            - name: Units
-              test: units
-## Docker
+  ## Docker
   - stage: Docker_devel
     displayName: Docker devel
     dependsOn: []
@@ -177,28 +166,8 @@ stages:
               test: ubuntu2004
             - name: Ubuntu 22.04
               test: ubuntu2204
-  - stage: Docker_2_9
-    displayName: Docker 2.9
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          testFormat: 2.9/linux/{0}/1
-          targets:
-            - name: CentOS 6
-              test: centos6
-            - name: CentOS 7
-              test: centos7
-            - name: openSUSE 15 py2
-              test: opensuse15py2
-            - name: openSUSE 15 py3
-              test: opensuse15
-            - name: Ubuntu 16.04
-              test: ubuntu1604
-            - name: Ubuntu 18.04
-              test: ubuntu1804
 
-## Remote
+  ## Remote
   - stage: Remote_devel
     displayName: Remote devel
     dependsOn: []
@@ -260,27 +229,12 @@ stages:
               test: freebsd/13.1
             - name: FreeBSD 12.4
               test: freebsd/12.4
-  - stage: Remote_2_9
-    displayName: Remote 2.9
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          testFormat: 2.9/{0}/1
-          targets:
-            - name: RHEL 7.9
-              test: rhel/7.9
-            - name: RHEL 8.1
-              test: rhel/8.1
 
-## Finally
+  ## Finally
 
   - stage: Summary
     condition: succeededOrFailed()
     dependsOn:
-      - Sanity_2_9
-      - Remote_2_9
-      - Docker_2_9
       - Sanity_2_14
       - Remote_2_14
       - Docker_2_14

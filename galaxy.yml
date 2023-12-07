@@ -1,3 +1,4 @@
+---
 namespace: ansible
 name: posix
 version: 1.5.4

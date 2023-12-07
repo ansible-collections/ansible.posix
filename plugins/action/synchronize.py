@@ -177,7 +177,7 @@ class ActionModule(ActionBase):
 
         # Store remote connection type
         self._remote_transport = self._connection.transport
-        use_ssh_args = _tmp_args.pop('use_ssh_args', None)
+        use_ssh_args = _tmp_args.pop('use_ssh_args', False)
 
         if use_ssh_args and self._connection.transport == 'ssh':
             ssh_args = [
@@ -185,7 +185,7 @@ class ActionModule(ActionBase):
                 self._connection.get_option('ssh_common_args'),
                 self._connection.get_option('ssh_extra_args'),
             ]
-            _tmp_args['ssh_args'] = ' '.join([a for a in ssh_args if a])
+            _tmp_args['_ssh_args'] = ' '.join([a for a in ssh_args if a])
 
         # Handle docker connection options
         if self._remote_transport in DOCKER:

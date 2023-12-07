@@ -11,13 +11,7 @@ An Ansible Collection of modules and plugins that target POSIX UNIX/Linux and de
 <!--start requires_ansible-->
 ## Ansible version compatibility
 
-This collection has been tested against following Ansible versions: **>=2.9**.
-
-For collections that support Ansible 2.9, please ensure you update your `network_os` to use the
-fully qualified collection name (for example, `cisco.ios.ios`).
-Plugins and modules within a collection may be tested with only specific Ansible versions.
-A collection may contain metadata that identifies these versions.
-PEP440 is the schema used to describe the versions of Ansible.
+This collection has been tested against following Ansible versions: **>=2.14**.
 <!--end requires_ansible-->
 
 ## Included content
@@ -63,8 +57,6 @@ collections:
 
 See [Ansible Using collections](https://docs.ansible.com/ansible/latest/user_guide/collections_using.html) for more details.
 
-**NOTE**: For Ansible 2.9, you may not see deprecation warnings when you run your playbooks with this collection. Use this documentation to track when a module is deprecated.
-
 ## Contributing to this collection
 
 <!--Describe how the community can contribute to your collection. At a minimum, include how and where users can create issues to report problems or request features for this collection.  List contribution requirements, including preferred workflows and necessary testing, so you can benefit from community PRs. If you are following general Ansible contributor guidelines, you can link to - [Ansible Community Guide](https://docs.ansible.com/ansible/latest/community/index.html). -->
@@ -91,12 +83,10 @@ None
 
 <!-- List the versions of Ansible the collection has been tested with. Must match what is in galaxy.yml. -->
 
-- ansible-core 2.14 (devel)
-- ansible-core 2.13 (stable)
-- ansible-core 2.12 (stable)
-- ansible-core 2.11 (stable)
-- ansible-base 2.10 (stable)
-- ansible 2.9 (stable)
+- ansible-core 2.17 (devel)
+- ansible-core 2.16 (stable)
+- ansible-core 2.15 (stable)
+- ansible-core 2.14 (stable)
 
 ## Roadmap
 
