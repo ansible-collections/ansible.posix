@@ -1,0 +1,2 @@
+minor_changes:
+  - firewalld_info - Only warn about ignored zones, when there are zones ignored.
