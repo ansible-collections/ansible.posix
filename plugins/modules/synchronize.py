@@ -360,6 +360,17 @@ EXAMPLES = r'''
         src: /tmp/localpath/
         dest: /tmp/remotepath
         rsync_path: /usr/gnu/bin/rsync
+
+# Source files from multiple folders and merge them on the remote
+# Files of the same name in /tmp/path_c/ will take precedence over those in /tmp/path_b/, and same for path_b to path_a
+- name: Copy files from multiple folders and merge them into dest
+  ansible.posix.synchronize:
+    src: 
+    - /tmp/path_a/
+    - /tmp/path_b/
+    - /tmp/path_c/
+    dest: /tmp/dest/
+    recursive: True
 '''
 
 
