@@ -831,7 +831,7 @@ def main():
         # handle mount on boot.  To avoid mount option conflicts, if 'noauto'
         # specified in 'opts',  mount module will ignore 'boot'.
         opts = args['opts'].split(',')
-        if 'noauto' in opts:
+        if module.params['boot'] and 'noauto' in opts:
             args['warnings'].append("Ignore the 'boot' due to 'opts' contains 'noauto'.")
         elif not module.params['boot']:
             args['boot'] = 'no'
