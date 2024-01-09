@@ -62,16 +62,7 @@ else
     retry pip install "https://github.com/ansible/ansible/archive/stable-${ansible_version}.tar.gz" --disable-pip-version-check
 fi
 
-if [ "${SHIPPABLE_BUILD_ID:-}" ]; then
-    export ANSIBLE_COLLECTIONS_PATHS="${HOME}/.ansible"
-    SHIPPABLE_RESULT_DIR="$(pwd)/shippable"
-    TEST_DIR="${ANSIBLE_COLLECTIONS_PATHS}/ansible_collections/ansible/posix"
-    mkdir -p "${TEST_DIR}"
-    cp -aT "${SHIPPABLE_BUILD_DIR}" "${TEST_DIR}"
-    cd "${TEST_DIR}"
-else
-    export ANSIBLE_COLLECTIONS_PATHS="${PWD}/../../../"
-fi
+export ANSIBLE_COLLECTIONS_PATHS="${PWD}/../../../"
 
 # START: HACK install dependencies
 if [ "${ansible_version}" == "2.9" ] || [ "${ansible_version}" == "2.10" ]; then
