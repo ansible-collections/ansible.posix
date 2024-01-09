@@ -211,8 +211,6 @@ stages:
               test: rhel/9.1
             - name: FreeBSD 13.2
               test: freebsd/13.2
-            - name: FreeBSD 12.4
-              test: freebsd/12.4
   - stage: Remote_2_14
     displayName: Remote 2.14
     dependsOn: []
@@ -227,8 +225,6 @@ stages:
               test: rhel/8.6
             - name: FreeBSD 13.2
               test: freebsd/13.2
-            - name: FreeBSD 12.4
-              test: freebsd/12.4
 
   ## Finally
 
