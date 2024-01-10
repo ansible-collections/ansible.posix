@@ -78,7 +78,7 @@ class ActionModule(ActionBase):
         if self._host_is_ipv6_address(host):
             return '[%s%s]:%s' % (user_prefix, host, path)
 
-        #preserve formatting of remote paths if host or user@host is explicitly defined in the path
+        # preserve formatting of remote paths if host or user@host is explicitly defined in the path
         if ':' not in path:
             return '%s%s:%s' % (user_prefix, host, path)
         elif '@' not in path:
