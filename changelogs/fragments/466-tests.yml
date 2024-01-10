@@ -1,0 +1,2 @@
+trivial:
+  - "Fix integration tests so they work with ansible-core devel / 2.16 (https://github.com/ansible-collections/ansible.posix/pull/466)."

@@ -1,6 +1,7 @@
+---
 namespace: ansible
 name: posix
-version: 1.4.0
+version: 1.5.4
 readme: README.md
 authors:
   - Ansible (github.com/ansible)

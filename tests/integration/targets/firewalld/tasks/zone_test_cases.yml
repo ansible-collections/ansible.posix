@@ -1,0 +1,48 @@
+---
+- name: Firewalld create zone custom
+  ansible.posix.firewalld:
+    zone: custom
+    permanent: true
+    state: present
+  register: result
+
+- name: Assert firewalld custom zone created worked
+  ansible.builtin.assert:
+    that:
+      - result is changed
+
+- name: Firewalld create zone custom rerun (verify not changed)
+  ansible.posix.firewalld:
+    zone: custom
+    permanent: true
+    state: present
+  register: result
+
+- name: Assert firewalld custom zone created worked (verify not changed)
+  ansible.builtin.assert:
+    that:
+      - result is not changed
+
+- name: Firewalld remove zone custom
+  ansible.posix.firewalld:
+    zone: custom
+    permanent: true
+    state: absent
+  register: result
+
+- name: Assert firewalld custom zone removed worked
+  ansible.builtin.assert:
+    that:
+      - result is changed
+
+- name: Firewalld remove custom zone rerun (verify not changed)
+  ansible.posix.firewalld:
+    zone: custom
+    permanent: true
+    state: absent
+  register: result
+
+- name: Assert firewalld custom zone removed worked (verify not changed)
+  ansible.builtin.assert:
+    that:
+      - result is not changed

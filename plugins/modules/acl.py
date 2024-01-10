@@ -20,7 +20,7 @@ options:
     description:
     - The full path of the file or object.
     type: path
-    required: yes
+    required: true
     aliases: [ name ]
   state:
     description:
@@ -33,17 +33,18 @@ options:
     description:
     - Whether to follow symlinks on the path if a symlink is encountered.
     type: bool
-    default: yes
+    default: true
   default:
     description:
-    - If the target is a directory, setting this to C(yes) will make it the default ACL for entities created inside the directory.
-    - Setting C(default) to C(yes) causes an error if the path is a file.
+    - If the target is a directory, setting this to C(true) will make it the default ACL for entities created inside the directory.
+    - Setting C(default) to C(true) causes an error if the path is a file.
     type: bool
-    default: no
+    default: false
   entity:
     description:
     - The actual user or group that the ACL applies to when matching entity types user or group are selected.
     type: str
+    default: ""
   etype:
     description:
     - The entity type of the ACL to apply, see C(setfacl) documentation for more info.
@@ -69,13 +70,13 @@ options:
     - Incompatible with C(state=query).
     - Alias C(recurse) added in version 1.3.0.
     type: bool
-    default: no
+    default: false
     aliases: [ recurse ]
   use_nfsv4_acls:
     description:
     - Use NFSv4 ACLs instead of POSIX ACLs.
     type: bool
-    default: no
+    default: false
   recalculate_mask:
     description:
     - Select if and when to recalculate the effective right masks of the files.
@@ -115,7 +116,7 @@ EXAMPLES = r'''
     entity: joe
     etype: user
     permissions: rw
-    default: yes
+    default: true
     state: present
 
 - name: Same as previous but using entry shorthand

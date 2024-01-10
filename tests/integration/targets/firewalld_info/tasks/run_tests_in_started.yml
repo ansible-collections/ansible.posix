@@ -1,32 +1,33 @@
+---
 # Test playbook for the firewalld_info module
 # (c) 2021, Hideki Saito <saito@fgrep.org>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 - name: Ensure firewalld_info without options
-  firewalld_info:
+  ansible.posix.firewalld_info:
   register: result
 
 - name: Assert collected_zones and undefined_zones
-  assert:
+  ansible.builtin.assert:
     that:
-      - 'result.collected_zones and not result.undefined_zones'
+      - result.collected_zones and not result.undefined_zones
 
 - name: Ensure firewalld_info with active_zones
-  firewalld_info:
-    active_zones: yes
+  ansible.posix.firewalld_info:
+    active_zones: true
   register: result
 
 - name: Assert turn active_zones true
-  assert:
+  ansible.builtin.assert:
     that:
 
 - name: Ensure firewalld_zones with zone list
-  firewalld_info:
+  ansible.posix.firewalld_info:
     zones:
       - public
       - invalid_zone
   register: result
 
 - name: Assert specified zones
-  assert:
+  ansible.builtin.assert:
     that:

@@ -32,7 +32,7 @@ options:
     description:
       - If set to I(true), will update also the kernel boot parameters when disabling/enabling SELinux.
       - The C(grubby) tool must be present on the target system for this to work.
-    default: no
+    default: false
     type: bool
     version_added: '1.4.0'
   configfile:
@@ -106,6 +106,8 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.facts.utils import get_file_lines
+
+from ansible_collections.ansible.posix.plugins.module_utils._respawn import respawn_module, HAS_RESPAWN_UTIL
 
 
 # getter subroutines
@@ -236,6 +238,8 @@ def main():
     )
 
     if not HAS_SELINUX:
+        if HAS_RESPAWN_UTIL:
+            respawn_module("selinux")
         module.fail_json(msg=missing_required_lib('libselinux-python'), exception=SELINUX_IMP_ERR)
 
     # global vars

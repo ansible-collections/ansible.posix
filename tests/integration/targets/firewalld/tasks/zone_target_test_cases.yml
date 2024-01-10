@@ -1,3 +1,4 @@
+---
 # Test playbook for the firewalld module - source operations
 # (c) 2020, Adam Miller <admiller@redhat.com>
 
@@ -16,106 +17,106 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- name: firewalld dmz zone target DROP
-  firewalld:
+- name: Firewalld dmz zone target DROP
+  ansible.posix.firewalld:
     zone: dmz
-    permanent: True
+    permanent: true
     state: present
     target: DROP
   register: result
 
-- name: assert firewalld dmz zone target DROP present worked
-  assert:
+- name: Assert firewalld dmz zone target DROP present worked
+  ansible.builtin.assert:
     that:
-    - result is changed
+      - result is changed
 
-- name: firewalld dmz zone target DROP rerun (verify not changed)
-  firewalld:
+- name: Firewalld dmz zone target DROP rerun (verify not changed)
+  ansible.posix.firewalld:
     zone: dmz
-    permanent: True
+    permanent: true
     state: present
     target: DROP
   register: result
 
-- name: assert firewalld dmz zone target DROP present worked (verify not changed)
-  assert:
+- name: Assert firewalld dmz zone target DROP present worked (verify not changed)
+  ansible.builtin.assert:
     that:
-    - result is not changed
+      - result is not changed
 
-- name: firewalld dmz zone target DROP absent
-  firewalld:
+- name: Firewalld dmz zone target DROP absent
+  ansible.posix.firewalld:
     zone: dmz
-    permanent: True
+    permanent: true
     state: absent
     target: DROP
   register: result
 
-- name: assert firewalld dmz zone target DROP absent worked
-  assert:
+- name: Assert firewalld dmz zone target DROP absent worked
+  ansible.builtin.assert:
     that:
-    - result is changed
+      - result is changed
 
-- name: firewalld dmz zone target DROP rerun (verify not changed)
-  firewalld:
+- name: Firewalld dmz zone target DROP rerun (verify not changed)
+  ansible.posix.firewalld:
     zone: dmz
-    permanent: True
+    permanent: true
     state: absent
     target: DROP
   register: result
 
-- name: assert firewalld dmz zone target DROP present worked (verify not changed)
-  assert:
+- name: Assert firewalld dmz zone target DROP present worked (verify not changed)
+  ansible.builtin.assert:
     that:
-    - result is not changed
+      - result is not changed
 
-- name: firewalld dmz zone target %%REJECT%%
-  firewalld:
+- name: Firewalld dmz zone target %%REJECT%%
+  ansible.posix.firewalld:
     zone: dmz
-    permanent: True
+    permanent: true
     state: present
-    target: '%%REJECT%%'
+    target: "%%REJECT%%"
   register: result
 
-- name: assert firewalld dmz zone target %%REJECT%% present worked
-  assert:
+- name: Assert firewalld dmz zone target %%REJECT%% present worked
+  ansible.builtin.assert:
     that:
-    - result is changed
+      - result is changed
 
-- name: firewalld dmz zone target %%REJECT%% rerun (verify not changed)
-  firewalld:
+- name: Firewalld dmz zone target %%REJECT%% rerun (verify not changed)
+  ansible.posix.firewalld:
     zone: dmz
-    permanent: True
+    permanent: true
     state: present
-    target: '%%REJECT%%'
+    target: "%%REJECT%%"
   register: result
 
-- name: assert firewalld dmz zone target %%REJECT%% present worked (verify not changed)
-  assert:
+- name: Assert firewalld dmz zone target %%REJECT%% present worked (verify not changed)
+  ansible.builtin.assert:
     that:
-    - result is not changed
+      - result is not changed
 
-- name: firewalld dmz zone target %%REJECT%% absent
-  firewalld:
+- name: Firewalld dmz zone target %%REJECT%% absent
+  ansible.posix.firewalld:
     zone: dmz
-    permanent: True
+    permanent: true
     state: absent
-    target: '%%REJECT%%'
+    target: "%%REJECT%%"
   register: result
 
-- name: assert firewalld dmz zone target %%REJECT%% absent worked
-  assert:
+- name: Assert firewalld dmz zone target %%REJECT%% absent worked
+  ansible.builtin.assert:
     that:
-    - result is changed
+      - result is changed
 
-- name: firewalld dmz zone target %%REJECT%% rerun (verify not changed)
-  firewalld:
+- name: Firewalld dmz zone target %%REJECT%% rerun (verify not changed)
+  ansible.posix.firewalld:
     zone: dmz
-    permanent: True
+    permanent: true
     state: absent
-    target: '%%REJECT%%'
+    target: "%%REJECT%%"
   register: result
 
-- name: assert firewalld dmz zone target %%REJECT%% present worked (verify not changed)
-  assert:
+- name: Assert firewalld dmz zone target %%REJECT%% present worked (verify not changed)
+  ansible.builtin.assert:
     that:
-    - result is not changed
+      - result is not changed

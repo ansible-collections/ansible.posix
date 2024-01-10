@@ -17,11 +17,11 @@ DOCUMENTATION = '''
       - Ansible callback plugin for timing individual tasks and overall execution time.
       - "Mashup of 2 excellent original works: https://github.com/jlafon/ansible-profile,
          https://github.com/junaid18183/ansible_home/blob/master/ansible_plugins/callback_plugins/timestamp.py.old"
-      - "Format: C(<task start timestamp> (<length of previous task>) <current elapsed playbook execution time>)"
+      - "Format: C(<task start timestamp>) C(<length of previous task>) C(<current elapsed playbook execution time>)"
       - It also lists the top/bottom time consuming tasks in the summary (configurable)
       - Before 2.4 only the environment variables were available for configuration.
     requirements:
-      - whitelisting in configuration - see examples section below for details.
+      - enable in configuration - see examples section below for details.
     options:
       output_limit:
         description: Number of tasks to display in the summary
@@ -46,7 +46,7 @@ EXAMPLES = '''
 example: >
   To enable, add this to your ansible.cfg file in the defaults block
     [defaults]
-    callback_whitelist = ansible.posix.profile_tasks
+    callbacks_enabled=ansible.posix.profile_tasks
 sample output: >
 #
 #    TASK: [ensure messaging security group exists] ********************************

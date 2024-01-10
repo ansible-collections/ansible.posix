@@ -1,0 +1,3 @@
+---
+trivial:
+  - "Replace Fedora 38 with 39 for container test(https://github.com/ansible-collections/ansible.posix/issues/509)."

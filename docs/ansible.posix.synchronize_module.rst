@@ -150,7 +150,7 @@ Parameters
                 </td>
                 <td>
                         <div>Delete files in <em>dest</em> that do not exist (after transfer, not before) in the <em>src</em> path.</div>
-                        <div>This option requires <em>recursive=yes</em>.</div>
+                        <div>This option requires <em>recursive=true</em>.</div>
                         <div>This option ignores excluded files and behaves like the rsync opt <code>--delete-after</code>.</div>
                 </td>
             </tr>
@@ -465,7 +465,7 @@ Parameters
                 </td>
                 <td>
                         <div>Put user@ for the remote paths.</div>
-                        <div>If you have a custom ssh config to define the remote user for a host that does not match the inventory user, you should set this parameter to <code>no</code>.</div>
+                        <div>If you have a custom ssh config to define the remote user for a host that does not match the inventory user, you should set this parameter to <code>false</code>.</div>
                 </td>
             </tr>
             <tr>
@@ -502,8 +502,8 @@ Parameters
                 </td>
                 <td>
                         <div>SSH connection multiplexing for rsync is disabled by default to prevent misconfigured ControlSockets from resulting in failed SSH connections. This is accomplished by setting the SSH <code>ControlSocket</code> to <code>none</code>.</div>
-                        <div>Set this option to <code>yes</code> to allow multiplexing and reduce SSH connection overhead.</div>
-                        <div>Note that simply setting this option to <code>yes</code> is not enough; You must also configure SSH connection multiplexing in your SSH client config by setting values for <code>ControlMaster</code>, <code>ControlPersist</code> and <code>ControlPath</code>.</div>
+                        <div>Set this option to <code>true</code> to allow multiplexing and reduce SSH connection overhead.</div>
+                        <div>Note that simply setting this option to <code>true</code> is not enough; You must also configure SSH connection multiplexing in your SSH client config by setting values for <code>ControlMaster</code>, <code>ControlPersist</code> and <code>ControlPath</code>.</div>
                 </td>
             </tr>
             <tr>
@@ -595,8 +595,8 @@ See Also
 
 .. seealso::
 
-   :ref:`copy_module`
-      The official documentation on the **copy** module.
+   :ref:`ansible.builtin.copy_module`
+      The official documentation on the **ansible.builtin.copy** module.
    :ref:`community.windows.win_robocopy_module`
       The official documentation on the **community.windows.win_robocopy** module.
 
@@ -639,27 +639,27 @@ Examples
       ansible.posix.synchronize:
         src: some/relative/path
         dest: /some/absolute/path
-        archive: no
+        archive: false
 
     - name: Synchronization with --archive options enabled except for --recursive
       ansible.posix.synchronize:
         src: some/relative/path
         dest: /some/absolute/path
-        recursive: no
+        recursive: false
 
     - name: Synchronization with --archive options enabled except for --times, with --checksum option enabled
       ansible.posix.synchronize:
         src: some/relative/path
         dest: /some/absolute/path
-        checksum: yes
-        times: no
+        checksum: true
+        times: false
 
     - name: Synchronization without --archive options enabled except use --links
       ansible.posix.synchronize:
         src: some/relative/path
         dest: /some/absolute/path
-        archive: no
-        links: yes
+        archive: false
+        links: true
 
     - name: Synchronization of two paths both on the control machine
       ansible.posix.synchronize:
@@ -689,8 +689,8 @@ Examples
       ansible.posix.synchronize:
         src: some/relative/path
         dest: /some/absolute/path
-        delete: yes
-        recursive: yes
+        delete: true
+        recursive: true
 
     # This specific command is granted su privileges on the destination
     - name: Synchronize using an alternate rsync command

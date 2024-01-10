@@ -31,3 +31,4 @@ except ImportError:
     BUILTINS = 'builtins'
 else:
     BUILTINS = '__builtin__'
+    __all__ = ['__builtin__']

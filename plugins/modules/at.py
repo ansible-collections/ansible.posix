@@ -44,7 +44,7 @@ options:
     description:
      - If a matching job is present a new job will not be added.
     type: bool
-    default: no
+    default: false
 requirements:
  - at
 author:
@@ -68,7 +68,7 @@ EXAMPLES = r'''
     command: ls -d / >/dev/null
     count: 20
     units: minutes
-    unique: yes
+    unique: true
 '''
 
 import os

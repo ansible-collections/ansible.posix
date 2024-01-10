@@ -34,13 +34,13 @@ options:
   manage_dir:
     description:
       - Whether this module should manage the directory of the authorized key file.
-      - If set to C(yes), the module will create the directory, as well as set the owner and permissions
+      - If set to C(true), the module will create the directory, as well as set the owner and permissions
         of an existing directory.
-      - Be sure to set C(manage_dir=no) if you are using an alternate directory for authorized_keys,
+      - Be sure to set C(manage_dir=false) if you are using an alternate directory for authorized_keys,
         as set with C(path), since you could lock yourself out of SSH access.
       - See the example below.
     type: bool
-    default: yes
+    default: true
   state:
     description:
       - Whether the given key (with the given key_options) should or should not be in the file.
@@ -58,15 +58,15 @@ options:
       - This option is not loop aware, so if you use C(with_) , it will be exclusive per iteration of the loop.
       - If you want multiple keys in the file you need to pass them all to C(key) in a single batch as mentioned above.
     type: bool
-    default: no
+    default: false
   validate_certs:
     description:
       - This only applies if using a https url as the source of the keys.
-      - If set to C(no), the SSL certificates will not be validated.
-      - This should only set to C(no) used on personally controlled sites using self-signed certificates as it avoids verifying the source site.
-      - Prior to 2.1 the code worked as if this was set to C(yes).
+      - If set to C(false), the SSL certificates will not be validated.
+      - This should only set to C(false) used on personally controlled sites using self-signed certificates as it avoids verifying the source site.
+      - Prior to 2.1 the code worked as if this was set to C(true).
     type: bool
-    default: yes
+    default: true
   comment:
     description:
       - Change the comment on the public key.
@@ -77,7 +77,7 @@ options:
     description:
       - Follow path symlink instead of replacing it.
     type: bool
-    default: no
+    default: false
 author: Ansible Core Team
 '''
 
@@ -106,7 +106,7 @@ EXAMPLES = r'''
     state: present
     key: "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
     path: /etc/ssh/authorized_keys/charlie
-    manage_dir: False
+    manage_dir: false
 
 - name: Set up multiple authorized keys
   ansible.posix.authorized_key:
@@ -129,14 +129,14 @@ EXAMPLES = r'''
     user: charlie
     state: present
     key: https://github.com/user.keys
-    validate_certs: False
+    validate_certs: false
 
 - name: Set authorized key, removing all the authorized keys already set
   ansible.posix.authorized_key:
     user: root
     key: "{{ lookup('file', 'public_keys/doe-jane') }}"
     state: present
-    exclusive: True
+    exclusive: true
 
 - name: Set authorized key for user ubuntu copying it from current user
   ansible.posix.authorized_key:
@@ -150,7 +150,7 @@ exclusive:
   description: If the key has been forced to be exclusive or not.
   returned: success
   type: bool
-  sample: False
+  sample: false
 key:
   description: The key that the module was running against.
   returned: success
@@ -170,7 +170,7 @@ manage_dir:
   description: Whether this module managed the directory of the authorized key file.
   returned: success
   type: bool
-  sample: True
+  sample: true
 path:
   description: Alternate path to the authorized_keys file
   returned: success
@@ -192,7 +192,7 @@ user:
   type: str
   sample: user
 validate_certs:
-  description: This only applies if using a https url as the source of the keys. If set to C(no), the SSL certificates will not be validated.
+  description: This only applies if using a https url as the source of the keys. If set to C(false), the SSL certificates will not be validated.
   returned: success
   type: bool
   sample: true
@@ -347,6 +347,8 @@ def keyfile(module, user, write=False, path=None, manage_dir=True, follow=False)
         basedir = os.path.dirname(keysfile)
         if not os.path.exists(basedir):
             os.makedirs(basedir)
+
+        f = None
         try:
             f = open(keysfile, "w")  # touches file so we can set ownership and perms
         finally:

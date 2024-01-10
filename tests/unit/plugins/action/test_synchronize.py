@@ -19,7 +19,6 @@ import os
 import unittest
 import yaml
 
-import ansible.plugins
 from ansible_collections.ansible.posix.tests.unit.compat.mock import patch, MagicMock
 from ansible_collections.ansible.posix.plugins.action.synchronize import ActionModule
 

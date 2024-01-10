@@ -1,9 +1,10 @@
+---
 # Test playbook for the firewalld module - port operations
 # (c) 2017, Adam Miller <admiller@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: firewalld port forward test permanent enabled
-  firewalld:
+- name: Firewalld port forward test permanent enabled
+  ansible.posix.firewalld:
     port_forward:
       - port: 8080
         proto: tcp
@@ -12,13 +13,13 @@
     state: enabled
   register: result
 
-- name: assert firewalld port test permanent enabled worked
-  assert:
+- name: Assert firewalld port test permanent enabled worked
+  ansible.builtin.assert:
     that:
-    - result is changed
+      - result is changed
 
-- name: firewalld port test permanent enabled rerun (verify not changed)
-  firewalld:
+- name: Firewalld port test permanent enabled rerun (verify not changed)
+  ansible.posix.firewalld:
     port_forward:
       - port: 8080
         proto: tcp
@@ -27,13 +28,13 @@
     state: enabled
   register: result
 
-- name: assert firewalld port test permanent enabled rerun worked (verify not changed)
-  assert:
+- name: Assert firewalld port test permanent enabled rerun worked (verify not changed)
+  ansible.builtin.assert:
     that:
-    - result is not changed
+      - result is not changed
 
-- name: firewalld port test permanent disabled
-  firewalld:
+- name: Firewalld port test permanent disabled
+  ansible.posix.firewalld:
     port_forward:
       - port: 8080
         proto: tcp
@@ -42,13 +43,13 @@
     state: disabled
   register: result
 
-- name: assert firewalld port test permanent disabled worked
-  assert:
+- name: Assert firewalld port test permanent disabled worked
+  ansible.builtin.assert:
     that:
-    - result is changed
+      - result is changed
 
-- name: firewalld port test permanent disabled rerun (verify not changed)
-  firewalld:
+- name: Firewalld port test permanent disabled rerun (verify not changed)
+  ansible.posix.firewalld:
     port_forward:
       - port: 8080
         proto: tcp
@@ -57,7 +58,7 @@
     state: disabled
   register: result
 
-- name: assert firewalld port test permanent disabled rerun worked (verify not changed)
-  assert:
+- name: Assert firewalld port test permanent disabled rerun worked (verify not changed)
+  ansible.builtin.assert:
     that:
-    - result is not changed
+      - result is not changed
