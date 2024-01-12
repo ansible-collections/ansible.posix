@@ -102,8 +102,8 @@ class CallbackModule(CallbackBase):
         self._display.display(tasktime())
 
     def playbook_on_stats(self, stats):
-        self._display.display(tasktime())
-        self._display.display(filled("", fchar="="))
+        # Align summary report header with other callback plugin summary
+        self._display.banner("ROLE RECAP")
 
         timestamp(self)
         total_time = sum(self.totals.values())
@@ -116,3 +116,4 @@ class CallbackModule(CallbackBase):
         msg_total = u"{0:-<70}{1:->9}".format(u'total ', u' {0:.02f}s'.format(total_time))
         self._display.display(filled("", fchar="~"))
         self._display.display(msg_total)
+        
