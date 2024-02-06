@@ -1,22 +1,24 @@
+---
 # Test playbook for the firewalld module
 # (c) 2017, Adam Miller <admiller@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 - name: Run firewalld tests
+  when:
+    - ansible_facts.os_family == "RedHat" and ansible_facts.distribution_major_version is version('7', '>=')
+    - not (ansible_distribution == "Ubuntu" and ansible_distribution_version is version('14.04', '=='))
+    # Firewalld package on OpenSUSE (15+) require Python 3, so we skip on OpenSUSE running py2 on these newer distros
+    - not (ansible_os_family == "Suse" and ansible_distribution_major_version|int != 42 and ansible_python.version.major != 3)
+    - not (ansible_facts.distribution == "CentOS" and ansible_distribution_major_version is version('7', '==')) # FIXME
   block:
     - name: Ensure firewalld is installed
-      package:
+      ansible.builtin.package:
         name: firewalld
         state: present
-      # This doesn't work for CentOS 6 because firewalld doesn't exist in CentOS6
-
-    - name: Check to make sure the firewalld python module is available.
-      shell: "{{ansible_python.executable}} -c 'import firewall'"
-      register: check_output
-      ignore_errors: true
+    # This doesn't work for CentOS 6 because firewalld doesn't exist in CentOS6
 
     - name: Enable dbus-broker daemon
-      service:
+      ansible.builtin.service:
         name: dbus-broker
         enabled: true
         state: started
@@ -24,27 +26,20 @@
 
     - name: Test Online Operations
       block:
-        - name: start firewalld
-          service:
+        - name: Start firewalld
+          ansible.builtin.service:
             name: firewalld
             state: started
 
-        - import_tasks: run_all_tests.yml
-      when: check_output.rc == 0
+        - name: Import test tasks
+          ansible.builtin.import_tasks: run_all_tests.yml
 
     - name: Test Offline Operations
       block:
-        - name: stop firewalld
-          service:
+        - name: Stop firewalld
+          ansible.builtin.service:
             name: firewalld
             state: stopped
 
-        - import_tasks: run_all_tests.yml
-      when: check_output.rc == 0
-
-  when:
-  - ansible_facts.os_family == "RedHat" and ansible_facts.distribution_major_version is version('7', '>=')
-  - not (ansible_distribution == "Ubuntu" and ansible_distribution_version is version('14.04', '=='))
-  # Firewalld package on OpenSUSE (15+) require Python 3, so we skip on OpenSUSE running py2 on these newer distros
-  - not (ansible_os_family == "Suse" and ansible_distribution_major_version|int != 42 and ansible_python.version.major != 3)
-  - not (ansible_facts.distribution == "CentOS" and ansible_distribution_major_version is version('7', '==')) # FIXME
+        - name: Import test tasks
+          ansible.builtin.import_tasks: run_all_tests.yml

@@ -38,14 +38,14 @@ options:
         description:
             - Use this option to ignore errors about unknown keys.
         type: bool
-        default: 'no'
+        default: false
     reload:
         description:
-            - If C(yes), performs a I(/sbin/sysctl -p) if the C(sysctl_file) is
-              updated. If C(no), does not reload I(sysctl) even if the
+            - If C(true), performs a I(/sbin/sysctl -p) if the C(sysctl_file) is
+              updated. If C(false), does not reload I(sysctl) even if the
               C(sysctl_file) is updated.
         type: bool
-        default: 'yes'
+        default: true
     sysctl_file:
         description:
             - Specifies the absolute path to C(sysctl.conf), if not C(/etc/sysctl.conf).
@@ -53,9 +53,9 @@ options:
         type: path
     sysctl_set:
         description:
-            - Verify token value with the sysctl command and set with -w if necessary
+            - Verify token value with the sysctl command and set with -w if necessary.
         type: bool
-        default: 'no'
+        default: false
 author:
 - David CHANIAL (@davixx)
 '''
@@ -78,21 +78,21 @@ EXAMPLES = r'''
     name: kernel.panic
     value: '3'
     sysctl_file: /tmp/test_sysctl.conf
-    reload: no
+    reload: false
 
 # Set ip forwarding on in /proc and verify token value with the sysctl command
 - ansible.posix.sysctl:
     name: net.ipv4.ip_forward
     value: '1'
-    sysctl_set: yes
+    sysctl_set: true
 
 # Set ip forwarding on in /proc and in the sysctl file and reload if necessary
 - ansible.posix.sysctl:
     name: net.ipv4.ip_forward
     value: '1'
-    sysctl_set: yes
+    sysctl_set: true
     state: present
-    reload: yes
+    reload: true
 '''
 
 # ==============================================================

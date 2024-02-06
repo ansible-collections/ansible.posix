@@ -7,19 +7,19 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    callback: skippy
-    callback_type: stdout
+    name: skippy
+    type: stdout
     requirements:
       - set as main display callback
     short_description: Ansible screen output that ignores skipped status
     deprecated:
-        why: The 'default' callback plugin now supports this functionality
-        removed_at_date: 2022-06-01
-        alternative: "'default' callback plugin with 'display_skipped_hosts = no' option"
+      why: The 'default' callback plugin now supports this functionality
+      removed_at_date: '2022-06-01'
+      alternative: "'default' callback plugin with 'display_skipped_hosts = no' option"
     extends_documentation_fragment:
       - default_callback
     description:
-        - This callback does the same as the default except it does not output skipped host/task/item status
+      - This callback does the same as the default except it does not output skipped host/task/item status
 '''
 
 from ansible.plugins.callback.default import CallbackModule as CallbackModule_default

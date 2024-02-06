@@ -10,18 +10,18 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    callback: profile_tasks
+    name: profile_tasks
     type: aggregate
     short_description: adds time information to tasks
     description:
       - Ansible callback plugin for timing individual tasks and overall execution time.
       - "Mashup of 2 excellent original works: https://github.com/jlafon/ansible-profile,
          https://github.com/junaid18183/ansible_home/blob/master/ansible_plugins/callback_plugins/timestamp.py.old"
-      - "Format: C(<task start timestamp> (<length of previous task>) <current elapsed playbook execution time>)"
+      - "Format: C(<task start timestamp>) C(<length of previous task>) C(<current elapsed playbook execution time>)"
       - It also lists the top/bottom time consuming tasks in the summary (configurable)
       - Before 2.4 only the environment variables were available for configuration.
     requirements:
-      - whitelisting in configuration - see examples section below for details.
+      - enable in configuration - see examples section below for details.
     options:
       output_limit:
         description: Number of tasks to display in the summary
@@ -40,13 +40,25 @@ DOCUMENTATION = '''
         ini:
           - section: callback_profile_tasks
             key: sort_order
+      summary_only:
+        description:
+          - Only show summary, not individual task profiles.
+            Especially usefull in combination with C(DISPLAY_SKIPPED_HOSTS=false) and/or C(ANSIBLE_DISPLAY_OK_HOSTS=false).
+        type: bool
+        default: False
+        env:
+          - name: PROFILE_TASKS_SUMMARY_ONLY
+        ini:
+          - section: callback_profile_tasks
+            key: summary_only
+        version_added: 1.5.0
 '''
 
 EXAMPLES = '''
 example: >
   To enable, add this to your ansible.cfg file in the defaults block
     [defaults]
-    callback_whitelist = ansible.posix.profile_tasks
+    callbacks_enabled=ansible.posix.profile_tasks
 sample output: >
 #
 #    TASK: [ensure messaging security group exists] ********************************
@@ -120,6 +132,7 @@ class CallbackModule(CallbackBase):
         self.current = None
 
         self.sort_order = None
+        self.summary_only = None
         self.task_output_limit = None
 
         super(CallbackModule, self).__init__()
@@ -137,6 +150,8 @@ class CallbackModule(CallbackBase):
             elif self.sort_order == 'none':
                 self.sort_order = None
 
+        self.summary_only = self.get_option('summary_only')
+
         self.task_output_limit = self.get_option('output_limit')
         if self.task_output_limit is not None:
             if self.task_output_limit == 'all':
@@ -144,11 +159,15 @@ class CallbackModule(CallbackBase):
             else:
                 self.task_output_limit = int(self.task_output_limit)
 
+    def _display_tasktime(self):
+        if not self.summary_only:
+            self._display.display(tasktime())
+
     def _record_task(self, task):
         """
         Logs the start of each task
         """
-        self._display.display(tasktime())
+        self._display_tasktime()
         timestamp(self)
 
         # Record the start time of the current task
@@ -171,10 +190,10 @@ class CallbackModule(CallbackBase):
         self._record_task(task)
 
     def playbook_on_setup(self):
-        self._display.display(tasktime())
+        self._display_tasktime()
 
     def playbook_on_stats(self, stats):
-        self._display.display(tasktime())
+        self._display_tasktime()
         self._display.display(filled("", fchar="="))
 
         timestamp(self)

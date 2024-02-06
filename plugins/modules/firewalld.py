@@ -19,6 +19,10 @@ options:
       - Name of a service to add/remove to/from firewalld.
       - The service must be listed in output of firewall-cmd --get-services.
     type: str
+  protocol:
+    description:
+      - Name of a protocol to add/remove to/from firewalld.
+    type: str
   port:
     description:
       - Name of a port or port range to add/remove to/from firewalld.
@@ -80,15 +84,17 @@ options:
     type: str
   permanent:
     description:
-      - Should this configuration be in the running firewalld configuration or persist across reboots.
+      - Whether to apply this change to the permanent firewalld configuration.
       - As of Ansible 2.3, permanent operations can operate on firewalld configs when it is not running (requires firewalld >= 0.3.9).
-      - Note that if this is C(no), immediate is assumed C(yes).
+      - Note that if this is C(false), I(immediate) defaults to C(true).
     type: bool
+    default: false
   immediate:
     description:
-      - Should this configuration be applied immediately, if set as permanent.
+      - Whether to apply this change to the runtime firewalld configuration.
+      - Defaults to C(true) if I(permanent=false).
     type: bool
-    default: no
+    default: false
   state:
     description:
       - Enable or disable a setting.
@@ -108,8 +114,9 @@ options:
     type: str
   offline:
     description:
-      - Whether to run this module even when firewalld is offline.
+      - Ignores I(immediate) if I(permanent=true) and firewalld is not running.
     type: bool
+    default: false
   target:
     description:
       - firewalld Zone target
@@ -138,32 +145,46 @@ author:
 '''
 
 EXAMPLES = r'''
+- name: permanently enable https service, also enable it immediately if possible
+  ansible.posix.firewalld:
+    service: https
+    state: enabled
+    permanent: true
+    immediate: true
+    offline: true
+
 - name: permit traffic in default zone for https service
   ansible.posix.firewalld:
     service: https
-    permanent: yes
+    permanent: true
+    state: enabled
+
+- name: permit ospf traffic
+  ansible.posix.firewalld:
+    protocol: ospf
+    permanent: true
     state: enabled
 
 - name: do not permit traffic in default zone on port 8081/tcp
   ansible.posix.firewalld:
     port: 8081/tcp
-    permanent: yes
+    permanent: true
     state: disabled
 
 - ansible.posix.firewalld:
     port: 161-162/udp
-    permanent: yes
+    permanent: true
     state: enabled
 
 - ansible.posix.firewalld:
     zone: dmz
     service: http
-    permanent: yes
+    permanent: true
     state: enabled
 
 - ansible.posix.firewalld:
     rich_rule: rule service name="ftp" audit limit value="1/m" accept
-    permanent: yes
+    permanent: true
     state: enabled
 
 - ansible.posix.firewalld:
@@ -174,44 +195,44 @@ EXAMPLES = r'''
 - ansible.posix.firewalld:
     zone: trusted
     interface: eth2
-    permanent: yes
+    permanent: true
     state: enabled
 
 - ansible.posix.firewalld:
-    masquerade: yes
+    masquerade: true
     state: enabled
-    permanent: yes
+    permanent: true
     zone: dmz
 
 - ansible.posix.firewalld:
     zone: custom
     state: present
-    permanent: yes
+    permanent: true
 
 - ansible.posix.firewalld:
     zone: drop
     state: enabled
-    permanent: yes
-    icmp_block_inversion: yes
+    permanent: true
+    icmp_block_inversion: true
 
 - ansible.posix.firewalld:
     zone: drop
     state: enabled
-    permanent: yes
+    permanent: true
     icmp_block: echo-request
 
 - ansible.posix.firewalld:
     zone: internal
     state: present
-    permanent: yes
+    permanent: true
     target: ACCEPT
 
 - name: Redirect port 443 to 8443 with Rich Rule
   ansible.posix.firewalld:
     rich_rule: rule family=ipv4 forward-port port=443 protocol=tcp to-port=8443
     zone: public
-    permanent: yes
-    immediate: yes
+    permanent: true
+    immediate: true
     state: enabled
 '''
 
@@ -343,6 +364,47 @@ class ServiceTransaction(FirewallTransaction):
         self.update_fw_settings(fw_zone, fw_settings)
 
 
+class ProtocolTransaction(FirewallTransaction):
+    """
+    ProtocolTransaction
+    """
+
+    def __init__(self, module, action_args=None, zone=None, desired_state=None, permanent=False, immediate=False):
+        super(ProtocolTransaction, self).__init__(
+            module, action_args=action_args, desired_state=desired_state, zone=zone, permanent=permanent, immediate=immediate
+        )
+
+    def get_enabled_immediate(self, protocol, timeout):
+        if protocol in self.fw.getProtocols(self.zone):
+            return True
+        else:
+            return False
+
+    def get_enabled_permanent(self, protocol, timeout):
+        fw_zone, fw_settings = self.get_fw_zone_settings()
+
+        if protocol in fw_settings.getProtocols():
+            return True
+        else:
+            return False
+
+    def set_enabled_immediate(self, protocol, timeout):
+        self.fw.addProtocol(self.zone, protocol, timeout)
+
+    def set_enabled_permanent(self, protocol, timeout):
+        fw_zone, fw_settings = self.get_fw_zone_settings()
+        fw_settings.addProtocol(protocol)
+        self.update_fw_settings(fw_zone, fw_settings)
+
+    def set_disabled_immediate(self, protocol, timeout):
+        self.fw.removeProtocol(self.zone, protocol)
+
+    def set_disabled_permanent(self, protocol, timeout):
+        fw_zone, fw_settings = self.get_fw_zone_settings()
+        fw_settings.removeProtocol(protocol)
+        self.update_fw_settings(fw_zone, fw_settings)
+
+
 class MasqueradeTransaction(FirewallTransaction):
     """
     MasqueradeTransaction
@@ -469,6 +531,7 @@ class InterfaceTransaction(FirewallTransaction):
                 old_zone_obj = self.fw.config.get_zone(zone)
                 if interface in old_zone_obj.interfaces:
                     iface_zone_objs.append(old_zone_obj)
+
             if len(iface_zone_objs) > 1:
                 # Even it shouldn't happen, it's actually possible that
                 # the same interface is in several zone XML files
@@ -478,18 +541,17 @@ class InterfaceTransaction(FirewallTransaction):
                         len(iface_zone_objs)
                     )
                 )
-            old_zone_obj = iface_zone_objs[0]
-            if old_zone_obj.name != self.zone:
-                old_zone_settings = FirewallClientZoneSettings(
-                    self.fw.config.get_zone_config(old_zone_obj)
-                )
+            elif len(iface_zone_objs) == 1 and iface_zone_objs[0].name != self.zone:
+                old_zone_obj = iface_zone_objs[0]
+                old_zone_config = self.fw.config.get_zone_config(old_zone_obj)
+                old_zone_settings = FirewallClientZoneSettings(list(old_zone_config))
                 old_zone_settings.removeInterface(interface)    # remove from old
                 self.fw.config.set_zone_config(
                     old_zone_obj,
                     old_zone_settings.settings
                 )
-                fw_settings.addInterface(interface)             # add to new
-                self.fw.config.set_zone_config(fw_zone, fw_settings.settings)
+            fw_settings.addInterface(interface)             # add to new
+            self.fw.config.set_zone_config(fw_zone, fw_settings.settings)
         else:
             old_zone_name = self.fw.config().getZoneOfInterface(interface)
             if old_zone_name != self.zone:
@@ -675,25 +737,33 @@ class ZoneTransaction(FirewallTransaction):
         self.module.fail_json(msg=self.tx_not_permanent_error_msg)
 
     def get_enabled_permanent(self):
-        zones = self.fw.config().listZones()
-        zone_names = [self.fw.config().getZone(z).get_property("name") for z in zones]
-        if self.zone in zone_names:
-            return True
+        if self.fw_offline:
+            zones = self.fw.config.get_zones()
+            zone_names = [self.fw.config.get_zone(z).name for z in zones]
         else:
-            return False
+            zones = self.fw.config().listZones()
+            zone_names = [self.fw.config().getZone(z).get_property("name") for z in zones]
+        return self.zone in zone_names
 
     def set_enabled_immediate(self):
         self.module.fail_json(msg=self.tx_not_permanent_error_msg)
 
     def set_enabled_permanent(self):
-        self.fw.config().addZone(self.zone, FirewallClientZoneSettings())
+        if self.fw_offline:
+            self.fw.config.new_zone(self.zone, FirewallClientZoneSettings().settings)
+        else:
+            self.fw.config().addZone(self.zone, FirewallClientZoneSettings())
 
     def set_disabled_immediate(self):
         self.module.fail_json(msg=self.tx_not_permanent_error_msg)
 
     def set_disabled_permanent(self):
-        zone_obj = self.fw.config().getZoneByName(self.zone)
-        zone_obj.remove()
+        if self.fw_offline:
+            zone = self.fw.config.get_zone(self.zone)
+            self.fw.config.remove_zone(zone)
+        else:
+            zone_obj = self.fw.config().getZoneByName(self.zone)
+            zone_obj.remove()
 
 
 class ForwardPortTransaction(FirewallTransaction):
@@ -740,18 +810,19 @@ def main():
             icmp_block=dict(type='str'),
             icmp_block_inversion=dict(type='str'),
             service=dict(type='str'),
+            protocol=dict(type='str'),
             port=dict(type='str'),
             port_forward=dict(type='list', elements='dict'),
             rich_rule=dict(type='str'),
             zone=dict(type='str'),
             immediate=dict(type='bool', default=False),
             source=dict(type='str'),
-            permanent=dict(type='bool'),
+            permanent=dict(type='bool', default=False),
             state=dict(type='str', required=True, choices=['absent', 'disabled', 'enabled', 'present']),
             timeout=dict(type='int', default=0),
             interface=dict(type='str'),
             masquerade=dict(type='str'),
-            offline=dict(type='bool'),
+            offline=dict(type='bool', default=False),
             target=dict(type='str', choices=['default', 'ACCEPT', 'DROP', '%%REJECT%%']),
         ),
         supports_check_mode=True,
@@ -761,7 +832,7 @@ def main():
             source=('permanent',),
         ),
         mutually_exclusive=[
-            ['icmp_block', 'icmp_block_inversion', 'service', 'port', 'port_forward', 'rich_rule',
+            ['icmp_block', 'icmp_block_inversion', 'service', 'protocol', 'port', 'port_forward', 'rich_rule',
              'interface', 'masquerade', 'source', 'target']
         ],
     )
@@ -772,38 +843,50 @@ def main():
     timeout = module.params['timeout']
     interface = module.params['interface']
     masquerade = module.params['masquerade']
+    offline = module.params['offline']
 
     # Sanity checks
     FirewallTransaction.sanity_check(module)
 
-    # If neither permanent or immediate is provided, assume immediate (as
-    # written in the module's docs)
+    # `offline`, `immediate`, and `permanent` have a weird twisty relationship.
+    if offline:
+        # specifying offline without permanent makes no sense
+        if not permanent:
+            module.fail_json(msg='offline cannot be enabled unless permanent changes are allowed')
+
+        # offline overrides immediate to false if firewalld is offline
+        if fw_offline:
+            immediate = False
+
+    # immediate defaults to true if permanent is not enabled
     if not permanent and not immediate:
         immediate = True
 
-    # Verify required params are provided
     if immediate and fw_offline:
         module.fail_json(msg='firewall is not currently running, unable to perform immediate actions without a running firewall daemon')
 
+    # Verify required params are provided
     changed = False
     msgs = []
     icmp_block = module.params['icmp_block']
     icmp_block_inversion = module.params['icmp_block_inversion']
     service = module.params['service']
+    protocol = module.params['protocol']
     rich_rule = module.params['rich_rule']
     source = module.params['source']
     zone = module.params['zone']
     target = module.params['target']
 
+    port = None
     if module.params['port'] is not None:
         if '/' in module.params['port']:
-            port, protocol = module.params['port'].strip().split('/')
+            port, port_protocol = module.params['port'].strip().split('/')
         else:
-            protocol = None
-        if not protocol:
+            port_protocol = None
+        if not port_protocol:
             module.fail_json(msg='improper port format (missing protocol?)')
     else:
-        port = None
+        port_protocol = None
 
     port_forward_toaddr = ''
     port_forward = None
@@ -821,7 +904,7 @@ def main():
             port_forward_toaddr = port_forward['toaddr']
 
     modification = False
-    if any([icmp_block, icmp_block_inversion, service, port, port_forward, rich_rule,
+    if any([icmp_block, icmp_block_inversion, service, protocol, port, port_forward, rich_rule,
             interface, masquerade, source, target]):
         modification = True
     if modification and desired_state in ['absent', 'present'] and target is None:
@@ -846,12 +929,21 @@ def main():
             msgs.append("Changed icmp-block %s to %s" % (icmp_block, desired_state))
 
     if icmp_block_inversion is not None:
+        # Type of icmp_block_inversion will be changed to boolean in a future release.
+        icmp_block_inversion_status = True
+        try:
+            icmp_block_inversion_status = boolean(icmp_block_inversion, True)
+        except TypeError:
+            module.warn('The value of the icmp_block_inversion option is "%s". '
+                        'The type of the option will be changed from string to boolean in a future release. '
+                        'To avoid unexpected behavior, please change the value to boolean.' % icmp_block_inversion)
+        expected_state = 'enabled' if (desired_state == 'enabled') == icmp_block_inversion_status else 'disabled'
 
         transaction = IcmpBlockInversionTransaction(
             module,
             action_args=(),
             zone=zone,
-            desired_state=desired_state,
+            desired_state=expected_state,
             permanent=permanent,
             immediate=immediate,
         )
@@ -860,14 +952,6 @@ def main():
         msgs = msgs + transaction_msgs
         if changed is True:
             msgs.append("Changed icmp-block-inversion %s to %s" % (icmp_block_inversion, desired_state))
-
-        # Type of icmp_block_inversion will be changed to boolean in a future release.
-        try:
-            boolean(icmp_block_inversion, True)
-        except TypeError:
-            module.warn('The value of the icmp_block_inversion option is "%s". '
-                        'The type of the option will be changed from string to boolean in a future release. '
-                        'To avoid unexpected behavior, please change the value to boolean.' % icmp_block_inversion)
 
     if service is not None:
 
@@ -884,6 +968,22 @@ def main():
         msgs = msgs + transaction_msgs
         if changed is True:
             msgs.append("Changed service %s to %s" % (service, desired_state))
+
+    if protocol is not None:
+
+        transaction = ProtocolTransaction(
+            module,
+            action_args=(protocol, timeout),
+            zone=zone,
+            desired_state=desired_state,
+            permanent=permanent,
+            immediate=immediate,
+        )
+
+        changed, transaction_msgs = transaction.run()
+        msgs = msgs + transaction_msgs
+        if changed is True:
+            msgs.append("Changed protocol %s to %s" % (protocol, desired_state))
 
     if source is not None:
 
@@ -903,7 +1003,7 @@ def main():
 
         transaction = PortTransaction(
             module,
-            action_args=(port, protocol, timeout),
+            action_args=(port, port_protocol, timeout),
             zone=zone,
             desired_state=desired_state,
             permanent=permanent,
@@ -915,7 +1015,7 @@ def main():
         if changed is True:
             msgs.append(
                 "Changed port %s to %s" % (
-                    "%s/%s" % (port, protocol), desired_state
+                    "%s/%s" % (port, port_protocol), desired_state
                 )
             )
 
@@ -973,26 +1073,27 @@ def main():
         msgs = msgs + transaction_msgs
 
     if masquerade is not None:
+        # Type of masquerade will be changed to boolean in a future release.
+        masquerade_status = True
+        try:
+            masquerade_status = boolean(masquerade, True)
+        except TypeError:
+            module.warn('The value of the masquerade option is "%s". '
+                        'The type of the option will be changed from string to boolean in a future release. '
+                        'To avoid unexpected behavior, please change the value to boolean.' % masquerade)
 
+        expected_state = 'enabled' if (desired_state == 'enabled') == masquerade_status else 'disabled'
         transaction = MasqueradeTransaction(
             module,
             action_args=(),
             zone=zone,
-            desired_state=desired_state,
+            desired_state=expected_state,
             permanent=permanent,
             immediate=immediate,
         )
 
         changed, transaction_msgs = transaction.run()
         msgs = msgs + transaction_msgs
-
-        # Type of masquerade will be changed to boolean in a future release.
-        try:
-            boolean(masquerade, True)
-        except TypeError:
-            module.warn('The value of the masquerade option is "%s". '
-                        'The type of the option will be changed from string to boolean in a future release. '
-                        'To avoid unexpected behavior, please change the value to boolean.' % masquerade)
 
     if target is not None:
 

@@ -25,6 +25,7 @@ Requirements
 The below requirements are needed on the host that executes this module.
 
 - firewalld >= 0.2.11
+- python-firewall >= 0.2.11
 
 
 Parameters
@@ -154,7 +155,7 @@ Parameters
                 <td>
                         <div>Should this configuration be in the running firewalld configuration or persist across reboots.</div>
                         <div>As of Ansible 2.3, permanent operations can operate on firewalld configs when it is not running (requires firewalld &gt;= 0.3.9).</div>
-                        <div>Note that if this is <code>no</code>, immediate is assumed <code>yes</code>.</div>
+                        <div>Note that if this is <code>false</code>, immediate is assumed <code>true</code>.</div>
                 </td>
             </tr>
             <tr>
@@ -261,6 +262,21 @@ Parameters
                 </td>
             </tr>
 
+            <tr>
+                <td colspan="2">
+                    <div class="ansibleOptionAnchor" id="parameter-"></div>
+                    <b>protocol</b>
+                    <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
+                    <div style="font-size: small">
+                        <span style="color: purple">string</span>
+                    </div>
+                </td>
+                <td>
+                </td>
+                <td>
+                        <div>Name of a protocol to add/remove to/from firewalld.</div>
+                </td>
+            </tr>
             <tr>
                 <td colspan="2">
                     <div class="ansibleOptionAnchor" id="parameter-"></div>
@@ -401,6 +417,7 @@ Notes
    - Requires the python2 bindings of firewalld, which may not be installed by default.
    - For distributions where the python2 firewalld bindings are unavailable (e.g Fedora 28 and later) you will have to set the ansible_python_interpreter for these hosts to the python3 interpreter path and install the python3 bindings.
    - Zone transactions (creating, deleting) can be performed by using only the zone and state parameters "present" or "absent". Note that zone transactions must explicitly be permanent. This is a limitation in firewalld. This also means that you will have to reload firewalld after adding a zone that you wish to perform immediate actions on. The module will not take care of this for you implicitly because that would undo any previously performed immediate actions which were not permanent. Therefore, if you require immediate access to a newly created zone it is recommended you reload firewalld immediately after the zone creation returns with a changed state and before you perform any other immediate, non-permanent actions on that zone.
+   - This module needs ``python-firewall`` or ``python3-firewall`` on managed nodes. It is usually provided as a subset with ``firewalld`` from the OS distributor for the OS default Python interpreter.
 
 
 
@@ -412,29 +429,35 @@ Examples
     - name: permit traffic in default zone for https service
       ansible.posix.firewalld:
         service: https
-        permanent: yes
+        permanent: true
+        state: enabled
+
+    - name: permit ospf traffic
+      ansible.posix.firewalld:
+        protocol: ospf
+        permanent: true
         state: enabled
 
     - name: do not permit traffic in default zone on port 8081/tcp
       ansible.posix.firewalld:
         port: 8081/tcp
-        permanent: yes
+        permanent: true
         state: disabled
 
     - ansible.posix.firewalld:
         port: 161-162/udp
-        permanent: yes
+        permanent: true
         state: enabled
 
     - ansible.posix.firewalld:
         zone: dmz
         service: http
-        permanent: yes
+        permanent: true
         state: enabled
 
     - ansible.posix.firewalld:
         rich_rule: rule service name="ftp" audit limit value="1/m" accept
-        permanent: yes
+        permanent: true
         state: enabled
 
     - ansible.posix.firewalld:
@@ -445,44 +468,44 @@ Examples
     - ansible.posix.firewalld:
         zone: trusted
         interface: eth2
-        permanent: yes
+        permanent: true
         state: enabled
 
     - ansible.posix.firewalld:
-        masquerade: yes
+        masquerade: true
         state: enabled
-        permanent: yes
+        permanent: true
         zone: dmz
 
     - ansible.posix.firewalld:
         zone: custom
         state: present
-        permanent: yes
+        permanent: true
 
     - ansible.posix.firewalld:
         zone: drop
         state: enabled
-        permanent: yes
-        icmp_block_inversion: yes
+        permanent: true
+        icmp_block_inversion: true
 
     - ansible.posix.firewalld:
         zone: drop
         state: enabled
-        permanent: yes
+        permanent: true
         icmp_block: echo-request
 
     - ansible.posix.firewalld:
         zone: internal
         state: present
-        permanent: yes
+        permanent: true
         target: ACCEPT
 
     - name: Redirect port 443 to 8443 with Rich Rule
       ansible.posix.firewalld:
         rich_rule: rule family=ipv4 forward-port port=443 protocol=tcp to-port=8443
         zone: public
-        permanent: yes
-        immediate: yes
+        permanent: true
+        immediate: true
         state: enabled
 
 

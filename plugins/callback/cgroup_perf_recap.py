@@ -11,8 +11,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
-    callback: cgroup_perf_recap
-    callback_type: aggregate
+    name: cgroup_perf_recap
+    type: aggregate
     requirements:
       - whitelist in configuration
       - cgroups

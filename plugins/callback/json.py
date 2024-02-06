@@ -7,7 +7,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    callback: json
+    name: json
     short_description: Ansible screen output as JSON
     description:
         - This callback converts all events into JSON output to stdout
@@ -25,6 +25,16 @@ DOCUMENTATION = '''
           - key: show_custom_stats
             section: defaults
         type: bool
+      json_indent:
+        name: Use indenting for the JSON output
+        description: 'If specified, use this many spaces for indenting in the JSON output. If <= 0, write to a single line.'
+        default: 4
+        env:
+          - name: ANSIBLE_JSON_INDENT
+        ini:
+          - key: json_indent
+            section: defaults
+        type: integer
     notes:
       - When using a strategy such as free, host_pinned, or a custom strategy, host results will
         be added to new task results in ``.plays[].tasks[]``. As such, there will exist duplicate
@@ -61,12 +71,19 @@ class CallbackModule(CallbackBase):
         self._task_map = {}
         self._is_lockstep = False
 
+        self.set_options()
+
+        self._json_indent = self.get_option('json_indent')
+        if self._json_indent <= 0:
+            self._json_indent = None
+
     def _new_play(self, play):
         self._is_lockstep = play.strategy in LOCKSTEP_CALLBACKS
         return {
             'play': {
                 'name': play.get_name(),
                 'id': to_text(play._uuid),
+                'path': to_text(play.get_path()),
                 'duration': {
                     'start': current_time()
                 }
@@ -79,6 +96,7 @@ class CallbackModule(CallbackBase):
             'task': {
                 'name': task.get_name(),
                 'id': to_text(task._uuid),
+                'path': to_text(task.get_path()),
                 'duration': {
                     'start': current_time()
                 }
@@ -143,7 +161,7 @@ class CallbackModule(CallbackBase):
             'global_custom_stats': global_custom_stats,
         }
 
-        self._display.display(json.dumps(output, cls=AnsibleJSONEncoder, indent=4, sort_keys=True))
+        self._display.display(json.dumps(output, cls=AnsibleJSONEncoder, indent=self._json_indent, sort_keys=True))
 
     def _record_task_result(self, on_info, result, **kwargs):
         """This function is used as a partial to add failed/skipped info in a single method"""

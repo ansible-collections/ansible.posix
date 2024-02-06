@@ -19,7 +19,6 @@ import os
 import unittest
 import yaml
 
-import ansible.plugins
 from ansible_collections.ansible.posix.tests.unit.compat.mock import patch, MagicMock
 from ansible_collections.ansible.posix.plugins.action.synchronize import ActionModule
 
@@ -55,6 +54,7 @@ class TaskMock(object):
     become = None
     become_user = None
     become_method = None
+    check_mode = False
 
 
 class StdinMock(object):

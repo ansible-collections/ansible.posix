@@ -5,6 +5,96 @@ ansible.posix Release Notes
 .. contents:: Topics
 
 
+v1.5.4
+======
+
+Minor Changes
+-------------
+
+- json and jsonl - Add the ``ANSIBLE_JSON_INDENT`` parameter
+- json and jsonl - Add the ``path`` attribute into the play and task output
+
+Bugfixes
+--------
+
+- Fix sysctl integration test failing on newer versions of core. Previously NoneType was allowable, now it fails to convert to a str type.
+- Support new sanity test for the ansible-core devel branch CI test (https://github.com/ansible-collections/ansible.posix/issues/446).
+- firewall - Fix issue where adding an interface to a zone would fail when the daemon is offline
+- firewall - Fix issue where opening a specific port resulted in opening the whole protocol of the specified port
+- firewalld - Consider value of masquerade and icmp_block_inversion parameters when a boolean like value is passed
+
+v1.5.2
+======
+
+Release Summary
+---------------
+
+This is the minor release of the ``ansible.posix`` collection.
+This changelog contains all changes to the modules and plugins
+in this collection that have been added after the release of
+``ansible.posix`` 1.5.1.
+
+Minor Changes
+-------------
+
+- Add jsonl callback plugin to ansible.posix collection
+- firewalld - add `protocol` parameter
+
+Bugfixes
+--------
+
+- Fixed a bug where firewalld module fails to create/remove zones when the daemon is stopped
+- rhel_facts - Call exit_json with all keyword arguments
+
+v1.5.1
+======
+
+Minor Changes
+-------------
+
+- mount - Add ``absent_from_fstab`` state (https://github.com/ansible-collections/ansible.posix/pull/166).
+- mount - Add ``ephemeral`` value for the ``state`` parameter, that allows to mount a filesystem without altering the ``fstab`` file (https://github.com/ansible-collections/ansible.posix/pull/267).
+- r4e_rpm_ostree - new module for validating package state on RHEL for Edge
+- rhel_facts - new facts module to handle RHEL specific facts
+- rhel_rpm_ostree - new module to handle RHEL rpm-ostree specific package management functionality
+- rpm_ostree_upgrade - new module to automate rpm-ostree upgrades
+- rpm_ostree_upgrade - new module to manage upgrades for rpm-ostree based systems
+
+Bugfixes
+--------
+
+- Removed contentious terminology to match reference documentation in profile_tasks.
+- firewall - Fixed to output a more complete missing library message.
+- synchronize - Fixed hosts involved in rsync require the same password
+
+v1.4.0
+======
+
+Release Summary
+---------------
+
+This is the minor release of the ``ansible.posix`` collection.
+This changelog contains all changes to the modules in this collection that
+have been added after the release of ``ansible.posix`` 1.3.0.
+
+Minor Changes
+-------------
+
+- firewalld - Show warning message that variable type of ``masquerade`` and ``icmp_block_inversion`` will be changed from ``str`` to ``boolean`` in the future release (https://github.com/ansible-collections/ansible.posix/pull/254).
+- selinux - optionally update kernel boot params when disabling/re-enabling SELinux (https://github.com/ansible-collections/ansible.posix/pull/142).
+
+Bugfixes
+--------
+
+- Fix for whitespace in source full path causing error ```code 23) at main.c(1330) [sender=3.2.3]``` (https://github.com/ansible-collections/ansible.posix/pull/278)
+- Include ``PSF-license.txt`` file for ``plugins/module_utils/_version.py``.
+- Use vendored version of ``distutils.version`` instead of the deprecated Python standard library to address PEP 632 (https://github.com/ansible-collections/ansible.posix/issues/303).
+- firewalld - Correct usage of queryForwardPort (https://github.com/ansible-collections/ansible.posix/issues/247).
+- firewalld - Refine the handling of exclusive options (https://github.com/ansible-collections/ansible.posix/issues/255).
+- mount - add a newline at the end of line in ``fstab`` (https://github.com/ansible-collections/ansible.posix/issues/210).
+- profile_tasks - Correctly calculate task execution time with serial execution (https://github.com/ansible-collections/ansible.posix/issues/83).
+- seboolean - add ``python3-libsemanage`` package dependency for RHEL8+ systems.
+
 v1.3.0
 ======
 

@@ -7,13 +7,26 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    callback: profile_roles
+    name: profile_roles
     type: aggregate
     short_description: adds timing information to roles
     description:
         - This callback module provides profiling for ansible roles.
     requirements:
       - whitelisting in configuration
+    options:
+      summary_only:
+        description:
+          - Only show summary, not individual task profiles.
+            Especially usefull in combination with C(DISPLAY_SKIPPED_HOSTS=false) and/or C(ANSIBLE_DISPLAY_OK_HOSTS=false).
+        type: bool
+        default: False
+        env:
+          - name: PROFILE_ROLES_SUMMARY_ONLY
+        ini:
+          - section: callback_profile_roles
+            key: summary_only
+        version_added: 1.5.0
 '''
 
 import collections
@@ -76,13 +89,26 @@ class CallbackModule(CallbackBase):
         self.stats = collections.Counter()
         self.totals = collections.Counter()
         self.current = None
+
+        self.summary_only = None
+
         super(CallbackModule, self).__init__()
+
+    def set_options(self, task_keys=None, var_options=None, direct=None):
+
+        super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+
+        self.summary_only = self.get_option('summary_only')
+
+    def _display_tasktime(self):
+        if not self.summary_only:
+            self._display.display(tasktime())
 
     def _record_task(self, task):
         """
         Logs the start of each task
         """
-        self._display.display(tasktime())
+        self._display_tasktime()
         timestamp(self)
 
         if task._role:
@@ -99,10 +125,10 @@ class CallbackModule(CallbackBase):
         self._record_task(task)
 
     def playbook_on_setup(self):
-        self._display.display(tasktime())
+        self._display_tasktime()
 
     def playbook_on_stats(self, stats):
-        self._display.display(tasktime())
+        self._display_tasktime()
         self._display.display(filled("", fchar="="))
 
         timestamp(self)

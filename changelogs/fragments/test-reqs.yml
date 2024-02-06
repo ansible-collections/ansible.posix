@@ -1,0 +1,2 @@
+trivial:
+  - "Move Galaxy test requirements from old transitional format in tests/requirements.yml to standard Ansible Galaxy requirements files in tests/integration/requirements.yml and tests/unit/requirements.yml."

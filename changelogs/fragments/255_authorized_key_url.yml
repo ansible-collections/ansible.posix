@@ -1,3 +1,0 @@
----
-trivial:
-- authorized_keys - add an example involving ``url`` lookup plugin (https://github.com/ansible-collections/ansible.posix/pull/260).
