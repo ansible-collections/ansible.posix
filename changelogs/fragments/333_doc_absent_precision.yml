@@ -1,0 +1,4 @@
+---
+trivial:
+- mount - fix description in the documentation of the state ``absent`` to match its actual behavior
+  and point out that ``src`` is ignored with state ``absent`` and ``unmounted`` (https://github.com/ansible-collections/ansible.posix/issues/322)
