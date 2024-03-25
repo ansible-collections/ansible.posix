@@ -178,8 +178,8 @@ stages:
           targets:
             - name: RHEL 9.3
               test: rhel/9.3
-            - name: FreeBSD 13.2
-              test: freebsd/13.2
+            - name: FreeBSD 13.3
+              test: freebsd/13.3
   - stage: Remote_2_16
     displayName: Remote 2.16
     dependsOn: []
