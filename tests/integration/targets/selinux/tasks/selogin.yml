@@ -5,7 +5,7 @@
 - name: Attempt to add mapping without 'seuser'
   register: selogin_error
   ignore_errors: true
-  community.general.system.selogin:
+  community.general.selogin:
     login: seuser
 - name: Verify failure
   ansible.builtin.assert:
@@ -19,7 +19,7 @@
     - false
     - true
     - false
-  community.general.system.selogin:
+  community.general.selogin:
     login: seuser
     seuser: staff_u
 - name: New mapping- verify functionality and check_mode
@@ -37,7 +37,7 @@
     - false
     - true
     - false
-  community.general.system.selogin:
+  community.general.selogin:
     login: seuser
     seuser: user_u
 - name: Changed mapping- verify functionality and check_mode
@@ -55,7 +55,7 @@
     - false
     - true
     - false
-  community.general.system.selogin:
+  community.general.selogin:
     login: seuser
     state: absent
 - name: Delete mapping- verify functionality and check_mode
