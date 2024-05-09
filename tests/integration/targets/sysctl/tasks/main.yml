@@ -332,3 +332,37 @@
         that:
           - sysctl_invalid_set1 is failed
           - "'vm.mmap_rnd_bits' not in sysctl_invalid_conf_content.stdout"
+
+    # Test sysctl: sysctl_file is symlink
+    - name: Create link source
+      ansible.builtin.copy:
+        content: |
+          # Testing Ansible Sysctl module on symlink.
+        dest: /tmp/ansible_sysctl_test.conf
+        mode: "0644"
+
+    - name: Create symlink to the conf file
+      ansible.builtin.file:
+        src: /tmp/ansible_sysctl_test.conf
+        dest: /tmp/ansible_sysctl_test_symlink.conf
+        state: link
+
+    - name: Use sysctl module with symlink sysctl file
+      ansible.posix.sysctl:
+        name: 'kernel.randomize_va_space'
+        value: '1'
+        sysctl_file: /tmp/ansible_sysctl_test_symlink.conf
+        state: present
+        sysctl_set: false
+        reload: false
+
+    - name: Stat sysctl file
+      ansible.builtin.stat:
+        path: /tmp/ansible_sysctl_test_symlink.conf
+      register: stat_result
+
+    - name: Ensure the sysctl file remains a symlink
+      ansible.builtin.assert:
+        that:
+          - stat_result.stat.islnk is defined and stat_result.stat.islnk
+          - stat_result.stat.lnk_source == '/tmp/ansible_sysctl_test.conf'
