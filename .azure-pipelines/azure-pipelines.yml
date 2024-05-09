@@ -30,7 +30,7 @@ variables:
   - name: pipelinesCoverage
     value: coverage
   - name: entryPoint
-    value: tests/utils/shippable/shippable.sh
+    value: .azure-pipelines/commands/entry-point.sh
   - name: fetchDepth
     value: 0
 
