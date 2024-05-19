@@ -114,12 +114,24 @@ class SysctlModule(object):
     # success or failure.
     LANG_ENV = {'LANG': 'C', 'LC_ALL': 'C', 'LC_MESSAGES': 'C'}
 
+    # We define a variable to keep all the directories to be read, equivalent to
+    # (/sbin/sysctl --system) option
+    SYSCTL_DIRS = [
+        '/etc/sysctl.d/*.conf',
+        '/run/sysctl.d/*.conf',
+        '/usr/local/lib/sysctl.d/*.conf',
+        '/usr/lib/sysctl.d/*.conf',
+        '/lib/sysctl.d/*.conf',
+        '/etc/sysctl.conf'
+    ]
+
     def __init__(self, module):
         self.module = module
         self.args = self.module.params
 
         self.sysctl_cmd = self.module.get_bin_path('sysctl', required=True)
         self.sysctl_file = self.args['sysctl_file']
+        self.system_Wide = self.args['system_Wide']
 
         self.proc_value = None  # current token value in proc fs
         self.file_value = None  # current token value in file
