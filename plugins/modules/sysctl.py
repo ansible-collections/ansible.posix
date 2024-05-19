@@ -386,15 +386,27 @@ class SysctlModule(object):
     # Completely rewrite the sysctl file
     def write_sysctl(self):
         # open a tmp file
-        fd, tmp_path = tempfile.mkstemp('.conf', '.ansible_m_sysctl_', os.path.dirname(os.path.realpath(self.sysctl_file)))
-        f = open(tmp_path, "w")
+        if self.system_Wide:
+            sysctl_files_dir = '/etc/sysctl.d/'
+            fd, tmp_path = tempfile.mkstemp('.conf', '.ansible_m_sysctl_', sysctl_files_dir)
+            os.close(fd=fd)
+        else:
+            fd, tmp_path = tempfile.mkstemp(dir=os.path.dirname(self.sysctl_file))
+            os.close(fd)
+        
         try:
-            for l in self.fixed_lines:
-                f.write(l.strip() + "\n")
+            with open(tmp_path, 'w') as write_file:
+                for line in self.fixed_lines:
+                    write_file.write("%s\n" % line)
+            os.rename(tmp_path, self.sysctl_file)
         except IOError as e:
-            self.module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, to_native(e)))
-        f.flush()
-        f.close()
+            self.module.fail_json(msg="Failed to write %s: %s" % (to_native(tmp_path), to_native(e)))
+        finally:
+            try:
+                os.remove(tmp_path)
+            except OSError:
+                pass
+
 
         # replace the real one
         self.module.atomic_move(tmp_path, os.path.realpath(self.sysctl_file))
@@ -414,7 +426,8 @@ def main():
             reload=dict(default=True, type='bool'),
             sysctl_set=dict(default=False, type='bool'),
             ignoreerrors=dict(default=False, type='bool'),
-            sysctl_file=dict(default='/etc/sysctl.conf', type='path')
+            sysctl_file=dict(default='/etc/sysctl.conf', type='path'),
+            system_wide=dict(default=False, type='bool'),  # system_wide parameter
         ),
         supports_check_mode=True,
         required_if=[('state', 'present', ['value'])],
