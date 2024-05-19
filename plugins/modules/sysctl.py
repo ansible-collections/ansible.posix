@@ -101,6 +101,7 @@ import os
 import platform
 import re
 import tempfile
+import glob
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types
@@ -311,15 +312,22 @@ class SysctlModule(object):
             # https://github.com/ansible/ansible/issues/58158
             return
         else:
-            # system supports reloading via the -p flag to sysctl, so we'll use that
-            sysctl_args = [self.sysctl_cmd, '-p', self.sysctl_file]
-            if self.args['ignoreerrors']:
-                sysctl_args.insert(1, '-e')
+            if self.system_Wide:
+                for sysctl_file in self.SYSCTL_DIRS:
+                    for conf_file in glob.glob(sysctl_file):
+                        rc, out, err = self.module.run_command([self.sysctl_cmd, '-p', conf_file], environ_update=self.LANG_ENV)
+                        if rc != 0 or self._stderr_failed(err):
+                            self.module.fail_json(msg="Failed to reload sysctl: %s" % to_native(out) + to_native(err))
+            else:
+                # system supports reloading via the -p flag to sysctl, so we'll use that
+                sysctl_args = [self.sysctl_cmd, '-p', self.sysctl_file]
+                if self.args['ignoreerrors']:
+                    sysctl_args.insert(1, '-e')
 
-            rc, out, err = self.module.run_command(sysctl_args, environ_update=self.LANG_ENV)
+                rc, out, err = self.module.run_command(sysctl_args, environ_update=self.LANG_ENV)
 
-        if rc != 0 or self._stderr_failed(err):
-            self.module.fail_json(msg="Failed to reload sysctl: %s" % to_native(out) + to_native(err))
+            if rc != 0 or self._stderr_failed(err):
+                self.module.fail_json(msg="Failed to reload sysctl: %s" % to_native(out) + to_native(err))
 
     # ==============================================================
     #   SYSCTL FILE MANAGEMENT
