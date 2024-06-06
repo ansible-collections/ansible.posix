@@ -24,20 +24,20 @@ options:
   path:
     description:
       - Path to the mount point (e.g. C(/mnt/files)).
-      - Before Ansible 2.3 this option was only usable as I(dest), I(destfile) and I(name).
+      - Before Ansible 2.3 this option was only usable as O(ignore:dest), O(ignore:destfile) and O(name).
     type: path
     required: true
     aliases: [ name ]
   src:
     description:
       - Device (or NFS volume, or something else) to be mounted on I(path).
-      - Required when I(state) set to C(present), C(mounted) or C(ephemeral).
-      - Ignored when I(state) set to C(absent) or C(unmounted).
+      - Required when O(state) set to V(present), V(mounted) or V(ephemeral).
+      - Ignored when O(state) set to V(absent) or V(unmounted).
     type: path
   fstype:
     description:
       - Filesystem type.
-      - Required when I(state) is C(present), C(mounted) or C(ephemeral).
+      - Required when O(state) is V(present), V(mounted) or V(ephemeral).
     type: str
   opts:
     description:
@@ -46,53 +46,53 @@ options:
   dump:
     description:
       - Dump (see fstab(5)).
-      - Note that if set to C(null) and I(state) set to C(present),
+      - Note that if set to C(null) and O(state=present),
         it will cease to work and duplicate entries will be made
         with subsequent runs.
-      - Has no effect on Solaris systems or when used with C(ephemeral).
+      - Has no effect on Solaris systems or when used with O(state=ephemeral).
     type: str
     default: '0'
   passno:
     description:
       - Passno (see fstab(5)).
-      - Note that if set to C(null) and I(state) set to C(present),
+      - Note that if set to C(null) and O(state=present),
         it will cease to work and duplicate entries will be made
         with subsequent runs.
-      - Deprecated on Solaris systems. Has no effect when used with C(ephemeral).
+      - Deprecated on Solaris systems. Has no effect when used with O(state=ephemeral).
     type: str
     default: '0'
   state:
     description:
-      - If C(mounted), the device will be actively mounted and appropriately
+      - If V(mounted), the device will be actively mounted and appropriately
         configured in I(fstab). If the mount point is not present, the mount
         point will be created.
-      - If C(unmounted), the device will be unmounted without changing I(fstab).
-      - C(present) only specifies that the device is to be configured in
+      - If V(unmounted), the device will be unmounted without changing I(fstab).
+      - V(present) only specifies that the device is to be configured in
         I(fstab) and does not trigger or require a mount.
-      - C(ephemeral) only specifies that the device is to be mounted, without changing
+      - V(ephemeral) only specifies that the device is to be mounted, without changing
         I(fstab). If it is already mounted, a remount will be triggered.
-        This will always return changed=True. If the mount point I(path)
-        has already a device mounted on, and its source is different than I(src),
+        This will always return RV(ignore:changed=True). If the mount point O(path)
+        has already a device mounted on, and its source is different than O(src),
         the module will fail to avoid unexpected unmount or mount point override.
         If the mount point is not present, the mount point will be created.
         The I(fstab) is completely ignored. This option is added in version 1.5.0.
-      - C(absent) specifies that the mount point entry I(path) will be removed
+      - V(absent) specifies that the mount point entry O(path) will be removed
         from I(fstab) and will also unmount the mounted device and remove the
-        mount point. A mounted device will be unmounted regardless of I(src) or its
-        real source. C(absent) does not unmount recursively, and the module will
+        mount point. A mounted device will be unmounted regardless of O(src) or its
+        real source. V(absent) does not unmount recursively, and the module will
         fail if multiple devices are mounted on the same mount point. Using
-        C(absent) with a mount point that is not registered in the I(fstab) has
-        no effect. Use C(unmounted) instead..
-      - C(remounted) specifies that the device will be remounted for when you
+        V(absent) with a mount point that is not registered in the I(fstab) has
+        no effect, use V(unmounted) instead.
+      - V(remounted) specifies that the device will be remounted for when you
         want to force a refresh on the mount itself (added in 2.9). This will
-        always return changed=true. If I(opts) is set, the options will be
+        always return RV(ignore:changed=true). If O(opts) is set, the options will be
         applied to the remount, but will not change I(fstab).  Additionally,
-        if I(opts) is set, and the remount command fails, the module will
-        error to prevent unexpected mount changes.  Try using C(mounted)
-        instead to work around this issue.  C(remounted) expects the mount point
+        if O(opts) is set, and the remount command fails, the module will
+        error to prevent unexpected mount changes.  Try using V(mounted)
+        instead to work around this issue.  V(remounted) expects the mount point
         to be present in the I(fstab). To remount a mount point not registered
-        in I(fstab), use C(ephemeral) instead, especially with BSD nodes.
-      - C(absent_from_fstab) specifies that the device mount's entry will be
+        in I(fstab), use V(ephemeral) instead, especially with BSD nodes.
+      - V(absent_from_fstab) specifies that the device mount's entry will be
         removed from I(fstab). This option does not unmount it or delete the
         mountpoint.
     type: str
@@ -105,20 +105,20 @@ options:
       - This might be useful if you need to configure mountpoints in a chroot environment.
       - OpenBSD does not allow specifying alternate fstab files with mount so do not
         use this on OpenBSD with any state that operates on the live filesystem.
-      - This parameter defaults to /etc/fstab or /etc/vfstab on Solaris.
-      - This parameter is ignored when I(state) is set to C(ephemeral).
+      - This parameter defaults to C(/etc/fstab) or C(/etc/vfstab) on Solaris.
+      - This parameter is ignored when O(state=ephemeral).
     type: str
   boot:
     description:
       - Determines if the filesystem should be mounted on boot.
       - Only applies to Solaris and Linux systems.
       - For Solaris systems, C(true) will set C(yes) as the value of mount at boot
-        in I(/etc/vfstab).
+        in C(/etc/vfstab).
       - For Linux, FreeBSD, NetBSD and OpenBSD systems, C(false) will add C(noauto)
-        to mount options in I(/etc/fstab).
-      - To avoid mount option conflicts, if C(noauto) specified in C(opts),
-        mount module will ignore C(boot).
-      - This parameter is ignored when I(state) is set to C(ephemeral).
+        to mount options in C(/etc/fstab).
+      - To avoid mount option conflicts, if C(noauto) specified in O(opts),
+        mount module will ignore O(boot).
+      - This parameter is ignored when O(state=ephemeral).
     type: bool
     default: true
   backup:
@@ -128,9 +128,9 @@ options:
     type: bool
     default: false
 notes:
-  - As of Ansible 2.3, the I(name) option has been changed to I(path) as
-    default, but I(name) still works as well.
-  - Using C(remounted) with I(opts) set may create unexpected results based on
+  - As of Ansible 2.3, the O(name) option has been changed to O(path) as
+    default, but O(name) still works as well.
+  - Using O(state=remounted) with O(opts) set may create unexpected results based on
     the existing options already defined on mount, so care should be taken to
     ensure that conflicting options are not present before hand.
 '''

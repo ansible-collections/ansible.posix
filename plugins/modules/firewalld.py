@@ -17,7 +17,7 @@ options:
   service:
     description:
       - Name of a service to add/remove to/from firewalld.
-      - The service must be listed in output of firewall-cmd --get-services.
+      - The service must be listed in output of C(firewall-cmd --get-services).
     type: str
   protocol:
     description:
@@ -38,22 +38,22 @@ options:
         type: str
         required: true
         description:
-          - Source port to forward from
+          - Source port to forward from.
       proto:
         type: str
         required: true
         description:
-          - protocol to forward
+          - protocol to forward.
         choices: [udp, tcp]
       toport:
         type: str
         required: true
         description:
-          - destination port
+          - destination port.
       toaddr:
         type: str
         description:
-          - Optional address to forward to
+          - Optional address to forward to.
   rich_rule:
     description:
       - Rich rule to add/remove to/from firewalld.
@@ -78,28 +78,28 @@ options:
   zone:
     description:
       - The firewalld zone to add/remove to/from.
-      - Note that the default zone can be configured per system but C(public) is default from upstream.
+      - Note that the default zone can be configured per system but V(public) is default from upstream.
       - Available choices can be extended based on per-system configs, listed here are "out of the box" defaults.
-      - Possible values include C(block), C(dmz), C(drop), C(external), C(home), C(internal), C(public), C(trusted), C(work).
+      - Possible values include V(block), V(dmz), V(drop), V(external), V(home), V(internal), V(public), V(trusted), V(work).
     type: str
   permanent:
     description:
       - Whether to apply this change to the permanent firewalld configuration.
       - As of Ansible 2.3, permanent operations can operate on firewalld configs when it is not running (requires firewalld >= 0.3.9).
-      - Note that if this is C(false), I(immediate) defaults to C(true).
+      - Note that if this is V(false), O(immediate=true).
     type: bool
     default: false
   immediate:
     description:
       - Whether to apply this change to the runtime firewalld configuration.
-      - Defaults to C(true) if I(permanent=false).
+      - Defaults to V(true) if O(permanent=false).
     type: bool
     default: false
   state:
     description:
       - Enable or disable a setting.
-      - 'For ports: Should this port accept (enabled) or reject (disabled) connections.'
-      - The states C(present) and C(absent) can only be used in zone level operations (i.e. when no other parameters but zone and state are set).
+      - 'For ports: Should this port accept (V(enabled)) or reject (V(disabled)) connections.'
+      - The states V(present) and V(absent) can only be used in zone level operations (i.e. when no other parameters but zone and state are set).
     type: str
     required: true
     choices: [ absent, disabled, enabled, present ]
@@ -114,13 +114,13 @@ options:
     type: str
   offline:
     description:
-      - Ignores I(immediate) if I(permanent=true) and firewalld is not running.
+      - Ignores O(immediate) if O(permanent=true) and firewalld is not running.
     type: bool
     default: false
   target:
     description:
-      - firewalld Zone target
-      - If state is set to C(absent), this will reset the target to default
+      - firewalld Zone target.
+      - If O(state=absent), this will reset the target to default.
     choices: [ default, ACCEPT, DROP, "%%REJECT%%" ]
     type: str
     version_added: 1.2.0
