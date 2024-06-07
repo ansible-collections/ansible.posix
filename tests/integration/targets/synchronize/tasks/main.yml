@@ -352,7 +352,7 @@
       - '''files/directories have been synchronized'' in sync_result.msg'
 
 - name: Cleanup
-  file:
+  ansible.builtin.file:
     state: absent
     path: '{{ output_dir }}/{{ item }}'
   loop:
@@ -360,13 +360,13 @@
     - bar.result
 
 - name: Synchronize files without quiet option
-  synchronize:
+  ansible.posix.synchronize:
     src: '{{ output_dir }}/foo.txt'
     dest: '{{ output_dir }}/foo.result'
   register: sync_result
 
 - name: Assertion for synchronize without quiet option
-  assert:
+  ansible.builtin.assert:
     that:
       - '''files/directories have been synchronized'' not in sync_result.msg'
 
