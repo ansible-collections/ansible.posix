@@ -206,8 +206,8 @@ options:
     description:
       - This option specifies quiet option which on true suppresses the output.
     type: bool
-    default: no
-    version_added: '1.3.0'
+    default: false
+    version_added: 1.6.0
 
 notes:
    - rsync must be installed on both the local and remote host.
@@ -370,7 +370,7 @@ EXAMPLES = r'''
   ansible.posix.synchronize:
     src: some/relative/path
     dest: /some/absolute/path
-    quiet: yes
+    quiet: true
 '''
 
 
