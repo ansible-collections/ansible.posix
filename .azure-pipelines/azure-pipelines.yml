@@ -57,6 +57,21 @@ stages:
               test: units
             - name: Lint
               test: lint
+  - stage: Sanity_2_17
+    displayName: Ansible 2.17 sanity
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          nameFormat: "{0}"
+          testFormat: 2.17/{0}
+          targets:
+            - name: Sanity
+              test: sanity
+            - name: Units
+              test: units
+            - name: Lint
+              test: lint
   - stage: Sanity_2_16
     displayName: Ansible 2.16 sanity
     dependsOn: []
@@ -70,8 +85,6 @@ stages:
               test: sanity
             - name: Units
               test: units
-            - name: Lint
-              test: lint
   - stage: Sanity_2_15
     displayName: Ansible 2.15 sanity
     dependsOn: []
@@ -106,6 +119,20 @@ stages:
       - template: templates/matrix.yml
         parameters:
           testFormat: devel/linux/{0}/1
+          targets:
+            - name: Fedora 39
+              test: fedora39
+            - name: Ubuntu 20.04
+              test: ubuntu2004
+            - name: Ubuntu 22.04
+              test: ubuntu2204
+  - stage: Docker_2_17
+    displayName: Docker 2.17
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          testFormat: 2.17/linux/{0}/1
           targets:
             - name: Fedora 39
               test: fedora39
@@ -180,6 +207,18 @@ stages:
               test: rhel/9.3
             - name: FreeBSD 13.3
               test: freebsd/13.3
+  - stage: Remote_2_17
+    displayName: Remote 2.17
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          testFormat: 2.17/{0}/1
+          targets:
+            - name: RHEL 9.3
+              test: rhel/9.3
+            - name: FreeBSD 13.3
+              test: freebsd/13.3
   - stage: Remote_2_16
     displayName: Remote 2.16
     dependsOn: []
@@ -240,6 +279,9 @@ stages:
       - Sanity_2_16
       - Remote_2_16
       - Docker_2_16
+      - Sanity_2_17
+      - Remote_2_17
+      - Docker_2_17
       - Sanity_devel
       - Remote_devel
       - Docker_devel
