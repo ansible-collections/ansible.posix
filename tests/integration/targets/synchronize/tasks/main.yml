@@ -339,6 +339,35 @@
       - stat_result_b.stat.exists == True
       - stat_result_b.stat.checksum == '2aae6c35c94fcfb415dbe95f408b9ce91ee846ed'
 
+- name: synchronize files with quiet option
+  synchronize:
+    src: '{{ output_dir }}/foo.txt'
+    dest: '{{ output_dir }}/foo.result'
+    quiet: true
+  register: sync_result
+
+- assert:
+    that:
+    - '''files/directories have been synchronized'' in sync_result.msg'
+
+- name: Cleanup
+  file:
+    state: absent
+    path: '{{ output_dir }}/{{ item }}'
+  loop:
+  - foo.result
+  - bar.result
+
+- name: synchronize files without quiet option
+  synchronize:
+    src: '{{ output_dir }}/foo.txt'
+    dest: '{{ output_dir }}/foo.result'
+  register: sync_result
+
+- assert:
+    that:
+    - '''files/directories have been synchronized'' not in sync_result.msg'
+
 - name: Cleanup
   ansible.builtin.file:
     state: absent
