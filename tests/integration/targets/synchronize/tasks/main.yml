@@ -346,7 +346,8 @@
     quiet: true
   register: sync_result
 
-- assert:
+- name: Assertion for synchronize with quiet option
+  assert:
     that:
     - '''files/directories have been synchronized'' in sync_result.msg'
 
@@ -364,7 +365,8 @@
     dest: '{{ output_dir }}/foo.result'
   register: sync_result
 
-- assert:
+- name: Assertion for synchronize without quiet option
+  assert:
     that:
     - '''files/directories have been synchronized'' not in sync_result.msg'
 
