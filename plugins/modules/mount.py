@@ -24,20 +24,20 @@ options:
   path:
     description:
       - Path to the mount point (e.g. C(/mnt/files)).
-      - Before Ansible 2.3 this option was only usable as O(ignore:dest), O(ignore:destfile) and O(name).
+      - Before Ansible 2.3 this option was only usable as O(ignore:dest), O(ignore:destfile), and O(name).
     type: path
     required: true
     aliases: [ name ]
   src:
     description:
       - Device (or NFS volume, or something else) to be mounted on I(path).
-      - Required when O(state) set to V(present), V(mounted) or V(ephemeral).
+      - Required when O(state) set to V(present), V(mounted), or V(ephemeral).
       - Ignored when O(state) set to V(absent) or V(unmounted).
     type: path
   fstype:
     description:
       - Filesystem type.
-      - Required when O(state) is V(present), V(mounted) or V(ephemeral).
+      - Required when O(state) is V(present), V(mounted), or V(ephemeral).
     type: str
   opts:
     description:
@@ -71,7 +71,7 @@ options:
         I(fstab) and does not trigger or require a mount.
       - V(ephemeral) only specifies that the device is to be mounted, without changing
         I(fstab). If it is already mounted, a remount will be triggered.
-        This will always return RV(ignore:changed=True). If the mount point O(path)
+        This will always return RV(ignore:changed=true). If the mount point O(path)
         has already a device mounted on, and its source is different than O(src),
         the module will fail to avoid unexpected unmount or mount point override.
         If the mount point is not present, the mount point will be created.

@@ -86,7 +86,7 @@ options:
     description:
       - Whether to apply this change to the permanent firewalld configuration.
       - As of Ansible 2.3, permanent operations can operate on firewalld configs when it is not running (requires firewalld >= 0.3.9).
-      - Note that if this is V(false), O(immediate=true).
+      - Note that if this is V(false), O(immediate=true) by default.
     type: bool
     default: false
   immediate:

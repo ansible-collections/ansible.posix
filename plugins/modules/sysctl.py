@@ -43,7 +43,7 @@ options:
         description:
             - If V(true), performs a C(/sbin/sysctl -p) if the O(sysctl_file) is
               updated. If V(false), does not reload C(sysctl) even if the
-              C(sysctl_file) is updated.
+              O(sysctl_file) is updated.
         type: bool
         default: true
     sysctl_file:

@@ -52,7 +52,7 @@ options:
     default: push
   archive:
     description:
-      - Mirrors the rsync archive flag, enables recursive, links, perms, times, owner, group flags and C(-D).
+      - Mirrors the rsync archive flag, enables recursive, links, perms, times, owner, group flags, and C(-D).
     type: bool
     default: true
   checksum:
@@ -207,8 +207,8 @@ options:
 
 notes:
    - C(rsync) must be installed on both the local and remote host.
-   - For the M(ansible.posix.synchronize) module, the "local host" is the host `the synchronize task originates on`,
-     and the "destination host" is the host `synchronize is connecting to`.
+   - For the M(ansible.posix.synchronize) module, the "local host" is the host I(the synchronize task originates on),
+     and the "destination host" is the host I(synchronize is connecting to).
    - The "local host" can be changed to a different host by using C(delegate_to).
      This enables copying between two remote hosts or entirely on one remote machine.
    - >
