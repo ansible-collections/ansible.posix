@@ -108,6 +108,11 @@ options:
       - The amount of time in seconds the rule should be in effect for when non-permanent.
     type: int
     default: 0
+  forward:
+    description:
+      - The forward setting you would like to enable/disable to/from zones within firewalld.
+      - This option only is supported by firewalld v0.9.0 or later.
+    type: str
   masquerade:
     description:
       - The masquerade setting you would like to enable/disable to/from zones within firewalld.
@@ -138,8 +143,8 @@ notes:
   - This module needs C(python-firewall) or C(python3-firewall) on managed nodes.
     It is usually provided as a subset with C(firewalld) from the OS distributor for the OS default Python interpreter.
 requirements:
-- firewalld >= 0.2.11
-- python-firewall >= 0.2.11
+- firewalld >= 0.9.0
+- python-firewall >= 0.9.0
 author:
 - Adam Miller (@maxamillion)
 '''
@@ -197,6 +202,12 @@ EXAMPLES = r'''
     interface: eth2
     permanent: true
     state: enabled
+
+- ansible.posix.firewalld:
+    forward: true
+    state: enabled
+    permanent: true
+    zone: internal
 
 - ansible.posix.firewalld:
     masquerade: true
@@ -402,6 +413,49 @@ class ProtocolTransaction(FirewallTransaction):
     def set_disabled_permanent(self, protocol, timeout):
         fw_zone, fw_settings = self.get_fw_zone_settings()
         fw_settings.removeProtocol(protocol)
+        self.update_fw_settings(fw_zone, fw_settings)
+
+
+class ForwardTransaction(FirewallTransaction):
+    """
+    ForwardTransaction
+    """
+
+    def __init__(self, module, action_args=None, zone=None, desired_state=None, permanent=False, immediate=False):
+        super(ForwardTransaction, self).__init__(
+            module, action_args=action_args, desired_state=desired_state, zone=zone, permanent=permanent, immediate=immediate
+        )
+
+        self.enabled_msg = "Added forward to zone %s" % self.zone
+        self.disabled_msg = "Removed forward from zone %s" % self.zone
+
+    def get_enabled_immediate(self):
+        if self.fw.queryForward(self.zone) is True:
+            return True
+        else:
+            return False
+
+    def get_enabled_permanent(self):
+        fw_zone, fw_settings = self.get_fw_zone_settings()
+        if fw_settings.queryForward() is True:
+            return True
+        else:
+            return False
+
+    def set_enabled_immediate(self):
+        self.fw.addForward(self.zone)
+
+    def set_enabled_permanent(self):
+        fw_zone, fw_settings = self.get_fw_zone_settings()
+        fw_settings.setForward(True)
+        self.update_fw_settings(fw_zone, fw_settings)
+
+    def set_disabled_immediate(self):
+        self.fw.removeForward(self.zone)
+
+    def set_disabled_permanent(self):
+        fw_zone, fw_settings = self.get_fw_zone_settings()
+        fw_settings.setForward(False)
         self.update_fw_settings(fw_zone, fw_settings)
 
 
@@ -821,6 +875,7 @@ def main():
             state=dict(type='str', required=True, choices=['absent', 'disabled', 'enabled', 'present']),
             timeout=dict(type='int', default=0),
             interface=dict(type='str'),
+            forward=dict(type='str'),
             masquerade=dict(type='str'),
             offline=dict(type='bool', default=False),
             target=dict(type='str', choices=['default', 'ACCEPT', 'DROP', '%%REJECT%%']),
@@ -833,7 +888,7 @@ def main():
         ),
         mutually_exclusive=[
             ['icmp_block', 'icmp_block_inversion', 'service', 'protocol', 'port', 'port_forward', 'rich_rule',
-             'interface', 'masquerade', 'source', 'target']
+             'interface', 'forward', 'masquerade', 'source', 'target']
         ],
     )
 
@@ -842,6 +897,7 @@ def main():
     immediate = module.params['immediate']
     timeout = module.params['timeout']
     interface = module.params['interface']
+    forward = module.params['forward']
     masquerade = module.params['masquerade']
     offline = module.params['offline']
 
@@ -905,7 +961,7 @@ def main():
 
     modification = False
     if any([icmp_block, icmp_block_inversion, service, protocol, port, port_forward, rich_rule,
-            interface, masquerade, source, target]):
+            interface, forward, masquerade, source, target]):
         modification = True
     if modification and desired_state in ['absent', 'present'] and target is None:
         module.fail_json(
@@ -1065,6 +1121,29 @@ def main():
             action_args=(interface,),
             zone=zone,
             desired_state=desired_state,
+            permanent=permanent,
+            immediate=immediate,
+        )
+
+        changed, transaction_msgs = transaction.run()
+        msgs = msgs + transaction_msgs
+
+    if forward is not None:
+        # Type of forward will be changed to boolean in a future release.
+        forward_status = False
+        try:
+            forward_status = boolean(forward, False)
+        except TypeError:
+            module.warn('The value of the forward option is "%s". '
+                        'The type of the option will be changed from string to boolean in a future release. '
+                        'To avoid unexpected behavior, please change the value to boolean.' % forward)
+
+        expected_state = 'enabled' if (desired_state == 'enabled') == forward_status else 'disabled'
+        transaction = ForwardTransaction(
+            module,
+            action_args=(),
+            zone=zone,
+            desired_state=expected_state,
             permanent=permanent,
             immediate=immediate,
         )
