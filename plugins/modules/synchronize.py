@@ -14,12 +14,13 @@ DOCUMENTATION = r'''
 module: synchronize
 short_description: A wrapper around rsync to make common tasks in your playbooks quick and easy
 description:
-    - C(synchronize) is a wrapper around rsync to make common tasks in your playbooks quick and easy.
+    - M(ansible.posix.synchronize) is a wrapper around C(rsync) to make common tasks in your playbooks quick and easy.
     - It is run and originates on the local host where Ansible is being run.
-    - Of course, you could just use the C(command) action to call rsync yourself, but you also have to add a fair number of
+    - Of course, you could just use the M(ansible.builtin.command) action to call C(rsync) yourself, but you also have to add a fair number of
       boilerplate options and host facts.
-    - This module is not intended to provide access to the full power of rsync, but does make the most common
-      invocations easier to implement. You `still` may need to call rsync directly via C(command) or C(shell) depending on your use case.
+    - This module is not intended to provide access to the full power of C(rsync), but does make the most common
+      invocations easier to implement.
+      You I(still) may need to call C(rsync) directly via M(ansible.builtin.command) or M(ansible.builtin.shell) depending on your use case.
 version_added: "1.0.0"
 options:
   src:
@@ -37,27 +38,27 @@ options:
   dest_port:
     description:
       - Port number for ssh on the destination host.
-      - Prior to Ansible 2.0, the ansible_ssh_port inventory var took precedence over this value.
+      - Prior to Ansible 2.0, the C(ansible_ssh_port) inventory var took precedence over this value.
       - This parameter defaults to the value of C(ansible_port), the C(remote_port) config setting
         or the value from ssh client configuration if none of the former have been set.
     type: int
   mode:
     description:
       - Specify the direction of the synchronization.
-      - In push mode the localhost or delegate is the source.
-      - In pull mode the remote host in context is the source.
+      - In V(push) mode the localhost or delegate is the source.
+      - In V(pull) mode the remote host in context is the source.
     type: str
     choices: [ pull, push ]
     default: push
   archive:
     description:
-      - Mirrors the rsync archive flag, enables recursive, links, perms, times, owner, group flags and -D.
+      - Mirrors the rsync archive flag, enables recursive, links, perms, times, owner, group flags, and C(-D).
     type: bool
     default: true
   checksum:
     description:
-      - Skip based on checksum, rather than mod-time & size; Note that that "archive" option is still enabled by default - the "checksum" option will
-        not disable it.
+      - Skip based on checksum, rather than mod-time & size; Note that that O(archive) option is still enabled by default -
+        the O(checksum) option will not disable it.
     type: bool
     default: false
   compress:
@@ -73,8 +74,8 @@ options:
     default: false
   delete:
     description:
-      - Delete files in I(dest) that do not exist (after transfer, not before) in the I(src) path.
-      - This option requires I(recursive=true).
+      - Delete files in O(dest) that do not exist (after transfer, not before) in the O(src) path.
+      - This option requires O(recursive=true).
       - This option ignores excluded files and behaves like the rsync opt C(--delete-after).
     type: bool
     default: false
@@ -130,17 +131,17 @@ options:
     default: 0
   set_remote_user:
     description:
-      - Put user@ for the remote paths.
+      - Put C(user@) for the remote paths.
       - If you have a custom ssh config to define the remote user for a host
-        that does not match the inventory user, you should set this parameter to C(false).
+        that does not match the inventory user, you should set this parameter to V(false).
     type: bool
     default: true
   ssh_connection_multiplexing:
     description:
       - SSH connection multiplexing for rsync is disabled by default to prevent misconfigured ControlSockets from resulting in failed SSH connections.
         This is accomplished by setting the SSH C(ControlSocket) to C(none).
-      - Set this option to C(true) to allow multiplexing and reduce SSH connection overhead.
-      - Note that simply setting this option to C(true) is not enough;
+      - Set this option to V(true) to allow multiplexing and reduce SSH connection overhead.
+      - Note that simply setting this option to V(true) is not enough;
         You must also configure SSH connection multiplexing in your SSH client config by setting values for
         C(ControlMaster), C(ControlPersist) and C(ControlPath).
     type: bool
@@ -182,7 +183,7 @@ options:
   use_ssh_args:
     description:
       - In Ansible 2.10 and lower, it uses the ssh_args specified in C(ansible.cfg).
-      - In Ansible 2.11 and onwards, when set to C(true), it uses all SSH connection configurations like
+      - In Ansible 2.11 and onwards, when set to V(true), it uses all SSH connection configurations like
         C(ansible_ssh_args), C(ansible_ssh_common_args), and C(ansible_ssh_extra_args).
     type: bool
     default: false
@@ -200,31 +201,31 @@ options:
     type: bool
     default: false
   _ssh_args:
-    description: Internal use only. See C(use_ssh_args) for ssh arg settings.
+    description: Internal use only. See O(use_ssh_args) for ssh arg settings.
     type: str
     required: false
 
 notes:
-   - rsync must be installed on both the local and remote host.
-   - For the C(synchronize) module, the "local host" is the host `the synchronize task originates on`, and the "destination host" is the host
-     `synchronize is connecting to`.
-   - The "local host" can be changed to a different host by using `delegate_to`.  This enables copying between two remote hosts or entirely on one
-     remote machine.
+   - C(rsync) must be installed on both the local and remote host.
+   - For the M(ansible.posix.synchronize) module, the "local host" is the host I(the synchronize task originates on),
+     and the "destination host" is the host I(synchronize is connecting to).
+   - The "local host" can be changed to a different host by using C(delegate_to).
+     This enables copying between two remote hosts or entirely on one remote machine.
    - >
-     The user and permissions for the synchronize `src` are those of the user running the Ansible task on the local host (or the remote_user for a
-     delegate_to host when delegate_to is used).
+     The user and permissions for the synchronize O(src) are those of the user running the Ansible task on the local host (or the remote_user for a
+     C(delegate_to) host when C(delegate_to) is used).
    - The user and permissions for the synchronize `dest` are those of the `remote_user` on the destination host or the `become_user` if `become=yes` is active.
    - In Ansible 2.0 a bug in the synchronize module made become occur on the "local host".  This was fixed in Ansible 2.0.1.
-   - Currently, synchronize is limited to elevating permissions via passwordless sudo.  This is because rsync itself is connecting to the remote machine
-     and rsync doesn't give us a way to pass sudo credentials in.
+   - Currently, M(ansible.posix.synchronize) is limited to elevating permissions via passwordless sudo.
+     This is because rsync itself is connecting to the remote machine and rsync doesn't give us a way to pass sudo credentials in.
    - Currently there are only a few connection types which support synchronize (ssh, paramiko, local, and docker) because a sync strategy has been
      determined for those connection types.  Note that the connection for these must not need a password as rsync itself is making the connection and
      rsync does not provide us a way to pass a password to the connection.
-   - Expect that dest=~/x will be ~<remote_user>/x even if using sudo.
+   - Expect that O(dest=~/x) will be V(~<remote_user>/x) even if using sudo.
    - Inspect the verbose output to validate the destination user/host/path are what was expected.
    - To exclude files and directories from being synchronized, you may add C(.rsync-filter) files to the source directory.
    - rsync daemon must be up and running with correct permission when using rsync protocol in source or destination path.
-   - The C(synchronize) module enables `--delay-updates` by default to avoid leaving a destination in a broken in-between state if the underlying rsync process
+   - The C(synchronize) module enables C(--delay-updates) by default to avoid leaving a destination in a broken in-between state if the underlying rsync process
      encounters an error. Those synchronizing large numbers of files that are willing to trade safety for performance should disable this option.
    - link_destination is subject to the same limitations as the underlying rsync daemon. Hard links are only preserved if the relative subtrees
      of the source and destination are the same. Attempts to hardlink into a directory that is a subdirectory of the source will be prevented.

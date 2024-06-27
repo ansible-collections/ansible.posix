@@ -13,7 +13,7 @@ module: rhel_facts
 version_added: 1.5.0
 short_description: Facts module to set or override RHEL specific facts.
 description:
-  - Compatibility layer for using the "package" module for rpm-ostree based systems via setting the "pkg_mgr" fact correctly.
+  - Compatibility layer for using the M(ansible.builtin.package) module for rpm-ostree based systems via setting the C(pkg_mgr) fact correctly.
 author:
   - Adam Miller (@maxamillion)
 requirements:

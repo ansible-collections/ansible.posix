@@ -25,7 +25,7 @@ options:
   state:
     description:
     - Define whether the ACL should be present or not.
-    - The C(query) state gets the current ACL without changing it, for use in C(register) operations.
+    - The V(query) state gets the current ACL without changing it, for use in C(register) operations.
     choices: [ absent, present, query ]
     default: query
     type: str
@@ -36,8 +36,8 @@ options:
     default: true
   default:
     description:
-    - If the target is a directory, setting this to C(true) will make it the default ACL for entities created inside the directory.
-    - Setting C(default) to C(true) causes an error if the path is a file.
+    - If O(path) is a directory, setting this to V(true) will make it the default ACL for entities created inside the directory.
+    - Setting O(default=true) causes an error if O(path) is a file.
     type: bool
     default: false
   entity:
@@ -53,7 +53,7 @@ options:
   permissions:
     description:
     - The permissions to apply/remove can be any combination of C(r), C(w), C(x)
-    - (read, write and execute respectively), and C(X) (execute permission if the file is a directory or already has execute permission for some user)
+      (read, write and execute respectively), and C(X) (execute permission if the file is a directory or already has execute permission for some user)
     type: str
   entry:
     description:
@@ -67,8 +67,8 @@ options:
   recursive:
     description:
     - Recursively sets the specified ACL.
-    - Incompatible with C(state=query).
-    - Alias C(recurse) added in version 1.3.0.
+    - Incompatible with O(state=query).
+    - Alias O(recurse) added in version 1.3.0.
     type: bool
     default: false
     aliases: [ recurse ]
@@ -81,7 +81,7 @@ options:
     description:
     - Select if and when to recalculate the effective right masks of the files.
     - See C(setfacl) documentation for more info.
-    - Incompatible with C(state=query).
+    - Incompatible with O(state=query).
     choices: [ default, mask, no_mask ]
     default: default
     type: str
@@ -89,9 +89,9 @@ author:
 - Brian Coca (@bcoca)
 - Jérémie Astori (@astorije)
 notes:
-- The C(acl) module requires that ACLs are enabled on the target filesystem and that the C(setfacl) and C(getfacl) binaries are installed.
+- The M(ansible.posix.acl) module requires that ACLs are enabled on the target filesystem and that the C(setfacl) and C(getfacl) binaries are installed.
 - As of Ansible 2.0, this module only supports Linux distributions.
-- As of Ansible 2.3, the I(name) option has been changed to I(path) as default, but I(name) still works as well.
+- As of Ansible 2.3, the O(name) option has been changed to O(path) as default, but O(name) still works as well.
 '''
 
 EXAMPLES = r'''
