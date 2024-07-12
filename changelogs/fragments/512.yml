@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - selinux - use compat.selinux instead of selinux (https://github.com/ansible-collections/ansible.posix/issues/502).

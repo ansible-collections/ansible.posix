@@ -97,7 +97,7 @@ import traceback
 
 SELINUX_IMP_ERR = None
 try:
-    import selinux
+    from ansible.module_utils.compat import selinux
     HAS_SELINUX = True
 except ImportError:
     SELINUX_IMP_ERR = traceback.format_exc()
