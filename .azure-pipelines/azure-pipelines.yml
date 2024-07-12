@@ -107,8 +107,8 @@ stages:
         parameters:
           testFormat: devel/linux/{0}/1
           targets:
-            - name: Fedora 39
-              test: fedora39@default
+            - name: Fedora 39 py310
+              test: fedora39@3.10
             - name: Ubuntu 20.04 py310
               test: ubuntu2004@3.10
             - name: Ubuntu 22.04
