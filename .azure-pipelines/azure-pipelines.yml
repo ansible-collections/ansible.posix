@@ -109,8 +109,8 @@ stages:
           targets:
             - name: Fedora 39 py311
               test: fedora39@3.11
-            - name: Ubuntu 20.04 py39
-              test: ubuntu2004@3.9
+            - name: Ubuntu 20.04 py310
+              test: ubuntu2004@3.10
             - name: Ubuntu 22.04 py39
               test: ubuntu2204@3.9
   - stage: Docker_2_17
