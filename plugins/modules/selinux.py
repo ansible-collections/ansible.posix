@@ -97,7 +97,7 @@ import traceback
 
 SELINUX_IMP_ERR = None
 try:
-    from ansible.module_utils.compat import selinux
+    from ansible.module_utils.compat import selinux as selinux_compat
     HAS_SELINUX = True
 except ImportError:
     SELINUX_IMP_ERR = traceback.format_exc()
@@ -181,9 +181,9 @@ def set_config_state(module, state, configfile):
 
 def set_state(module, state):
     if state == 'enforcing':
-        selinux.security_setenforce(1)
+        selinux_compat.security_setenforce(1)
     elif state == 'permissive':
-        selinux.security_setenforce(0)
+        selinux_compat.security_setenforce(0)
     elif state == 'disabled':
         pass
     else:
@@ -249,15 +249,15 @@ def main():
     policy = module.params['policy']
     state = module.params['state']
     update_kernel_param = module.params['update_kernel_param']
-    runtime_enabled = selinux.is_selinux_enabled()
-    runtime_policy = selinux.selinux_getpolicytype()[1]
+    runtime_enabled = selinux_compat.is_selinux_enabled()
+    runtime_policy = selinux_compat.selinux_getpolicytype()[1]
     runtime_state = 'disabled'
     kernel_enabled = None
     reboot_required = False
 
     if runtime_enabled:
         # enabled means 'enforcing' or 'permissive'
-        if selinux.security_getenforce():
+        if selinux_compat.security_getenforce():
             runtime_state = 'enforcing'
         else:
             runtime_state = 'permissive'
