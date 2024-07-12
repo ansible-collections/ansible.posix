@@ -174,8 +174,6 @@ stages:
           targets:
             - name: RHEL 9.3 py39
               test: rhel/9.3@3.9
-            - name: RHEL 9.3 py311
-              test: rhel/9.3@3.11
             - name: FreeBSD 13.3
               test: freebsd/13.3
   - stage: Remote_2_17
