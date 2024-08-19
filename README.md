@@ -7,6 +7,17 @@ https://dev.azure.com/ansible/ansible.posix/_apis/build/status/CI?branchName=mai
 <!-- Describe the collection and why a user would want to use it. What does the collection do? -->
 An Ansible Collection of modules and plugins that target POSIX UNIX/Linux and derivative Operating Systems.
 
+## Communication
+
+* Join the Ansible forum:
+  * [Get Help](https://forum.ansible.com/c/help/6): get help or help others.
+  * [Social Spaces](https://forum.ansible.com/c/chat/4): gather and interact with fellow enthusiasts.
+  * [News & Announcements](https://forum.ansible.com/c/news/5): track project-wide announcements including social events.
+
+* The Ansible [Bullhorn newsletter](https://docs.ansible.com/ansible/devel/community/communication.html#the-bullhorn): used to announce releases and important changes.
+
+For more information about communication, see the [Ansible communication guide](https://docs.ansible.com/ansible/devel/community/communication.html).
+
 ## Supported Versions of Ansible
 <!--start requires_ansible-->
 ## Ansible version compatibility
