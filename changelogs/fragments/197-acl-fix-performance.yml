@@ -1,0 +1,2 @@
+bugfixes:
+  - acl - Fix module performance (https://github.com/ansible-collections/ansible.posix/pull/197).
