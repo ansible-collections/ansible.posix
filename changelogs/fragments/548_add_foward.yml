@@ -1,0 +1,3 @@
+---
+minor_changes:
+  - firewalld - add functionality to set forwarding (https://github.com/ansible-collections/ansible.posix/pull/548).
