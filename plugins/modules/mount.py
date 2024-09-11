@@ -43,6 +43,12 @@ options:
     description:
       - Mount options (see fstab(5), or vfstab(4) on Solaris).
     type: str
+  opts_no_log:
+    description:
+      - Do not log opts.
+    type: bool
+    default: false
+    version_added: 1.6.0
   dump:
     description:
       - Dump (see fstab(5)).
@@ -209,6 +215,7 @@ EXAMPLES = r'''
     src: //192.168.1.200/share
     path: /mnt/smb_share
     opts: "rw,vers=3,file_mode=0600,dir_mode=0700,dom={{ ad_domain }},username={{ ad_username }},password={{ ad_password }}"
+    opts_no_log: true
     fstype: cifs
     state: ephemeral
 '''
@@ -768,6 +775,7 @@ def main():
             fstype=dict(type='str'),
             path=dict(type='path', required=True, aliases=['name']),
             opts=dict(type='str'),
+            opts_no_log=dict(type='bool', default=False),
             passno=dict(type='str', no_log=False, default='0'),
             src=dict(type='path'),
             backup=dict(type='bool', default=False),
@@ -780,6 +788,9 @@ def main():
             ['state', 'ephemeral', ['src', 'fstype']]
         ),
     )
+
+    if module.params['opts_no_log']:
+        module.no_log_values.add(module.params['opts'])
 
     # solaris args:
     #   name, src, fstype, opts, boot, passno, state, fstab=/etc/vfstab
