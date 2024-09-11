@@ -1,3 +1,0 @@
----
-bugfixes:
-  - "Bugfix in the documentation regarding the path option for authorised_key(https://github.com/ansible-collections/ansible.posix/issues/483)."

@@ -1,2 +1,0 @@
-minor_changes:
-  - firewalld - added offline flag implementation (https://github.com/ansible-collections/ansible.posix/pull/484)

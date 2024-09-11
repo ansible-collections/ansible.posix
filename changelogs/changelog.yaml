@@ -347,3 +347,61 @@ releases:
     - 451_firewall_fix_protocol_parameter.yml
     - 456_sysctl_fix_nonetype.yml
     release_date: '2023-05-10'
+  1.6.0:
+    changes:
+      bugfixes:
+      - Bugfix in the documentation regarding the path option for authorised_key(https://github.com/ansible-collections/ansible.posix/issues/483).
+      - seboolean - make it work with disabled SELinux
+      - synchronize - maintain proper formatting of the remote paths (https://github.com/ansible-collections/ansible.posix/pull/361).
+      - sysctl - fix sysctl to work properly on symlinks (https://github.com/ansible-collections/ansible.posix/issues/111).
+      major_changes:
+      - Dropping support for Ansible 2.9, ansible-core 2.15 will be minimum required
+        version for this release
+      minor_changes:
+      - Add summary_only parameter to profile_roles and profile_tasks callbacks.
+      - firewalld - add functionality to set forwarding (https://github.com/ansible-collections/ansible.posix/pull/548).
+      - firewalld - added offline flag implementation (https://github.com/ansible-collections/ansible.posix/pull/484)
+      - firewalld - respawn module to use the system python interpreter when the ``firewall``
+        python module is not available for ``ansible_python_interpreter`` (https://github.com/ansible-collections/ansible.posix/pull/460).
+      - firewalld_info - Only warn about ignored zones, when there are zones ignored.
+      - firewalld_info - respawn module to use the system python interpreter when
+        the ``firewall`` python module is not available for ``ansible_python_interpreter``
+        (https://github.com/ansible-collections/ansible.posix/pull/460).
+      - mount - add no_log option for opts parameter (https://github.com/ansible-collections/ansible.posix/pull/563).
+      - seboolean - respawn module to use the system python interpreter when the ``selinux``
+        python module is not available for ``ansible_python_interpreter`` (https://github.com/ansible-collections/ansible.posix/pull/460).
+      - selinux - respawn module to use the system python interpreter when the ``selinux``
+        python module is not available for ``ansible_python_interpreter`` (https://github.com/ansible-collections/ansible.posix/pull/460).
+      release_summary: 'This is the minor release of the ``ansible.posix`` collection.
+
+        This changelog contains all changes to the modules and plugins
+
+        in this collection that have been added after the release of
+
+        ``ansible.posix`` 1.5.4.'
+      removed_features:
+      - skippy - Remove skippy pluglin as it is no longer supported(https://github.com/ansible-collections/ansible.posix/issues/350).
+    fragments:
+    - 1.6.0.yml
+    - 206_fix_sysctl_to_work_on_symlinks.yml
+    - 333_doc_absent_precision.yml
+    - 361_maintain_proper_formating_remote_paths.yml
+    - 421-remove-deprecation-warning.yml
+    - 460-respawn.yaml
+    - 466-tests.yml
+    - 477_ci_update.yml
+    - 484-firewalld-offline.yml
+    - 487_ci_update.yml
+    - 490_doc_authorized_key_path.yml
+    - 496_seboolean-make-it-wrk-with-SELinux-disabled.yaml
+    - 504-firewalld_info-warning.yaml
+    - 508_ci_update.yml
+    - 510_ci_update.yml
+    - 511_profile-callbacks-add-summary-only-parameter.yml
+    - 548_add_foward.yml
+    - 556_remove_skippy_callback.yml
+    - 562_update_core_version.yml
+    - 563_add_no_log_option.yml
+    - dropping-ansible29.yml
+    - test-reqs.yml
+    release_date: '2024-09-11'
