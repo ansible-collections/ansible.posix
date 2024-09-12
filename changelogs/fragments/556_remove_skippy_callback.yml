@@ -1,2 +1,0 @@
-removed_features:
-  - skippy - Remove skippy pluglin as it is no longer supported(https://github.com/ansible-collections/ansible.posix/issues/350).

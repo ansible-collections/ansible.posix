@@ -1,3 +1,0 @@
----
-minor_changes:
-  - "Dropping support for ansible-core 2.14, ansible-core 2.15 will be minimum required version for this release"

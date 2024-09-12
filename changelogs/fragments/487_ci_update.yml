@@ -1,3 +1,0 @@
----
-trivial:
-  - "Drop FreeBSD12.4 from CI for ansible-core:devel(https://github.com/ansible-collections/ansible.posix/issues/486)."

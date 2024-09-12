@@ -1,3 +1,0 @@
----
-bugfixes:
-- synchronize - maintain proper formatting of the remote paths (https://github.com/ansible-collections/ansible.posix/pull/361).

@@ -5,6 +5,48 @@ ansible.posix Release Notes
 .. contents:: Topics
 
 
+v1.6.0
+======
+
+Release Summary
+---------------
+
+This is the minor release of the ``ansible.posix`` collection.
+This changelog contains all changes to the modules and plugins
+in this collection that have been added after the release of
+``ansible.posix`` 1.5.4.
+
+Major Changes
+-------------
+
+- Dropping support for Ansible 2.9, ansible-core 2.15 will be minimum required version for this release
+
+Minor Changes
+-------------
+
+- Add summary_only parameter to profile_roles and profile_tasks callbacks.
+- firewalld - add functionality to set forwarding (https://github.com/ansible-collections/ansible.posix/pull/548).
+- firewalld - added offline flag implementation (https://github.com/ansible-collections/ansible.posix/pull/484)
+- firewalld - respawn module to use the system python interpreter when the ``firewall`` python module is not available for ``ansible_python_interpreter`` (https://github.com/ansible-collections/ansible.posix/pull/460).
+- firewalld_info - Only warn about ignored zones, when there are zones ignored.
+- firewalld_info - respawn module to use the system python interpreter when the ``firewall`` python module is not available for ``ansible_python_interpreter`` (https://github.com/ansible-collections/ansible.posix/pull/460).
+- mount - add no_log option for opts parameter (https://github.com/ansible-collections/ansible.posix/pull/563).
+- seboolean - respawn module to use the system python interpreter when the ``selinux`` python module is not available for ``ansible_python_interpreter`` (https://github.com/ansible-collections/ansible.posix/pull/460).
+- selinux - respawn module to use the system python interpreter when the ``selinux`` python module is not available for ``ansible_python_interpreter`` (https://github.com/ansible-collections/ansible.posix/pull/460).
+
+Removed Features (previously deprecated)
+----------------------------------------
+
+- skippy - Remove skippy pluglin as it is no longer supported(https://github.com/ansible-collections/ansible.posix/issues/350).
+
+Bugfixes
+--------
+
+- Bugfix in the documentation regarding the path option for authorised_key(https://github.com/ansible-collections/ansible.posix/issues/483).
+- seboolean - make it work with disabled SELinux
+- synchronize - maintain proper formatting of the remote paths (https://github.com/ansible-collections/ansible.posix/pull/361).
+- sysctl - fix sysctl to work properly on symlinks (https://github.com/ansible-collections/ansible.posix/issues/111).
+
 v1.5.4
 ======
 

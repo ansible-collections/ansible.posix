@@ -1,3 +1,0 @@
----
-trivial:
-  - "Drop Python3.9 and update versions of RHEL,Fedora and FreeBSD for ansible-core:devel test(https://github.com/ansible-collections/ansible.posix/issues/476)."
