@@ -1,0 +1,3 @@
+---
+trivial:
+  - mount - remove wrong version_added section from ``opts_no_log``.
