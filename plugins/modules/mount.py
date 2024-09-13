@@ -48,7 +48,6 @@ options:
       - Do not log opts.
     type: bool
     default: false
-    version_added: 1.6.0
   dump:
     description:
       - Dump (see fstab(5)).
