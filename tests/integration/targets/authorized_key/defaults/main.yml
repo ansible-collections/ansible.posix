@@ -35,3 +35,5 @@ multiple_keys_comments: |
   ssh-rsa DATA_BASIC 1@testing
   # I like adding comments yo-dude-this-is-not-a-key INVALID_DATA 2@testing
   ecdsa-sha2-nistp521 ECDSA_DATA 4@testing
+
+key_path: /tmp/id_rsa.pub
