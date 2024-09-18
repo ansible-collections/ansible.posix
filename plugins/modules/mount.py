@@ -899,11 +899,6 @@ def main():
                     module.fail_json(
                         msg="Error unmounting %s: %s" % (name, msg))
 
-            if os.path.exists(name):
-                try:
-                    os.rmdir(name)
-                except (OSError, IOError) as e:
-                    module.fail_json(msg="Error rmdir %s: %s" % (name, to_native(e)))
     elif state == 'unmounted':
         if ismount(name) or is_bind_mounted(module, linux_mounts, name):
             if not module.check_mode:
