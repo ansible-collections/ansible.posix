@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - acl - Fixed to set ACLs on paths mounted with NFS version 4 correctly (https://github.com/ansible-collections/ansible.posix/issues/240).

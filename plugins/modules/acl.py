@@ -75,6 +75,10 @@ options:
   use_nfsv4_acls:
     description:
     - Use NFSv4 ACLs instead of POSIX ACLs.
+    - This feature uses C(nfs4_setfacl) and C(nfs4_getfacl). The behavior depends on those implementation.
+      And currently it only supports C(A) in ACE, so C(D) must be replaced with the appropriate C(A).
+    - Permission is set as optimised ACLs by the system. You can check the actual ACLs that has been set using the return value.
+    - More info C(man nfs4_setfacl)
     type: bool
     default: false
   recalculate_mask:
@@ -179,7 +183,7 @@ def split_entry(entry):
 def build_entry(etype, entity, permissions=None, use_nfsv4_acls=False):
     '''Builds and returns an entry string. Does not include the permissions bit if they are not provided.'''
     if use_nfsv4_acls:
-        return ':'.join([etype, entity, permissions, 'allow'])
+        return ':'.join(['A', 'g' if etype == 'group' else '', entity, permissions + 'tcy'])
 
     if permissions:
         return etype + ':' + entity + ':' + permissions
@@ -187,22 +191,27 @@ def build_entry(etype, entity, permissions=None, use_nfsv4_acls=False):
     return etype + ':' + entity
 
 
-def build_command(module, mode, path, follow, default, recursive, recalculate_mask, entry=''):
+def build_command(module, mode, path, follow, default, recursive, recalculate_mask, use_nfsv4_acls, entry=''):
     '''Builds and returns a getfacl/setfacl command.'''
     if mode == 'set':
-        cmd = [module.get_bin_path('setfacl', True)]
-        cmd.extend(['-m', entry])
+        cmd = [module.get_bin_path('nfs4_setfacl' if use_nfsv4_acls else 'setfacl', True)]
+        cmd.extend(['-a' if use_nfsv4_acls else '-m', entry])
     elif mode == 'rm':
-        cmd = [module.get_bin_path('setfacl', True)]
+        cmd = [module.get_bin_path('nfs4_setfacl' if use_nfsv4_acls else 'setfacl', True)]
         cmd.extend(['-x', entry])
     else:  # mode == 'get'
         cmd = [module.get_bin_path('getfacl', True)]
         # prevents absolute path warnings and removes headers
         if platform.system().lower() == 'linux':
+            if use_nfsv4_acls:
+                # use nfs4_getfacl instead of getfacl if use_nfsv4_acls is True
+                cmd = [module.get_bin_path('nfs4_getfacl', True)]
+            else:
+                cmd = [module.get_bin_path('getfacl', True)]
+                cmd.append('--absolute-names')
             cmd.append('--omit-header')
-            cmd.append('--absolute-names')
 
-    if recursive:
+    if recursive and not use_nfsv4_acls:
         cmd.append('--recursive')
 
     if recalculate_mask == 'mask' and mode in ['set', 'rm']:
@@ -210,7 +219,7 @@ def build_command(module, mode, path, follow, default, recursive, recalculate_ma
     elif recalculate_mask == 'no_mask' and mode in ['set', 'rm']:
         cmd.append('--no-mask')
 
-    if not follow:
+    if not follow and not use_nfsv4_acls:
         if platform.system().lower() == 'linux':
             cmd.append('--physical')
         elif platform.system().lower() == 'freebsd':
@@ -223,24 +232,34 @@ def build_command(module, mode, path, follow, default, recursive, recalculate_ma
     return cmd
 
 
-def acl_changed(module, cmd):
+def acl_changed(module, cmd, entry, use_nfsv4_acls=False):
     '''Returns true if the provided command affects the existing ACLs, false otherwise.'''
-    # FreeBSD do not have a --test flag, so by default, it is safer to always say "true"
+    # To check the ACL changes, use the output of setfacl or nfs4_setfacl with '--test'.
+    # FreeBSD do not have a --test flag, so by default, it is safer to always say "true".
     if platform.system().lower() == 'freebsd':
         return True
 
     cmd = cmd[:]  # lists are mutables so cmd would be overwritten without this
     cmd.insert(1, '--test')
     lines = run_acl(module, cmd)
-
+    counter = 0
     for line in lines:
-        if not line.endswith('*,*'):
-            return True
-    return False
+        if line.endswith('*,*') and not use_nfsv4_acls:
+            return False
+        # if use_nfsv4_acls and entry is listed
+        if use_nfsv4_acls and entry == line:
+            counter += 1
+
+    # The current 'nfs4_setfacl --test' lists a new entry,
+    #  which will be added at the top of list, followed by the existing entries.
+    # So if the entry has already been registered, the entry should be find twice.
+    if counter == 2:
+        return False
+    return True
 
 
 def run_acl(module, cmd, check_rc=True):
-
+    '''Runs the provided command and returns the output as a list of lines.'''
     try:
         (rc, out, err) = module.run_command(cmd, check_rc=check_rc)
     except Exception as e:
@@ -313,7 +332,7 @@ def main():
             module.fail_json(msg="'recalculate_mask' MUST NOT be set to 'mask' or 'no_mask' when 'state=query'.")
 
     if not entry:
-        if state == 'absent' and permissions:
+        if state == 'absent' and permissions and not use_nfsv4_acls:
             module.fail_json(msg="'permissions' MUST NOT be set when 'state=absent'.")
 
         if state == 'absent' and not entity:
@@ -350,21 +369,24 @@ def main():
         entry = build_entry(etype, entity, permissions, use_nfsv4_acls)
         command = build_command(
             module, 'set', path, follow,
-            default, recursive, recalculate_mask, entry
+            default, recursive, recalculate_mask, use_nfsv4_acls, entry
         )
-        changed = acl_changed(module, command)
+        changed = acl_changed(module, command, entry, use_nfsv4_acls)
 
         if changed and not module.check_mode:
             run_acl(module, command)
         msg = "%s is present" % entry
 
     elif state == 'absent':
-        entry = build_entry(etype, entity, use_nfsv4_acls)
+        if use_nfsv4_acls:
+            entry = build_entry(etype, entity, permissions, use_nfsv4_acls)
+        else:
+            entry = build_entry(etype, entity, use_nfsv4_acls)
         command = build_command(
             module, 'rm', path, follow,
-            default, recursive, recalculate_mask, entry
+            default, recursive, recalculate_mask, use_nfsv4_acls, entry
         )
-        changed = acl_changed(module, command)
+        changed = acl_changed(module, command, entry, use_nfsv4_acls)
 
         if changed and not module.check_mode:
             run_acl(module, command, False)
@@ -375,7 +397,10 @@ def main():
 
     acl = run_acl(
         module,
-        build_command(module, 'get', path, follow, default, recursive, recalculate_mask)
+        build_command(
+            module, 'get', path, follow, default, recursive,
+            recalculate_mask, use_nfsv4_acls
+        )
     )
 
     module.exit_json(changed=changed, msg=msg, acl=acl)
