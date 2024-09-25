@@ -57,6 +57,21 @@ stages:
               test: units
             - name: Lint
               test: lint
+  - stage: Sanity_2_18
+    displayName: Ansible 2.18 sanity
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          nameFormat: "{0}"
+          testFormat: 2.18/{0}
+          targets:
+            - name: Sanity
+              test: sanity
+            - name: Units
+              test: units
+            - name: Lint
+              test: lint
   - stage: Sanity_2_17
     displayName: Ansible 2.17 sanity
     dependsOn: []
@@ -106,6 +121,20 @@ stages:
       - template: templates/matrix.yml
         parameters:
           testFormat: devel/linux/{0}/1
+          targets:
+            - name: Fedora 40
+              test: fedora40
+            - name: Ubuntu 22.04
+              test: ubuntu2204
+            - name: Ubuntu 24.04
+              test: ubuntu2404
+  - stage: Docker_2_18
+    displayName: Docker devel
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          testFormat: 2.18/linux/{0}/1
           targets:
             - name: Fedora 40
               test: fedora40
@@ -176,6 +205,18 @@ stages:
               test: rhel/9.4
             - name: FreeBSD 13.3
               test: freebsd/13.3
+  - stage: Remote_2_18
+    displayName: Remote devel
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          testFormat: 2.18/{0}/1
+          targets:
+            - name: RHEL 9.4
+              test: rhel/9.4
+            - name: FreeBSD 13.3
+              test: freebsd/13.3
   - stage: Remote_2_17
     displayName: Remote 2.17
     dependsOn: []
@@ -234,8 +275,11 @@ stages:
       - Sanity_2_17
       - Remote_2_17
       - Docker_2_17
+      - Sanity_2_18
+      - Remote_2_18
+      - Docker_2_18
       - Sanity_devel
-      - Remote_devel
-      - Docker_devel
+      # - Remote_devel # Wait for test environment release
+      # - Docker_devel # Wait for test environment release
     jobs:
       - template: templates/coverage.yml
