@@ -24,6 +24,7 @@ options:
   key:
     description:
       - The SSH public key(s), as a string or (since Ansible 1.9) url (https://github.com/username.keys).
+      - You can also use V(file://) prefix to search remote for a file with SSH key(s).
     type: str
     required: true
   path:
@@ -95,6 +96,12 @@ EXAMPLES = r'''
     user: charlie
     state: present
     key: https://github.com/charlie.keys
+
+- name: Set authorized keys taken from path on controller node
+  ansible.posix.authorized_key:
+    user: charlie
+    state: present
+    key: file:///home/charlie/.ssh/id_rsa.pub
 
 - name: Set authorized keys taken from url using lookup
   ansible.posix.authorized_key:
@@ -223,6 +230,7 @@ from operator import itemgetter
 from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.six.moves.urllib.parse import urlparse
 
 
 class keydict(dict):
@@ -556,7 +564,7 @@ def enforce_state(module, params):
     follow = params.get('follow', False)
     error_msg = "Error getting key from: %s"
 
-    # if the key is a url, request it and use it as key source
+    # if the key is a url or file, request it and use it as key source
     if key.startswith("http"):
         try:
             resp, info = fetch_url(module, key)
@@ -569,6 +577,19 @@ def enforce_state(module, params):
 
         # resp.read gives bytes on python3, convert to native string type
         key = to_native(key, errors='surrogate_or_strict')
+
+    if key.startswith("file"):
+        # if the key is an absolute path, check for existense and use it as a key source
+        key_path = urlparse(key).path
+        if not os.path.exists(key_path):
+            module.fail_json(msg="Path to a key file not found: %s" % key_path)
+        if not os.path.isfile(key_path):
+            module.fail_json(msg="Path to a key is a directory and must be a file: %s" % key_path)
+        try:
+            with open(key_path, 'r') as source_fh:
+                key = source_fh.read()
+        except OSError as e:
+            module.fail_json(msg="Failed to read key file %s : %s" % (key_path, to_native(e)))
 
     # extract individual keys into an array, skipping blank lines and comments
     new_keys = [s for s in key.splitlines() if s and not s.startswith('#')]
