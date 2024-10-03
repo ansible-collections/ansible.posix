@@ -73,7 +73,7 @@ options:
         point will be created.
       - If V(unmounted), the device will be unmounted without changing I(fstab).
       - V(present) only specifies that the device is to be configured in
-        I(fstab) and does not trigger or require a mount. TODO check
+        I(fstab) and does not trigger or require a mount.
       - V(ephemeral) only specifies that the device is to be mounted, without changing
         I(fstab). If it is already mounted, a remount will be triggered.
         This will always return RV(ignore:changed=true). If the mount point O(path)
