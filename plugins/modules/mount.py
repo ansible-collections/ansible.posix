@@ -73,7 +73,7 @@ options:
         point will be created.
       - If V(unmounted), the device will be unmounted without changing I(fstab).
       - V(present) only specifies that the device is to be configured in
-        I(fstab) and does not trigger or require a mount.
+        I(fstab) and does not trigger or require a mount. 
       - V(ephemeral) only specifies that the device is to be mounted, without changing
         I(fstab). If it is already mounted, a remount will be triggered.
         This will always return RV(ignore:changed=true). If the mount point O(path)
@@ -87,7 +87,7 @@ options:
         real source. V(absent) does not unmount recursively, and the module will
         fail if multiple devices are mounted on the same mount point. Using
         V(absent) with a mount point that is not registered in the I(fstab) has
-        no effect, use V(unmounted) instead. You can set O(keep_mountpoint) to 
+        no effect, use V(unmounted) instead. You can set O(keep_mountpoint) to
         True to keep the mountpoint.
       - V(remounted) specifies that the device will be remounted for when you
         want to force a refresh on the mount itself (added in 2.9). This will
@@ -138,7 +138,7 @@ options:
     - Change the default behaviour of state=absent by keeping the mountpoint
     - With keep_mountpoint=true, state=absent is like unmounted plus the
       fstab update.
-    - Use it if you care about finding original mountpoint content without failing 
+    - Use it if you care about finding original mountpoint content without failing
       and want to remove the entry in fstab. If you have no entry to clean in
       fstab you can use state=unmounted
     type: bool
