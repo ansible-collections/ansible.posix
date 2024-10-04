@@ -472,6 +472,25 @@
         path: /tmp/myfs
         state: absent
 
+    - name: Mount the FS with noauto option and defaults
+      ansible.posix.mount:
+        path: /tmp/myfs
+        src: /tmp/myfs.img
+        fstype: ext3
+        state: mounted
+        boot: false
+      register: mount_info
+
+    - name: Assert the mount without noauto was successful
+      ansible.builtin.assert:
+        that:
+          - "'noauto' in mount_info['opts'].split(',')"
+
+    - name: Unmount FS
+      ansible.posix.mount:
+        path: /tmp/myfs
+        state: absent
+
     - name: Remove the test FS
       ansible.builtin.file:
         path: '{{ item }}'
