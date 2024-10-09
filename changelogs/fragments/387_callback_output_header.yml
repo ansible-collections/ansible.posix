@@ -1,3 +1,0 @@
----
-minor_changes:
-  - callback plugins - Add recap information to timer, profile_roles and profile_tasks callback outputs (https://github.com/ansible-collections/ansible.posix/pull/387).
