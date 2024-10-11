@@ -789,3 +789,85 @@
       loop:
         - /tmp/myfs.img
         - /tmp/myfs
+
+- name: Block to test keep_mountpoint option
+  block:
+  - name: Create the mount point
+    ansible.builtin.file:
+      state: directory
+      path: '/tmp/myfs'
+      mode: '0755'
+
+  - name: Create empty file for FS aaa
+    community.general.filesize:
+      path: /tmp/myfs.img
+      size: 20M
+
+  - name: Format FS bbb
+    community.general.filesystem:
+      fstype: xfs
+      dev: /tmp/myfs.img
+
+  - name: Put data in the mount point before mounting
+    ansible.builtin.copy:
+      content: 'Testing
+        This is the data before mounting
+        '
+      dest: '/tmp/myfs/test_file'
+      mode: '0644'
+    register: file_before_info
+
+  - name: Mount with fstab
+    ansible.posix.mount:
+      path: '/tmp/myfs'
+      fstype: xfs
+      state: mounted
+      src: '/tmp/myfs.img'
+
+  - name: Check data disappears - stat data
+    ansible.builtin.stat:
+      path: '/tmp/myfs/test_file'
+    register: file_stat_after_mount
+  - name: Check data disappears - file does not exist
+    ansible.builtin.assert:
+      that:
+      - file_stat_after_mount['stat']['exists'] == false
+  - name: Put data in the mount point after mounting
+    ansible.builtin.copy:
+      content: 'Testing
+        This is the data updated after mounting
+        '
+      dest: '/tmp/myfs/test_file'
+      mode: '0644'
+    register: file_after_info
+  - name: Umount with keep_mountpoint
+    ansible.posix.mount:
+      path: '/tmp/myfs'
+      fstype: xfs
+      state: absent
+      keep_mountpoint: true
+  - name: Check original data reappears - stat data
+    ansible.builtin.stat:
+      path: '/tmp/myfs/test_file'
+    register: file_stat_after_umount
+  - name: Check original data reappears - compare checksums
+    ansible.builtin.assert:
+      that:
+      - file_stat_after_umount['stat']['checksum'] == file_before_info['checksum']
+  always:
+    - name: Remove the first test file
+      ansible.builtin.file:
+        path: /tmp/myfs/test_file
+        state: absent
+    - name: Unmount FS
+      ansible.posix.mount:
+        path: /tmp/myfs
+        state: absent
+    - name: Remove the test FS and the second test file
+      ansible.builtin.file:
+        path: '{{ item }}'
+        state: absent
+      loop:
+        - /tmp/myfs/test_file
+        - /tmp/myfs.img
+        - /tmp/myfs
