@@ -1,6 +1,0 @@
----
-trivial:
-  - Create a stable branch stable-1 for version 1.x release
-  - skippy - Update deprecation message to include removal version 2.0.0 (https://github.com/ansible-collections/ansible.posix/pull/556).
-bugfixes:
-  - skippy - Revert removal of skippy plugin. It will be removed in version 2.0.0 (https://github.com/ansible-collections/ansible.posix/issues/573).

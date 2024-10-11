@@ -405,3 +405,27 @@ releases:
     - dropping-ansible29.yml
     - test-reqs.yml
     release_date: '2024-09-11'
+  1.6.1:
+    changes:
+      bugfixes:
+      - acl - Fixed to set ACLs on paths mounted with NFS version 4 correctly (https://github.com/ansible-collections/ansible.posix/issues/240).
+      - mount - Handle ``boot`` option on Linux, NetBSD and OpenBSD correctly (https://github.com/ansible-collections/ansible.posix/issues/364).
+      - skippy - Revert removal of skippy plugin. It will be removed in version 2.0.0
+        (https://github.com/ansible-collections/ansible.posix/issues/573).
+      release_summary: 'This is the bugfix release of the stable version ``ansible.posix``
+        collection.
+
+        This changelog contains all changes to the modules and plugins
+
+        in this collection that have been added after the release of
+
+        ``ansible.posix`` 1.6.1.'
+    fragments:
+    - 1.6.1.yml
+    - 365-boot-linux.yml
+    - 566_bump_version_161.yml
+    - 567_remove_version_added.yml
+    - 570_nfs4_acl.yml
+    - 571_ci_bump_core_version.yml
+    - 572_revert_removal_of_skippy.yml
+    release_date: '2024-10-11'
