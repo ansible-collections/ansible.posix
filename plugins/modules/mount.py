@@ -186,7 +186,7 @@ EXAMPLES = r'''
     path: /tmp/mnt-pnt
     state: remounted
 
-# The following will fail on first run 
+# The following will fail on first run
 # if /home/mydir is not empty after unmounting,
 # though unmount and remove from fstab are successfull.
 # It will be successfull on subsequent runs (already unmounted).
@@ -194,7 +194,7 @@ EXAMPLES = r'''
   ansible.posix.mount:
     path: /home/mydir
     state: absent
-# The following will not fail on first run 
+# The following will not fail on first run
 # if /home/mydir is not empty after unmounting.
 # It will leave /home/mydir and its content (if any) after unmounting.
 - name: Unmount and remove from fstab, but keep /home/mydir
