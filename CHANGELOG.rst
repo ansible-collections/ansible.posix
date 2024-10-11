@@ -4,6 +4,23 @@ ansible.posix Release Notes
 
 .. contents:: Topics
 
+v1.6.1
+======
+
+Release Summary
+---------------
+
+This is the bugfix release of the stable version ``ansible.posix`` collection.
+This changelog contains all changes to the modules and plugins
+in this collection that have been added after the release of
+``ansible.posix`` 1.6.1.
+
+Bugfixes
+--------
+
+- acl - Fixed to set ACLs on paths mounted with NFS version 4 correctly (https://github.com/ansible-collections/ansible.posix/issues/240).
+- mount - Handle ``boot`` option on Linux, NetBSD and OpenBSD correctly (https://github.com/ansible-collections/ansible.posix/issues/364).
+- skippy - Revert removal of skippy plugin. It will be removed in version 2.0.0 (https://github.com/ansible-collections/ansible.posix/issues/573).
 
 v1.6.0
 ======
