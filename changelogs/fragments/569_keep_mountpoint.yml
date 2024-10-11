@@ -1,0 +1,6 @@
+---
+minor_changes:
+- keep_mountpoint - added keep_mountpoint option with default value false. If set to true keep_mountpoint changes the behaviour of state: absent by keeping the mountpoint.
+
+# vim: ai sw=2 ts=2 et nu
+
