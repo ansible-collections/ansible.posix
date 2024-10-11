@@ -1,0 +1,3 @@
+---
+trivial:
+  - Bump ansible.posix version to 2.0.0.
