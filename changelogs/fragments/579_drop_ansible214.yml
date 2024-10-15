@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - backport - Drop ansible-core 2.14 and set 2.15 minimum version (https://github.com/ansible-collections/ansible.posix/issues/578).
