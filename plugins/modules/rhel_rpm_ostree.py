@@ -25,12 +25,12 @@ requirements:
 options:
   name:
     description:
-      - A package name or package specifier with version, like C(name-1.0).
-      - Comparison operators for package version are valid here C(>), C(<), C(>=), C(<=). Example - C(name>=1.0)
+      - A package name or package specifier with version, like V(name-1.0).
+      - Comparison operators for package version are valid here C(>), C(<), C(>=), C(<=). Example - C(name>=1.0).
       - If a previous version is specified, the task also needs to turn C(allow_downgrade) on.
         See the C(allow_downgrade) documentation for caveats with downgrading packages.
-      - When using state=latest, this can be C('*') which means run C(yum -y update).
-      - You can also pass a url or a local path to a rpm file (using state=present).
+      - When using O(state=latest), this can be V('*') which means run C(yum -y update).
+      - You can also pass a url or a local path to a rpm file (using O(state=present)).
         To operate on several packages this can accept a comma separated string of packages or (as of 2.0) a list of packages.
     aliases: [ pkg ]
     type: list
@@ -38,12 +38,12 @@ options:
     default: []
   state:
     description:
-      - Whether to install (C(present) or C(installed), C(latest)), or remove (C(absent) or C(removed)) a package.
-      - C(present) and C(installed) will simply ensure that a desired package is installed.
-      - C(latest) will update the specified package if it's not of the latest available version.
-      - C(absent) and C(removed) will remove the specified package.
-      - Default is C(None), however in effect the default action is C(present) unless the C(autoremove) option is
-        enabled for this module, then C(absent) is inferred.
+      - Whether to install (V(present) or V(installed), V(latest)), or remove (V(absent) or V(removed)) a package.
+      - V(present) and V(installed) will simply ensure that a desired package is installed.
+      - V(latest) will update the specified package if it's not of the latest available version.
+      - V(absent) and V(removed) will remove the specified package.
+      - Default is C(null), however in effect the default action is V(present) unless the C(autoremove) option is
+        enabled for this module, then V(absent) is inferred.
     type: str
     choices: [ absent, installed, latest, present, removed ]
 notes:

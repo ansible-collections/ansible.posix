@@ -1,2 +1,0 @@
-trivial:
-  - synchronize - instantiate the connection plugin without the ``new_stdin`` argument, which is deprecated in ansible-core 2.15 (https://github.com/ansible-collections/ansible.posix/pull/421).

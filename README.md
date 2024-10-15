@@ -7,35 +7,26 @@ https://dev.azure.com/ansible/ansible.posix/_apis/build/status/CI?branchName=mai
 <!-- Describe the collection and why a user would want to use it. What does the collection do? -->
 An Ansible Collection of modules and plugins that target POSIX UNIX/Linux and derivative Operating Systems.
 
+## Communication
+
+* Join the Ansible forum:
+  * [Get Help](https://forum.ansible.com/c/help/6): get help or help others.
+  * [Social Spaces](https://forum.ansible.com/c/chat/4): gather and interact with fellow enthusiasts.
+  * [News & Announcements](https://forum.ansible.com/c/news/5): track project-wide announcements including social events.
+
+* The Ansible [Bullhorn newsletter](https://docs.ansible.com/ansible/devel/community/communication.html#the-bullhorn): used to announce releases and important changes.
+
+For more information about communication, see the [Ansible communication guide](https://docs.ansible.com/ansible/devel/community/communication.html).
+
 ## Supported Versions of Ansible
 <!--start requires_ansible-->
 ## Ansible version compatibility
 
-This collection has been tested against following Ansible versions: **>=2.14**.
+This collection has been tested against following Ansible versions: **>=2.15**.
 <!--end requires_ansible-->
 
 ## Included content
-<!-- Galaxy will eventually list the module docs within the UI, but until that is ready, you may need to either describe your plugins etc here, or point to an external docsite to cover that information. -->
-<!--start collection content-->
-### Modules
-Name | Description
---- | ---
-[ansible.posix.acl](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.acl_module.rst)|Set and retrieve file ACL information.
-[ansible.posix.at](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.at_module.rst)|Schedule the execution of a command or script file via the at command
-[ansible.posix.authorized_key](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.authorized_key_module.rst)|Adds or removes an SSH authorized key
-[ansible.posix.firewalld](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.firewalld_module.rst)|Manage arbitrary ports/services with firewalld
-[ansible.posix.firewalld_info](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.firewalld_info_module.rst)|Gather information about firewalld
-[ansible.posix.mount](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.mount_module.rst)|Control active and configured mount points
-[ansible.posix.patch](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.patch_module.rst)|Apply patch files using the GNU patch tool
-[ansible.posix.rhel_facts](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.rhel_facts_module.rst)|Facts module to set or override RHEL specific facts.
-[ansible.posix.rhel_rpm_ostree](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.rhel_rpm_ostree_module.rst)|Ensure packages exist in a RHEL for Edge rpm-ostree based system
-[ansible.posix.rpm_ostree_upgrade](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.rpm_ostree_upgrade_module.rst)|Manage rpm-ostree upgrade transactions
-[ansible.posix.seboolean](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.seboolean_module.rst)|Toggles SELinux booleans
-[ansible.posix.selinux](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.selinux_module.rst)|Change policy and state of SELinux
-[ansible.posix.synchronize](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.synchronize_module.rst)|A wrapper around rsync to make common tasks in your playbooks quick and easy
-[ansible.posix.sysctl](https://github.com/ansible-collections/ansible.posix/blob/main/docs/ansible.posix.sysctl_module.rst)|Manage entries in sysctl.conf.
-
-<!--end collection content-->
+Check out [Ansible Galaxy](https://galaxy.ansible.com/ui/repo/published/ansible/posix/content/) or [the Ansible documentation](https://docs.ansible.com/ansible/devel/collections/ansible/posix/) for all modules and plugins included in this collection.
 
 ## Installing this collection
 
@@ -83,10 +74,13 @@ None
 
 <!-- List the versions of Ansible the collection has been tested with. Must match what is in galaxy.yml. -->
 
-- ansible-core 2.17 (devel)
+- ansible-core 2.19 (devel)
+- ansible-core 2.18 (stable) *
+- ansible-core 2.17 (stable)
 - ansible-core 2.16 (stable)
 - ansible-core 2.15 (stable)
-- ansible-core 2.14 (stable)
+
+*Note: For ansible-core 2.18, CI only covers sanity tests and no integration tests will be run until the test environment is released.*
 
 ## Roadmap
 

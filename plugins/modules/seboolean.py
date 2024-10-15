@@ -22,12 +22,12 @@ options:
     type: str
   persistent:
     description:
-      - Set to C(true) if the boolean setting should survive a reboot.
+      - Set to V(true) if the boolean setting should survive a reboot.
     type: bool
     default: false
   state:
     description:
-      - Desired boolean value
+      - Desired boolean value.
     type: bool
     required: true
   ignore_selinux_state:

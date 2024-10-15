@@ -24,22 +24,23 @@ options:
   key:
     description:
       - The SSH public key(s), as a string or (since Ansible 1.9) url (https://github.com/username.keys).
+      - You can also use V(file://) prefix to search remote for a file with SSH key(s).
     type: str
     required: true
   path:
     description:
       - Alternative path to the authorized_keys file.
-      - The default value is the C(.ssh/authorized_keys) of the home of the user specified in the O(user) parameter.
-      - Most of the time, it's not necessary to set this key.
+      - The default value is the V(.ssh/authorized_keys) of the home of the user specified in the O(user) parameter.
+      - Most of the time, it is not necessary to set this key.
       - Use the path to your target authorized_keys if you need to explicitly point on it.
     type: path
   manage_dir:
     description:
       - Whether this module should manage the directory of the authorized key file.
-      - If set to C(true), the module will create the directory, as well as set the owner and permissions
+      - If set to V(true), the module will create the directory, as well as set the owner and permissions
         of an existing directory.
-      - Be sure to set C(manage_dir=false) if you are using an alternate directory for authorized_keys,
-        as set with C(path), since you could lock yourself out of SSH access.
+      - Be sure to set O(manage_dir=false) if you are using an alternate directory for authorized_keys,
+        as set with O(path), since you could lock yourself out of SSH access.
       - See the example below.
     type: bool
     default: true
@@ -56,17 +57,17 @@ options:
   exclusive:
     description:
       - Whether to remove all other non-specified keys from the authorized_keys file.
-      - Multiple keys can be specified in a single C(key) string value by separating them by newlines.
+      - Multiple keys can be specified in a single O(key) string value by separating them by newlines.
       - This option is not loop aware, so if you use C(with_) , it will be exclusive per iteration of the loop.
-      - If you want multiple keys in the file you need to pass them all to C(key) in a single batch as mentioned above.
+      - If you want multiple keys in the file you need to pass them all to O(key) in a single batch as mentioned above.
     type: bool
     default: false
   validate_certs:
     description:
       - This only applies if using a https url as the source of the keys.
-      - If set to C(false), the SSL certificates will not be validated.
-      - This should only set to C(false) used on personally controlled sites using self-signed certificates as it avoids verifying the source site.
-      - Prior to 2.1 the code worked as if this was set to C(true).
+      - If set to V(false), the SSL certificates will not be validated.
+      - This should only set to V(false) used on personally controlled sites using self-signed certificates as it avoids verifying the source site.
+      - Prior to 2.1 the code worked as if this was set to V(true).
     type: bool
     default: true
   comment:
@@ -95,6 +96,12 @@ EXAMPLES = r'''
     user: charlie
     state: present
     key: https://github.com/charlie.keys
+
+- name: Set authorized keys taken from path on controller node
+  ansible.posix.authorized_key:
+    user: charlie
+    state: present
+    key: file:///home/charlie/.ssh/id_rsa.pub
 
 - name: Set authorized keys taken from url using lookup
   ansible.posix.authorized_key:
@@ -223,6 +230,7 @@ from operator import itemgetter
 from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.six.moves.urllib.parse import urlparse
 
 
 class keydict(dict):
@@ -556,7 +564,7 @@ def enforce_state(module, params):
     follow = params.get('follow', False)
     error_msg = "Error getting key from: %s"
 
-    # if the key is a url, request it and use it as key source
+    # if the key is a url or file, request it and use it as key source
     if key.startswith("http"):
         try:
             resp, info = fetch_url(module, key)
@@ -569,6 +577,19 @@ def enforce_state(module, params):
 
         # resp.read gives bytes on python3, convert to native string type
         key = to_native(key, errors='surrogate_or_strict')
+
+    if key.startswith("file"):
+        # if the key is an absolute path, check for existense and use it as a key source
+        key_path = urlparse(key).path
+        if not os.path.exists(key_path):
+            module.fail_json(msg="Path to a key file not found: %s" % key_path)
+        if not os.path.isfile(key_path):
+            module.fail_json(msg="Path to a key is a directory and must be a file: %s" % key_path)
+        try:
+            with open(key_path, 'r') as source_fh:
+                key = source_fh.read()
+        except OSError as e:
+            module.fail_json(msg="Failed to read key file %s : %s" % (key_path, to_native(e)))
 
     # extract individual keys into an array, skipping blank lines and comments
     new_keys = [s for s in key.splitlines() if s and not s.startswith('#')]

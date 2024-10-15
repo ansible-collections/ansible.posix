@@ -1,3 +1,0 @@
----
-bugfixes:
-- sysctl - fix sysctl to work properly on symlinks (https://github.com/ansible-collections/ansible.posix/issues/111).

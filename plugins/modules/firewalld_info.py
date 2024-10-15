@@ -21,7 +21,7 @@ options:
     zones:
         description:
             - Gather information about specific zones.
-            - If only works if C(active_zones) is set to C(false).
+            - If only works if O(active_zones=false).
         required: false
         type: list
         elements: str

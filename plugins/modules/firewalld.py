@@ -17,7 +17,7 @@ options:
   service:
     description:
       - Name of a service to add/remove to/from firewalld.
-      - The service must be listed in output of firewall-cmd --get-services.
+      - The service must be listed in output of C(firewall-cmd --get-services).
     type: str
   protocol:
     description:
@@ -38,22 +38,22 @@ options:
         type: str
         required: true
         description:
-          - Source port to forward from
+          - Source port to forward from.
       proto:
         type: str
         required: true
         description:
-          - protocol to forward
+          - protocol to forward.
         choices: [udp, tcp]
       toport:
         type: str
         required: true
         description:
-          - destination port
+          - destination port.
       toaddr:
         type: str
         description:
-          - Optional address to forward to
+          - Optional address to forward to.
   rich_rule:
     description:
       - Rich rule to add/remove to/from firewalld.
@@ -78,28 +78,28 @@ options:
   zone:
     description:
       - The firewalld zone to add/remove to/from.
-      - Note that the default zone can be configured per system but C(public) is default from upstream.
+      - Note that the default zone can be configured per system but V(public) is default from upstream.
       - Available choices can be extended based on per-system configs, listed here are "out of the box" defaults.
-      - Possible values include C(block), C(dmz), C(drop), C(external), C(home), C(internal), C(public), C(trusted), C(work).
+      - Possible values include V(block), V(dmz), V(drop), V(external), V(home), V(internal), V(public), V(trusted), V(work).
     type: str
   permanent:
     description:
       - Whether to apply this change to the permanent firewalld configuration.
       - As of Ansible 2.3, permanent operations can operate on firewalld configs when it is not running (requires firewalld >= 0.3.9).
-      - Note that if this is C(false), I(immediate) defaults to C(true).
+      - Note that if this is V(false), O(immediate=true) by default.
     type: bool
     default: false
   immediate:
     description:
       - Whether to apply this change to the runtime firewalld configuration.
-      - Defaults to C(true) if I(permanent=false).
+      - Defaults to V(true) if O(permanent=false).
     type: bool
     default: false
   state:
     description:
       - Enable or disable a setting.
-      - 'For ports: Should this port accept (enabled) or reject (disabled) connections.'
-      - The states C(present) and C(absent) can only be used in zone level operations (i.e. when no other parameters but zone and state are set).
+      - 'For ports: Should this port accept (V(enabled)) or reject (V(disabled)) connections.'
+      - The states V(present) and V(absent) can only be used in zone level operations (i.e. when no other parameters but zone and state are set).
     type: str
     required: true
     choices: [ absent, disabled, enabled, present ]
@@ -108,19 +108,24 @@ options:
       - The amount of time in seconds the rule should be in effect for when non-permanent.
     type: int
     default: 0
+  forward:
+    description:
+      - The forward setting you would like to enable/disable to/from zones within firewalld.
+      - This option only is supported by firewalld v0.9.0 or later.
+    type: str
   masquerade:
     description:
       - The masquerade setting you would like to enable/disable to/from zones within firewalld.
     type: str
   offline:
     description:
-      - Ignores I(immediate) if I(permanent=true) and firewalld is not running.
+      - Ignores O(immediate) if O(permanent=true) and firewalld is not running.
     type: bool
     default: false
   target:
     description:
-      - firewalld Zone target
-      - If state is set to C(absent), this will reset the target to default
+      - firewalld Zone target.
+      - If O(state=absent), this will reset the target to default.
     choices: [ default, ACCEPT, DROP, "%%REJECT%%" ]
     type: str
     version_added: 1.2.0
@@ -138,8 +143,8 @@ notes:
   - This module needs C(python-firewall) or C(python3-firewall) on managed nodes.
     It is usually provided as a subset with C(firewalld) from the OS distributor for the OS default Python interpreter.
 requirements:
-- firewalld >= 0.2.11
-- python-firewall >= 0.2.11
+- firewalld >= 0.9.0
+- python-firewall >= 0.9.0
 author:
 - Adam Miller (@maxamillion)
 '''
@@ -197,6 +202,12 @@ EXAMPLES = r'''
     interface: eth2
     permanent: true
     state: enabled
+
+- ansible.posix.firewalld:
+    forward: true
+    state: enabled
+    permanent: true
+    zone: internal
 
 - ansible.posix.firewalld:
     masquerade: true
@@ -402,6 +413,49 @@ class ProtocolTransaction(FirewallTransaction):
     def set_disabled_permanent(self, protocol, timeout):
         fw_zone, fw_settings = self.get_fw_zone_settings()
         fw_settings.removeProtocol(protocol)
+        self.update_fw_settings(fw_zone, fw_settings)
+
+
+class ForwardTransaction(FirewallTransaction):
+    """
+    ForwardTransaction
+    """
+
+    def __init__(self, module, action_args=None, zone=None, desired_state=None, permanent=False, immediate=False):
+        super(ForwardTransaction, self).__init__(
+            module, action_args=action_args, desired_state=desired_state, zone=zone, permanent=permanent, immediate=immediate
+        )
+
+        self.enabled_msg = "Added forward to zone %s" % self.zone
+        self.disabled_msg = "Removed forward from zone %s" % self.zone
+
+    def get_enabled_immediate(self):
+        if self.fw.queryForward(self.zone) is True:
+            return True
+        else:
+            return False
+
+    def get_enabled_permanent(self):
+        fw_zone, fw_settings = self.get_fw_zone_settings()
+        if fw_settings.queryForward() is True:
+            return True
+        else:
+            return False
+
+    def set_enabled_immediate(self):
+        self.fw.addForward(self.zone)
+
+    def set_enabled_permanent(self):
+        fw_zone, fw_settings = self.get_fw_zone_settings()
+        fw_settings.setForward(True)
+        self.update_fw_settings(fw_zone, fw_settings)
+
+    def set_disabled_immediate(self):
+        self.fw.removeForward(self.zone)
+
+    def set_disabled_permanent(self):
+        fw_zone, fw_settings = self.get_fw_zone_settings()
+        fw_settings.setForward(False)
         self.update_fw_settings(fw_zone, fw_settings)
 
 
@@ -821,6 +875,7 @@ def main():
             state=dict(type='str', required=True, choices=['absent', 'disabled', 'enabled', 'present']),
             timeout=dict(type='int', default=0),
             interface=dict(type='str'),
+            forward=dict(type='str'),
             masquerade=dict(type='str'),
             offline=dict(type='bool', default=False),
             target=dict(type='str', choices=['default', 'ACCEPT', 'DROP', '%%REJECT%%']),
@@ -833,7 +888,7 @@ def main():
         ),
         mutually_exclusive=[
             ['icmp_block', 'icmp_block_inversion', 'service', 'protocol', 'port', 'port_forward', 'rich_rule',
-             'interface', 'masquerade', 'source', 'target']
+             'interface', 'forward', 'masquerade', 'source', 'target']
         ],
     )
 
@@ -842,6 +897,7 @@ def main():
     immediate = module.params['immediate']
     timeout = module.params['timeout']
     interface = module.params['interface']
+    forward = module.params['forward']
     masquerade = module.params['masquerade']
     offline = module.params['offline']
 
@@ -905,7 +961,7 @@ def main():
 
     modification = False
     if any([icmp_block, icmp_block_inversion, service, protocol, port, port_forward, rich_rule,
-            interface, masquerade, source, target]):
+            interface, forward, masquerade, source, target]):
         modification = True
     if modification and desired_state in ['absent', 'present'] and target is None:
         module.fail_json(
@@ -1065,6 +1121,29 @@ def main():
             action_args=(interface,),
             zone=zone,
             desired_state=desired_state,
+            permanent=permanent,
+            immediate=immediate,
+        )
+
+        changed, transaction_msgs = transaction.run()
+        msgs = msgs + transaction_msgs
+
+    if forward is not None:
+        # Type of forward will be changed to boolean in a future release.
+        forward_status = False
+        try:
+            forward_status = boolean(forward, False)
+        except TypeError:
+            module.warn('The value of the forward option is "%s". '
+                        'The type of the option will be changed from string to boolean in a future release. '
+                        'To avoid unexpected behavior, please change the value to boolean.' % forward)
+
+        expected_state = 'enabled' if (desired_state == 'enabled') == forward_status else 'disabled'
+        transaction = ForwardTransaction(
+            module,
+            action_args=(),
+            zone=zone,
+            desired_state=expected_state,
             permanent=permanent,
             immediate=immediate,
         )

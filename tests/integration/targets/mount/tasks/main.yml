@@ -472,6 +472,25 @@
         path: /tmp/myfs
         state: absent
 
+    - name: Mount the FS with noauto option and defaults
+      ansible.posix.mount:
+        path: /tmp/myfs
+        src: /tmp/myfs.img
+        fstype: ext3
+        state: mounted
+        boot: false
+      register: mount_info
+
+    - name: Assert the mount without noauto was successful
+      ansible.builtin.assert:
+        that:
+          - "'noauto' in mount_info['opts'].split(',')"
+
+    - name: Unmount FS
+      ansible.posix.mount:
+        path: /tmp/myfs
+        state: absent
+
     - name: Remove the test FS
       ansible.builtin.file:
         path: '{{ item }}'
@@ -738,4 +757,54 @@
       loop:
         - /tmp/myfs_A.img
         - /tmp/myfs_B.img
+        - /tmp/myfs
+
+- name: Block to test opts_no_log option
+  when: ansible_system == 'Linux'
+  block:
+    - name: Create an empty file
+      community.general.filesize:
+        path: /tmp/myfs.img
+        size: 1M
+    - name: Format FS
+      community.general.filesystem:
+        fstype: ext4
+        dev: /tmp/myfs.img
+    - name: Mount the FS with opts_no_log option true
+      ansible.posix.mount:
+        path: /tmp/myfs
+        src: /tmp/myfs.img
+        fstype: ext4
+        state: mounted
+        opts: rw
+        opts_no_log: true
+      register: mount_info
+    - name: Assert opts_no_log option true
+      ansible.builtin.assert:
+        that:
+          - mount_info.opts == 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+    - name: Remount the FS with opts_no_log option false
+      ansible.posix.mount:
+        path: /tmp/myfs
+        src: /tmp/myfs.img
+        fstype: ext4
+        state: remounted
+        opts: rw,user
+        opts_no_log: false
+      register: mount_info
+    - name: Assert opts_no_log option false
+      ansible.builtin.assert:
+        that:
+          - mount_info.opts == 'rw,user'
+  always:
+    - name: Unmount FS
+      ansible.posix.mount:
+        path: /tmp/myfs
+        state: absent
+    - name: Remove the test FS
+      ansible.builtin.file:
+        path: '{{ item }}'
+        state: absent
+      loop:
+        - /tmp/myfs.img
         - /tmp/myfs

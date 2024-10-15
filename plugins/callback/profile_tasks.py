@@ -193,7 +193,10 @@ class CallbackModule(CallbackBase):
         self._display_tasktime()
 
     def playbook_on_stats(self, stats):
-        self._display_tasktime()
+        # Align summary report header with other callback plugin summary
+        self._display.banner("TASKS RECAP")
+
+        self._display.display(tasktime())
         self._display.display(filled("", fchar="="))
 
         timestamp(self)
