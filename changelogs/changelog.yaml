@@ -429,3 +429,19 @@ releases:
     - 571_ci_bump_core_version.yml
     - 572_revert_removal_of_skippy.yml
     release_date: '2024-10-11'
+  1.6.2:
+    changes:
+      bugfixes:
+      - backport - Drop ansible-core 2.14 and set 2.15 minimum version (https://github.com/ansible-collections/ansible.posix/issues/578).
+      release_summary: 'This is the bugfix release of the stable version ``ansible.posix``
+        collection.
+
+        This changelog contains all changes to the modules and plugins
+
+        in this collection that have been added after the release of
+
+        ``ansible.posix`` 1.6.1.'
+    fragments:
+    - 1.6.2.yml
+    - 580_drop_ansible214.yml
+    release_date: '2024-10-22'
