@@ -1,5 +1,0 @@
----
-bugfixes:
-  - backport - Drop ansible-core 2.14 and set 2.15 minimum version (https://github.com/ansible-collections/ansible.posix/issues/578).
-trivial:
-  - selinux - conditions for selinux integration tests have been modified to be more accurate.

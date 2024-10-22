@@ -4,6 +4,22 @@ ansible.posix Release Notes
 
 .. contents:: Topics
 
+v1.6.2
+======
+
+Release Summary
+---------------
+
+This is the bugfix release of the stable version ``ansible.posix`` collection.
+This changelog contains all changes to the modules and plugins
+in this collection that have been added after the release of
+``ansible.posix`` 1.6.1.
+
+Bugfixes
+--------
+
+- backport - Drop ansible-core 2.14 and set 2.15 minimum version (https://github.com/ansible-collections/ansible.posix/issues/578).
+
 v1.6.1
 ======
 
