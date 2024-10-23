@@ -112,11 +112,13 @@ options:
     description:
       - The forward setting you would like to enable/disable to/from zones within firewalld.
       - This option only is supported by firewalld v0.9.0 or later.
-    type: str
+      - Note that the option type is changed to bool in ansible.posix version 2.0.0 and later.
+    type: bool
   masquerade:
     description:
       - The masquerade setting you would like to enable/disable to/from zones within firewalld.
-    type: str
+      - Note that the option type is changed to bool in ansible.posix version 2.0.0 and later.
+    type: bool
   offline:
     description:
       - Ignores O(immediate) if O(permanent=true) and firewalld is not running.
@@ -875,8 +877,8 @@ def main():
             state=dict(type='str', required=True, choices=['absent', 'disabled', 'enabled', 'present']),
             timeout=dict(type='int', default=0),
             interface=dict(type='str'),
-            forward=dict(type='str'),
-            masquerade=dict(type='str'),
+            forward=dict(type='bool'),
+            masquerade=dict(type='bool'),
             offline=dict(type='bool', default=False),
             target=dict(type='str', choices=['default', 'ACCEPT', 'DROP', '%%REJECT%%']),
         ),
@@ -1129,16 +1131,7 @@ def main():
         msgs = msgs + transaction_msgs
 
     if forward is not None:
-        # Type of forward will be changed to boolean in a future release.
-        forward_status = False
-        try:
-            forward_status = boolean(forward, False)
-        except TypeError:
-            module.warn('The value of the forward option is "%s". '
-                        'The type of the option will be changed from string to boolean in a future release. '
-                        'To avoid unexpected behavior, please change the value to boolean.' % forward)
-
-        expected_state = 'enabled' if (desired_state == 'enabled') == forward_status else 'disabled'
+        expected_state = 'enabled' if (desired_state == 'enabled') == forward else 'disabled'
         transaction = ForwardTransaction(
             module,
             action_args=(),
@@ -1152,16 +1145,7 @@ def main():
         msgs = msgs + transaction_msgs
 
     if masquerade is not None:
-        # Type of masquerade will be changed to boolean in a future release.
-        masquerade_status = True
-        try:
-            masquerade_status = boolean(masquerade, True)
-        except TypeError:
-            module.warn('The value of the masquerade option is "%s". '
-                        'The type of the option will be changed from string to boolean in a future release. '
-                        'To avoid unexpected behavior, please change the value to boolean.' % masquerade)
-
-        expected_state = 'enabled' if (desired_state == 'enabled') == masquerade_status else 'disabled'
+        expected_state = 'enabled' if (desired_state == 'enabled') == masquerade else 'disabled'
         transaction = MasqueradeTransaction(
             module,
             action_args=(),

@@ -1,0 +1,3 @@
+---
+breaking_changes:
+  - firewalld - Changed the type of forward and masquerade options from str to bool (https://github.com/ansible-collections/ansible.posix/issues/582).
