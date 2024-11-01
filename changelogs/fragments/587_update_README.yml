@@ -1,0 +1,3 @@
+---
+trivial:
+  - README.md - update README to cover RH guidelines (https://github.com/ansible-collections/ansible.posix/issues/585).

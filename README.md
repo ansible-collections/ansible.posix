@@ -4,9 +4,6 @@
 https://dev.azure.com/ansible/ansible.posix/_apis/build/status/CI?branchName=main)](https://dev.azure.com/ansible/ansible.posix/_build?definitionId=26)
 [![Run Status](https://api.shippable.com/projects/5e669aaf8b17a60007e4d18d/badge?branch=main)]() <!--[![Codecov](https://img.shields.io/codecov/c/github/ansible-collections/ansible.posix)](https://codecov.io/gh/ansible-collections/ansible.posix)-->
 
-<!-- Describe the collection and why a user would want to use it. What does the collection do? -->
-An Ansible Collection of modules and plugins that target POSIX UNIX/Linux and derivative Operating Systems.
-
 ## Communication
 
 * Join the Ansible forum:
@@ -14,65 +11,72 @@ An Ansible Collection of modules and plugins that target POSIX UNIX/Linux and de
   * [Social Spaces](https://forum.ansible.com/c/chat/4): gather and interact with fellow enthusiasts.
   * [News & Announcements](https://forum.ansible.com/c/news/5): track project-wide announcements including social events.
 
-* The Ansible [Bullhorn newsletter](https://docs.ansible.com/ansible/devel/community/communication.html#the-bullhorn): used to announce releases and important changes.
+## Description
 
-For more information about communication, see the [Ansible communication guide](https://docs.ansible.com/ansible/devel/community/communication.html).
+<!-- Describe the collection and why a user would want to use it. What does the collection do? -->
+An Ansible Collection of modules and plugins that target POSIX UNIX/Linux and derivative Operating Systems.
 
-## Supported Versions of Ansible
-<!--start requires_ansible-->
-## Ansible version compatibility
+## Requirements
 
-This collection has been tested against following Ansible versions: **>=2.15**.
-<!--end requires_ansible-->
+* Python:
+  * The Python interpreter version must meet Ansible Core's requirements.
+* Ansible Core:
+  - ansible-core 2.15 or later
 
-## Included content
-Check out [Ansible Galaxy](https://galaxy.ansible.com/ui/repo/published/ansible/posix/content/) or [the Ansible documentation](https://docs.ansible.com/ansible/devel/collections/ansible/posix/) for all modules and plugins included in this collection.
+## Installation
 
-## Installing this collection
+Before using this collection, you need to install it with the Ansible Galaxy command-line tool:
 
-You can install the ``ansible.posix`` collection with the Ansible Galaxy CLI:
+```shell
+ansible-galaxy collection install ansible.posix
+```
 
-    ansible-galaxy collection install ansible.posix
+You can also include it in a requirements.yml file and install it with ansible-galaxy collection install -r requirements.yml, using the format:
 
-You can also include it in a `requirements.yml` file and install it with `ansible-galaxy collection install -r requirements.yml`, using the format:
 
 ```yaml
----
 collections:
   - name: ansible.posix
 ```
 
-## Using this collection
+Note that if you install any collections from Ansible Galaxy, they will not be upgraded automatically when you upgrade the Ansible package.
+To upgrade the collection to the latest available version, run the following command:
 
-<!--Include some quick examples that cover the most common use cases for your collection content. -->
+```shell
+ansible-galaxy collection install ansible.posix --upgrade
+```
 
-See [Ansible Using collections](https://docs.ansible.com/ansible/latest/user_guide/collections_using.html) for more details.
+You can also install a specific version of the collection, for example, if you need to downgrade when something is broken in the latest version (please report an issue in this repository). Use the following syntax to install version 1.0.0:
 
-## Contributing to this collection
+```shell
+ansible-galaxy collection install ansible.posix:==1.0.0
+```
 
-<!--Describe how the community can contribute to your collection. At a minimum, include how and where users can create issues to report problems or request features for this collection.  List contribution requirements, including preferred workflows and necessary testing, so you can benefit from community PRs. If you are following general Ansible contributor guidelines, you can link to - [Ansible Community Guide](https://docs.ansible.com/ansible/latest/community/index.html). -->
+See [using Ansible collections](https://docs.ansible.com/ansible/devel/user_guide/collections_using.html) for more details.
 
-We welcome community contributions to this collection. See [Contributing to Ansible-maintained collections](https://docs.ansible.com/ansible/devel/community/contributing_maintained_collections.html#contributing-maintained-collections) for complete details.
+* The Ansible [Bullhorn newsletter](https://docs.ansible.com/ansible/devel/community/communication.html#the-bullhorn): used to announce releases and important changes.
 
-* [Issues](https://github.com/ansible-collections/ansible.posix/issues)
-* [Pull Requests](https://github.com/ansible-collections/ansible.posix/pulls)
-* [Ansible Community Guide](https://docs.ansible.com/ansible/latest/community/index.html)
+For more information about communication, see the [Ansible communication guide](https://docs.ansible.com/ansible/devel/community/communication.html).
 
-### Code of Conduct
-This collection follows the Ansible project's
-[Code of Conduct](https://docs.ansible.com/ansible/devel/community/code_of_conduct.html).
-Please read and familiarize yourself with this document.
+## Use Cases
 
-## Release notes
-See [changelog](https://github.com/ansible-collections/ansible.posix/blob/main/CHANGELOG.rst) for more details.
+You can see the general use-cases as an example by `ansible-doc` command like below.
 
-## External requirements
+For example, ansible.posix.firewalld module:
+```shell
+ansible-doc ansible.posix.firewalld
+```
 
-None
+Also, if you want to confirm the plugins descriptions, you can follow the following option with `ansible-doc` command:
 
-## Tested with Ansible
+For example, ansible.posix.profile_tasks callback plugin:
+```shell
+ansible-doc -t callback ansible.posix.profile_tasks
+```
 
-<!-- List the versions of Ansible the collection has been tested with. Must match what is in galaxy.yml. -->
+## Testing
+
+The following ansible-core versions have been tested with this collection:
 
 - ansible-core 2.19 (devel)
 - ansible-core 2.18 (stable) *
@@ -82,20 +86,30 @@ None
 
 *Note: For ansible-core 2.18, CI only covers sanity tests and no integration tests will be run until the test environment is released.*
 
-## Roadmap
+## Contributing
 
-<!-- Optional. Include the roadmap for this collection, and the proposed release/versioning strategy so users can anticipate the upgrade/update cycle. -->
+We welcome community contributions to this collection. For more details, see [Contributing to Ansible-maintained collections](https://docs.ansible.com/ansible/devel/community/contributing_maintained_collections.html#contributing-maintained-collections) for complete details.
 
-## More information
+* [Issues](https://github.com/ansible-collections/ansible.posix/issues)
+* [Pull Requests](https://github.com/ansible-collections/ansible.posix/pulls)
+* [Ansible Community Guide](https://docs.ansible.com/ansible/latest/community/index.html)
 
-<!-- List out where the user can find additional information, such as working group meeting times, slack/IRC channels, or documentation for the product this collection automates. At a minimum, link to: -->
 
-- [Ansible Collection overview](https://github.com/ansible-collections/overview)
-- [Ansible User guide](https://docs.ansible.com/ansible/latest/user_guide/index.html)
-- [Ansible Developer guide](https://docs.ansible.com/ansible/latest/dev_guide/index.html)
-- [Ansible Community code of conduct](https://docs.ansible.com/ansible/latest/community/code_of_conduct.html)
+## Support
 
-## Licensing
+See [Communication](#Communication) section.
+
+## Release Notes and Roadmap
+
+See [changelog](https://github.com/ansible-collections/ansible.posix/blob/main/CHANGELOG.rst) for more details.
+
+## Related Information
+
+This document was written using the following [template](https://access.redhat.com/articles/7068606).
+
+The README has been carefully prepared to cover the [community template](https://github.com/ansible-collections/collection_template/blob/main/README.md), but if you find any problems, please file a [documentation issue](https://github.com/ansible-collections/ansible.posix/issues/new?assignees=&labels=&projects=&template=documentation_report.md).
+
+## License Information
 
 GNU General Public License v3.0 or later.
 
