@@ -128,8 +128,8 @@
   ansible.builtin.assert:
     that:
       - selinux_config_original | length == selinux_config_after | length
-      - selinux_config_after[selinux_config_after.index('SELINUX=disabled')]  is search("^SELINUX=\w+$")
-      - selinux_config_after[selinux_config_after.index('SELINUXTYPE=targeted')]  is search("^SELINUXTYPE=\w+$")
+      - (selinux_config_after | select("search", "^SELINUX=disabled\s*$") | list | length) > 0
+      - (selinux_config_after | select("search", "^SELINUXTYPE=targeted\s*$") | list | length) > 0
 
 - name: TEST 1 | Disable SELinux again, with kernel arguments update
   ansible.posix.selinux:
