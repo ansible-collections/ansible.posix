@@ -1,0 +1,3 @@
+---
+trivial:
+  - Enabled remote and docker integration tests for devel branch.

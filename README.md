@@ -84,8 +84,6 @@ The following ansible-core versions have been tested with this collection:
 - ansible-core 2.16 (stable)
 - ansible-core 2.15 (stable)
 
-*Note: For ansible-core 2.18, CI only covers sanity tests and no integration tests will be run until the test environment is released.*
-
 ## Contributing
 
 We welcome community contributions to this collection. For more details, see [Contributing to Ansible-maintained collections](https://docs.ansible.com/ansible/devel/community/contributing_maintained_collections.html#contributing-maintained-collections) for complete details.

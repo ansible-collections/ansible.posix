@@ -279,7 +279,7 @@ stages:
       - Remote_2_18
       - Docker_2_18
       - Sanity_devel
-      # - Remote_devel # Wait for test environment release
-      # - Docker_devel # Wait for test environment release
+      - Remote_devel
+      - Docker_devel
     jobs:
       - template: templates/coverage.yml
