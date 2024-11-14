@@ -1,0 +1,3 @@
+---
+trivial:
+  - Replaced FreeBSD version 13.3 with 13.4 and 14.1 in CI for devel branch.
