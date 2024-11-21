@@ -239,8 +239,8 @@ def write_fstab(module, lines, path):
 
     fs_w = open(path, 'w')
 
-    for line in lines:
-        fs_w.write(line)
+    for l in lines:
+        fs_w.write(l)
 
     fs_w.flush()
     fs_w.close()
@@ -307,10 +307,10 @@ def _set_mount_save_old(module, args):
 
         # Check if we got a valid line for splitting
         # (on Linux the 5th and the 6th field is optional)
-        if any([
-                platform.system() == 'SunOS' and len(fields) != 7,
-                platform.system() == 'Linux' and len(fields) not in [4, 5, 6],
-                platform.system() not in ['SunOS', 'Linux'] and len(fields) != 6]):
+        if (
+                platform.system() == 'SunOS' and len(fields) != 7 or
+                platform.system() == 'Linux' and len(fields) not in [4, 5, 6] or
+                platform.system() not in ['SunOS', 'Linux'] and len(fields) != 6):
             to_write.append(line)
 
             continue
@@ -340,12 +340,12 @@ def _set_mount_save_old(module, args):
 
         # Check if we found the correct line
         if (
-                ld['name'] != escaped_args['name'] or all([
+                ld['name'] != escaped_args['name'] or (
                     # In the case of swap, check the src instead
-                    'src' in args,
-                    ld['name'] == 'none',
-                    ld['fstype'] == 'swap',
-                    ld['src'] != args['src']])):
+                    'src' in args and
+                    ld['name'] == 'none' and
+                    ld['fstype'] == 'swap' and
+                    ld['src'] != args['src'])):
             to_write.append(line)
 
             continue
@@ -397,9 +397,9 @@ def unset_mount(module, args):
             continue
 
         # Check if we got a valid line for splitting
-        if any([
-                platform.system() == 'SunOS' and len(line.split()) != 7,
-                platform.system() != 'SunOS' and len(line.split()) != 6]):
+        if (
+                platform.system() == 'SunOS' and len(line.split()) != 7 or
+                platform.system() != 'SunOS' and len(line.split()) != 6):
             to_write.append(line)
 
             continue
@@ -427,12 +427,12 @@ def unset_mount(module, args):
             ) = line.split()
 
         if (
-                ld['name'] != escaped_name or all([
+                ld['name'] != escaped_name or (
                     # In the case of swap, check the src instead
-                    'src' in args,
-                    ld['name'] == 'none',
-                    ld['fstype'] == 'swap',
-                    ld['src'] != args['src']])):
+                    'src' in args and
+                    ld['name'] == 'none' and
+                    ld['fstype'] == 'swap' and
+                    ld['src'] != args['src'])):
             to_write.append(line)
 
             continue
@@ -449,10 +449,10 @@ def unset_mount(module, args):
 def _set_fstab_args(fstab_file):
     result = []
 
-    if all([
-            fstab_file,
-            fstab_file != '/etc/fstab',
-            platform.system().lower() != 'sunos']):
+    if (
+            fstab_file and
+            fstab_file != '/etc/fstab' and
+            platform.system().lower() != 'sunos'):
         if platform.system().lower().endswith('bsd'):
             result.append('-F')
         else:
@@ -640,10 +640,10 @@ def is_bind_mounted(module, linux_mounts, dest, src=None, fstype=None):
         for mnt in mounts:
             arguments = mnt.split()
 
-            if all([
-                    (arguments[0] == src or src is None),
-                    arguments[2] == dest,
-                    (arguments[4] == fstype or fstype is None)]):
+            if (
+                    (arguments[0] == src or src is None) and
+                    arguments[2] == dest and
+                    (arguments[4] == fstype or fstype is None)):
                 is_mounted = True
 
             if is_mounted:
@@ -690,7 +690,8 @@ def get_linux_mounts(module, mntinfo_file="/proc/self/mountinfo"):
         if mnt['parent_id'] != 1 and mnt['parent_id'] in mntinfo:
             m = mntinfo[mnt['parent_id']]
             if (
-                    len(m['root']) > 1 and mnt['root'].startswith("%s/" % m['root'])):
+                    len(m['root']) > 1 and
+                    mnt['root'].startswith("%s/" % m['root'])):
                 # Omit the parent's root in the child's root
                 # == Example:
                 # 140 136 253:2 /rootfs / rw - ext4 /dev/sdb2 rw
@@ -726,9 +727,9 @@ def get_linux_mounts(module, mntinfo_file="/proc/self/mountinfo"):
 def _is_same_mount_src(module, src, mountpoint, linux_mounts):
     """Return True if the mounted fs on mountpoint is the same source than src. Return False if mountpoint is not a mountpoint"""
     # If the provided mountpoint is not a mountpoint, don't waste time
-    if all([
-            not ismount(mountpoint),
-            not is_bind_mounted(module, linux_mounts, mountpoint)]):
+    if (
+            not ismount(mountpoint) and
+            not is_bind_mounted(module, linux_mounts, mountpoint)):
         return False
 
     # Treat Linux bind mounts
@@ -862,7 +863,7 @@ def main():
             try:
                 open(args['fstab'], 'a').close()
             except PermissionError as e:
-                module.fail_json(msg="Failed to open %s due to permission issue %s" % (args['fstab'], to_native(e)))
+                module.fail_json(msg="Failed to open %s due to permission issue" % args['fstab'])
             except Exception as e:
                 module.fail_json(msg="Failed to open %s due to %s" % (args['fstab'], to_native(e)))
 
@@ -945,7 +946,10 @@ def main():
             name, backup_lines, changed = args['name'], [], False
         res = 0
 
-        if (ismount(name) or is_bind_mounted(module, linux_mounts, name, args['src'], args['fstype'])):
+        if (
+                ismount(name) or
+                is_bind_mounted(
+                    module, linux_mounts, name, args['src'], args['fstype'])):
             if changed and not module.check_mode:
                 res, msg = remount(module, args)
                 changed = True
