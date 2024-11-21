@@ -303,7 +303,7 @@ def _set_mount_save_old(module, args):
 
             continue
 
-        fields = line.split()
+        fields = line.split('#')[0].split()
 
         # Check if we got a valid line for splitting
         # (on Linux the 5th and the 6th field is optional)
