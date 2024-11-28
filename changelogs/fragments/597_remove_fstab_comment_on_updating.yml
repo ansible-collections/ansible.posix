@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - fstab - If a comment is appended to a fstab entry, state present creates a double-entry (https://github.com/ansible-collections/ansible.posix/issues/595).
