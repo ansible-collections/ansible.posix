@@ -1,0 +1,3 @@
+---
+breaking_changes:
+  - firewalld - Changed the type of icmp_block_inversion option from str to bool (https://github.com/ansible-collections/ansible.posix/issues/586).
