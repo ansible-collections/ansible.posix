@@ -405,3 +405,88 @@ releases:
     - dropping-ansible29.yml
     - test-reqs.yml
     release_date: '2024-09-11'
+  1.6.1:
+    changes:
+      bugfixes:
+      - acl - Fixed to set ACLs on paths mounted with NFS version 4 correctly (https://github.com/ansible-collections/ansible.posix/issues/240).
+      - mount - Handle ``boot`` option on Linux, NetBSD and OpenBSD correctly (https://github.com/ansible-collections/ansible.posix/issues/364).
+      - skippy - Revert removal of skippy plugin. It will be removed in version 2.0.0
+        (https://github.com/ansible-collections/ansible.posix/issues/573).
+      release_summary: 'This is the bugfix release of the stable version ``ansible.posix``
+        collection.
+
+        This changelog contains all changes to the modules and plugins
+
+        in this collection that have been added after the release of
+
+        ``ansible.posix`` 1.6.1.'
+    fragments:
+    - 1.6.1.yml
+    - 365-boot-linux.yml
+    - 566_bump_version_161.yml
+    - 567_remove_version_added.yml
+    - 570_nfs4_acl.yml
+    - 571_ci_bump_core_version.yml
+    - 572_revert_removal_of_skippy.yml
+    release_date: '2024-10-11'
+  1.6.2:
+    changes:
+      bugfixes:
+      - backport - Drop ansible-core 2.14 and set 2.15 minimum version (https://github.com/ansible-collections/ansible.posix/issues/578).
+      release_summary: 'This is the bugfix release of the stable version ``ansible.posix``
+        collection.
+
+        This changelog contains all changes to the modules and plugins
+
+        in this collection that have been added after the release of
+
+        ``ansible.posix`` 1.6.1.'
+    fragments:
+    - 1.6.2.yml
+    - 580_drop_ansible214.yml
+    release_date: '2024-10-22'
+  2.0.0:
+    changes:
+      breaking_changes:
+      - firewalld - Changed the type of forward and masquerade options from str to
+        bool (https://github.com/ansible-collections/ansible.posix/issues/582).
+      - firewalld - Changed the type of icmp_block_inversion option from str to bool
+        (https://github.com/ansible-collections/ansible.posix/issues/586).
+      bugfixes:
+      - acl - Fixed to set ACLs on paths mounted with NFS version 4 correctly (https://github.com/ansible-collections/ansible.posix/issues/240).
+      - mount - Handle ``boot`` option on Linux, NetBSD and OpenBSD correctly (https://github.com/ansible-collections/ansible.posix/issues/364).
+      - mount - If a comment is appended to a fstab entry, state present creates a
+        double-entry (https://github.com/ansible-collections/ansible.posix/issues/595).
+      minor_changes:
+      - authorized_keys - allow using absolute path to a file as a SSH key(s) source
+        (https://github.com/ansible-collections/ansible.posix/pull/568)
+      - callback plugins - Add recap information to timer, profile_roles and profile_tasks
+        callback outputs (https://github.com/ansible-collections/ansible.posix/pull/387).
+      release_summary: 'This is the major release of the ``ansible.posix`` collection.
+
+        This changelog contains all changes to the modules and plugins
+
+        in this collection that have been added after the release of
+
+        ``ansible.posix`` 1.6.2'
+      removed_features:
+      - skippy - Remove skippy pluglin as it is no longer supported(https://github.com/ansible-collections/ansible.posix/issues/350).
+    fragments:
+    - 2.0.0.yml
+    - 365-boot-linux.yml
+    - 387_callback_output_header.yml
+    - 556_remove_skippy_callback.yml
+    - 566_bump_version_161.yml
+    - 567_remove_version_added.yml
+    - 568_update_authorized_key.yml
+    - 570_nfs4_acl.yml
+    - 571_ci_bump_core_version.yml
+    - 576_bump_version_2.yml
+    - 581_ci_selinux.yml
+    - 584_firewalld_opt_type.yml
+    - 587_update_README.yml
+    - 588_ci_enable_devel.yml
+    - 593_replace_freebsd_version.yml
+    - 597_remove_fstab_comment_on_updating.yml
+    - 598_icmp_block_inversion.yml
+    release_date: '2024-12-04'
