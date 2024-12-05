@@ -1,3 +1,0 @@
----
-trivial:
-  - selinux - conditions for selinux integration tests have been modified to be more accurate.
