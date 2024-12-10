@@ -229,6 +229,40 @@
       ansible.builtin.assert:
         that:
           - sysctl_test4 is failed
+        
+      ##
+      ## sysctl --system
+      ##
+
+    - name: Set vm.swappiness to 10 with --system option
+      ansible.posix.sysctl:
+        name: vm.swappiness
+        value: 10
+        state: present
+        reload: false
+        sysctl_set: true
+        system: true
+      register: sysctl_system_test1
+
+    - name: Check with sysctl command
+      ansible.builtin.command: sysctl vm.swappiness
+      changed_when: false
+      register: sysctl_check_system1
+
+    - name: Debug sysctl_system_test1 sysctl_check_system1
+      ansible.builtin.debug:
+        var: item
+        verbosity: 1
+      with_items:
+        - "{{ sysctl_system_test1 }}"
+        - "{{ sysctl_check_system1 }}"
+
+    - name: Validate results for --system option
+      ansible.builtin.assert:
+        that:
+          - sysctl_system_test1 is changed
+          - sysctl_check_system1.stdout_lines == ["vm.swappiness = 10"]
+
 
 - name: Test on RHEL VMs
   when:
@@ -366,3 +400,33 @@
         that:
           - stat_result.stat.islnk is defined and stat_result.stat.islnk
           - stat_result.stat.lnk_source == '/tmp/ansible_sysctl_test.conf'
+    
+    # Test sysctl: --system
+    - name: Set vm.swappiness to 10 with --system option
+      ansible.posix.sysctl:
+        name: vm.swappiness
+        value: 10
+        state: present
+        reload: false
+        sysctl_set: true
+        system: true
+      register: sysctl_system_test1
+
+    - name: Check with sysctl command
+      ansible.builtin.command: sysctl vm.swappiness
+      changed_when: false
+      register: sysctl_check_system1
+
+    - name: Debug sysctl_system_test1 sysctl_check_system1
+      ansible.builtin.debug:
+        var: item
+        verbosity: 1
+      with_items:
+        - "{{ sysctl_system_test1 }}"
+        - "{{ sysctl_check_system1 }}"
+
+    - name: Validate results for --system option
+      ansible.builtin.assert:
+        that:
+          - sysctl_system_test1 is changed
+          - sysctl_check_system1.stdout_lines == ["vm.swappiness = 10"]
