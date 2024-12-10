@@ -1,0 +1,2 @@
+trivial:
+  - Bump version to 3.0.0 for the next release (https://github.com/ansible-collections/ansible.posix/issues/603).
