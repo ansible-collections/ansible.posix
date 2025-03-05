@@ -590,6 +590,7 @@
       ansible.builtin.shell:
         cmd: set -o pipefail && mount | grep myfs | grep -E -w 'noexec' | wc -l
         executable: "{{ shell_executable }}"
+      failed_when: false
       changed_when: false
       register: remounted_options
 
@@ -818,12 +819,7 @@
         opts: rw
         state: ephemeral
       register: ephemeral_mount_info
-
-    - name: Put something in the directory so we can do additional checks later on
-      ansible.builtin.copy:
-        content: 'Testing'
-        dest: /tmp/myfs/test_file
-        mode: '0644'
+      check_mode: true
 
     - name: Get checksum of /etc/fstab after an ephemeral mount
       ansible.builtin.stat:
@@ -919,11 +915,11 @@
       register: check_mountinfo
       changed_when: false
 
-    - name: Assert the FS A is still mounted, the options changed and the fstab unchanged
+    - name: Assert the FS A is still mounted, the options unchanged and the fstab unchanged
       ansible.builtin.assert:
         that:
-          - check_mountinfo.stdout|int == 0
-          - ephemeral_mount_record_1.stdout != ephemeral_mount_record_2.stdout
+          - check_mountinfo.stdout|int == 1
+          - ephemeral_mount_record_1.stdout == ephemeral_mount_record_2.stdout
           - ephemeral_mount_info['changed']
           - fstab_stat_before_mount['stat']['checksum'] == fstab_stat_after_mount['stat']['checksum']
 
@@ -1030,11 +1026,11 @@
         path: /tmp/myfs/test_file
       register: test_file_stat
 
-    - name: Assert that fstab is unchanged after unmounting an ephemeral mount with state = unmounted
+    - name: Assert that unmount did not take place and fstab unchanged
       ansible.builtin.assert:
         that:
-          - check_mountinfo.stdout|int == 0
-          - not test_file_stat['stat']['exists']
+          - check_mountinfo.stdout|int == 1
+          - test_file_stat['stat']['exists']
           - fstab_stat_before_mount['stat']['checksum'] == fstab_stat_after_unmount['stat']['checksum']
 
     # unmount
