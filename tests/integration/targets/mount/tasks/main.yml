@@ -811,7 +811,7 @@
         path: '{{ ephemeral_fstab }}'
       register: fstab_stat_before_mount
 
-    - name: Mount the FS A with ephemeral state
+    - name: Mount the FS A with ephemeral state (check mode)
       ansible.posix.mount:
         path: /tmp/myfs
         src: '{{ ephemeral_device_a }}'
