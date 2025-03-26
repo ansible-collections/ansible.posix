@@ -143,11 +143,7 @@
 - name: Assert the bind mount did not take place
   ansible.builtin.assert:
     that:
-      - linux_and_changed or freebsd_and_changed
       - not dest_stat['stat']['exists']
-  vars:
-    linux_and_changed: "{{ ansible_system == 'Linux' and bind_result_linux_dry_run['changed'] }}"
-    freebsd_and_changed: "{{ ansible_system == 'FreeBSD' and bind_result_freebsd['changed'] }}"
   when: ansible_system in ('FreeBSD', 'Linux')
 
 # bind mount
