@@ -830,7 +830,7 @@
       failed_when: false
       changed_when: false
 
-    - name: Assert the mount occured and the fstab is unchanged
+    - name: Assert the mount occurred and the fstab is unchanged
       ansible.builtin.assert:
         that:
           - check_mountinfo.stdout|int == 0
