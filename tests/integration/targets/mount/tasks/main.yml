@@ -134,7 +134,7 @@
   register: bind_result_freebsd_dry_run
   check_mode: true
 
-- name: attempt to stat bind mounted file
+- name: Attempt to stat bind mounted file
   ansible.builtin.stat:
     path: '{{ output_dir }}/mount_dest/test_file'
   when: ansible_system in ('FreeBSD', 'Linux')
@@ -330,12 +330,12 @@
   when: ansible_system in ('FreeBSD', 'Linux')
 
 # SWAP #############################################################
-- name: swap
+- name: Swap
   when: ansible_system in ('Linux')
   block:
     # mount swap check mode
     - name: Stat /etc/fstab
-      stat:
+      ansible.builtin.stat:
         path: /etc/fstab
       register: stat_fstab_before
 
@@ -349,7 +349,7 @@
       check_mode: true
 
     - name: Stat /etc/fstab
-      stat:
+      ansible.builtin.stat:
         path: /etc/fstab
       register: stat_fstab_after
 
@@ -410,7 +410,7 @@
 
     # remove swap check mode
     - name: Stat /etc/fstab
-      stat:
+      ansible.builtin.stat:
         path: /etc/fstab
       register: stat_fstab_before
 
@@ -422,7 +422,7 @@
       check_mode: true
 
     - name: Stat /etc/fstab
-      stat:
+      ansible.builtin.stat:
         path: /etc/fstab
       register: stat_fstab_after
 
@@ -474,7 +474,7 @@
           - not swap2_removed_again['changed']
 
 # FIXUP #############################################################
-- name: fix incomplete entry already present in fstab
+- name: Fix incomplete entry already present in fstab
   when: ansible_system == 'Linux'
   block:
     - name: Create fstab record with missing last two fields
