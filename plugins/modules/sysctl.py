@@ -80,6 +80,13 @@ EXAMPLES = r'''
     sysctl_file: /tmp/test_sysctl.conf
     reload: false
 
+# Enable resource limits management in FreeBSD
+- ansible.posix.sysctl:
+    name: kern.racct.enable
+    value: '1'
+    sysctl_file: /boot/loader.conf
+    reload: false
+
 # Set ip forwarding on in /proc and verify token value with the sysctl command
 - ansible.posix.sysctl:
     name: net.ipv4.ip_forward
