@@ -1,3 +1,4 @@
+# SETUP ################################################################################
 - name: Install dependencies (Linux)
   ansible.builtin.package:
     name: e2fsprogs
@@ -110,6 +111,42 @@
     mode: '0644'
   register: orig_info
 
+# BIND MOUNT ################################################################################
+# bind mount check mode
+- name: Bind mount a filesystem (Linux) (check mode)
+  ansible.posix.mount:
+    src: '{{ output_dir }}/mount_source'
+    name: '{{ output_dir }}/mount_dest'
+    state: mounted
+    fstype: None
+    opts: bind
+  when: ansible_system == 'Linux'
+  register: bind_result_linux_dry_run
+  check_mode: true
+
+- name: Bind mount a filesystem (FreeBSD) (check mode)
+  ansible.posix.mount:
+    src: '{{ output_dir }}/mount_source'
+    name: '{{ output_dir }}/mount_dest'
+    state: mounted
+    fstype: nullfs
+  when: ansible_system == 'FreeBSD'
+  register: bind_result_freebsd_dry_run
+  check_mode: true
+
+- name: Attempt to stat bind mounted file
+  ansible.builtin.stat:
+    path: '{{ output_dir }}/mount_dest/test_file'
+  when: ansible_system in ('FreeBSD', 'Linux')
+  register: dest_stat
+
+- name: Assert the bind mount did not take place
+  ansible.builtin.assert:
+    that:
+      - not dest_stat['stat']['exists']
+  when: ansible_system in ('FreeBSD', 'Linux')
+
+# bind mount
 - name: Bind mount a filesystem (Linux)
   ansible.posix.mount:
     src: '{{ output_dir }}/mount_source'
@@ -168,6 +205,48 @@
       - (ansible_system == 'Linux' and not bind_result_linux['changed']) or (ansible_system == 'FreeBSD' and not bind_result_freebsd['changed'])
   when: ansible_system in ('FreeBSD', 'Linux')
 
+# remount check mode
+- name: Remount filesystem with different opts (Linux) (check mode)
+  ansible.posix.mount:
+    src: '{{ output_dir }}/mount_source'
+    name: '{{ output_dir }}/mount_dest'
+    state: mounted
+    fstype: None
+    opts: bind,ro
+  when: ansible_system == 'Linux'
+  register: bind_result_linux
+  check_mode: true
+
+- name: Remount filesystem with different opts (FreeBSD) (check mode)
+  ansible.posix.mount:
+    src: '{{ output_dir }}/mount_source'
+    name: '{{ output_dir }}/mount_dest'
+    state: mounted
+    fstype: nullfs
+    opts: ro
+  when: ansible_system == 'FreeBSD'
+  register: bind_result_freebsd
+  check_mode: true
+
+- name: Get mount options
+  ansible.builtin.shell:
+    cmd: set -o pipefail && mount | grep mount_dest | grep -c -E -w '(ro|read-only)'
+    executable: "{{ shell_executable }}"
+  changed_when: false
+  failed_when: false
+  register: new_options_count
+
+- name: Make sure the filesystem does not have the new opts
+  ansible.builtin.assert:
+    that:
+      - linux_and_changed or freebsd_and_changed
+      - new_options_count.stdout | int == 0
+  vars:
+    linux_and_changed: "{{ ansible_system == 'Linux' and bind_result_linux_dry_run['changed'] }}"
+    freebsd_and_changed: "{{ ansible_system == 'FreeBSD' and bind_result_freebsd['changed'] }}"
+  when: ansible_system in ('FreeBSD', 'Linux')
+
+# remount
 - name: Remount filesystem with different opts (Linux)
   ansible.posix.mount:
     src: '{{ output_dir }}/mount_source'
@@ -203,6 +282,29 @@
       - 1 == remount_options.stdout_lines | length
   when: ansible_system in ('FreeBSD', 'Linux')
 
+# unmount check mode
+- name: Unmount the bind mount (check mode)
+  ansible.posix.mount:
+    name: '{{ output_dir }}/mount_dest'
+    state: absent
+  when: ansible_system in ('Linux', 'FreeBSD')
+  register: unmount_result
+  check_mode: true
+
+- name: Make sure the file still exists in dest
+  ansible.builtin.stat:
+    path: '{{ output_dir }}/mount_dest/test_file'
+  when: ansible_system in ('FreeBSD', 'Linux')
+  register: dest_stat
+
+- name: Check that we did not unmount
+  ansible.builtin.assert:
+    that:
+      - unmount_result['changed']
+      - dest_stat['stat']['exists']
+  when: ansible_system in ('FreeBSD', 'Linux')
+
+# unmount
 - name: Unmount the bind mount
   ansible.posix.mount:
     name: '{{ output_dir }}/mount_dest'
@@ -223,9 +325,36 @@
       - not dest_stat['stat']['exists']
   when: ansible_system in ('FreeBSD', 'Linux')
 
-- name: Block to test remounted option
+# SWAP #############################################################
+- name: Swap
   when: ansible_system in ('Linux')
   block:
+    # mount swap check mode
+    - name: Stat /etc/fstab
+      ansible.builtin.stat:
+        path: /etc/fstab
+      register: stat_fstab_before
+
+    - name: Create fstab record for the first swap file (check mode)
+      ansible.posix.mount:
+        name: none
+        src: /tmp/swap1
+        opts: sw
+        fstype: swap
+        state: present
+      check_mode: true
+
+    - name: Stat /etc/fstab
+      ansible.builtin.stat:
+        path: /etc/fstab
+      register: stat_fstab_after
+
+    - name: Assert that fstab checksum did not change
+      ansible.builtin.assert:
+        that:
+          - stat_fstab_before.stat.checksum == stat_fstab_after.stat.checksum
+
+    # mount swap1
     - name: Create fstab record for the first swap file
       ansible.posix.mount:
         name: none
@@ -250,6 +379,7 @@
           - swap1_created['changed']
           - not swap1_created_again['changed']
 
+    # mount swap2
     - name: Create fstab record for the second swap file
       ansible.posix.mount:
         name: none
@@ -274,6 +404,30 @@
           - swap2_created['changed']
           - not swap2_created_again['changed']
 
+    # remove swap check mode
+    - name: Stat /etc/fstab
+      ansible.builtin.stat:
+        path: /etc/fstab
+      register: stat_fstab_before
+
+    - name: Remove the fstab record for the first swap file (check mode)
+      ansible.posix.mount:
+        name: none
+        src: /tmp/swap1
+        state: absent
+      check_mode: true
+
+    - name: Stat /etc/fstab
+      ansible.builtin.stat:
+        path: /etc/fstab
+      register: stat_fstab_after
+
+    - name: Assert that fstab checksum did not change
+      ansible.builtin.assert:
+        that:
+          - stat_fstab_before.stat.checksum == stat_fstab_after.stat.checksum
+
+    # remove swap1
     - name: Remove the fstab record for the first swap file
       ansible.posix.mount:
         name: none
@@ -294,6 +448,7 @@
           - swap1_removed['changed']
           - not swap1_removed_again['changed']
 
+    # remove swap2
     - name: Remove the fstab record for the second swap file
       ansible.posix.mount:
         name: none
@@ -314,6 +469,10 @@
           - swap2_removed['changed']
           - not swap2_removed_again['changed']
 
+# FIXUP #############################################################
+- name: Fix incomplete entry already present in fstab
+  when: ansible_system == 'Linux'
+  block:
     - name: Create fstab record with missing last two fields
       ansible.builtin.copy:
         dest: /etc/fstab
@@ -343,6 +502,11 @@
           - ''' 0 0'' in optional_fields_content.stdout'
           - 1 == optional_fields_content.stdout_lines | length
 
+# REMOUNTED #############################################################
+- name: Block to test remounted option
+  when: ansible_system in ('Linux')
+  block:
+    # setup
     - name: Create empty file
       community.general.filesize:
         path: /tmp/myfs.img
@@ -372,6 +536,26 @@
       ansible.builtin.pause:
         seconds: 2
 
+    # remount check mode
+    - name: Remount (check mode)
+      ansible.posix.mount:
+        path: /tmp/myfs
+        state: remounted
+
+    - name: Get again the last write time
+      ansible.builtin.shell:
+        cmd: >-
+          set -o pipefail && dumpe2fs /tmp/myfs.img 2>/dev/null | grep -i "last write time:" |cut -d: -f2-
+        executable: "{{ shell_executable }}"
+      changed_when: false
+      register: last_write_time_check
+
+    - name: Fail if they are different
+      ansible.builtin.fail:
+        msg: Filesytem was remounted, testing of the module failed!
+      when: last_write_time.stdout != last_write_time_check.stdout
+
+    # remount
     - name: Test if the FS is remounted
       ansible.posix.mount:
         path: /tmp/myfs
@@ -390,6 +574,29 @@
         msg: Filesytem was not remounted, testing of the module failed!
       when: last_write is defined and last_write_time2 is defined and last_write_time.stdout == last_write_time2.stdout
 
+    # remount different options check mode
+    - name: Remount filesystem with different opts using remounted option (Linux only)
+      ansible.posix.mount:
+        path: /tmp/myfs
+        state: remounted
+        opts: rw,noexec
+      check_mode: true
+
+    - name: Get remounted options (Linux only)
+      ansible.builtin.shell:
+        cmd: set -o pipefail && mount | grep myfs | grep -E -w 'noexec' | wc -l
+        executable: "{{ shell_executable }}"
+      failed_when: false
+      changed_when: false
+      register: remounted_options
+
+    - name: Make sure the filesystem now has the new opts after using remounted (Linux only)
+      ansible.builtin.assert:
+        that:
+          - "'0' in remounted_options.stdout"
+          - "1 == remounted_options.stdout_lines | length"
+
+    # remount different options
     - name: Remount filesystem with different opts using remounted option (Linux only)
       ansible.posix.mount:
         path: /tmp/myfs
@@ -409,6 +616,7 @@
           - "'1' in remounted_options.stdout"
           - "1 == remounted_options.stdout_lines | length"
 
+    # backup
     - name: Mount the FS again to test backup
       ansible.posix.mount:
         path: /tmp/myfs
@@ -439,9 +647,11 @@
         - /tmp/myfs.img
         - /tmp/myfs
 
+# BOOT #############################################################
 - name: Block to test boot option for Linux
   when: ansible_system in ('Linux')
   block:
+    # setup
     - name: Create empty file
       community.general.filesize:
         path: /tmp/myfs.img
@@ -452,6 +662,7 @@
         fstype: ext3
         dev: /tmp/myfs.img
 
+    # noauto
     - name: Mount the FS with noauto option
       ansible.posix.mount:
         path: /tmp/myfs
@@ -472,6 +683,7 @@
         path: /tmp/myfs
         state: absent
 
+    # noauto + defaults
     - name: Mount the FS with noauto option and defaults
       ansible.posix.mount:
         path: /tmp/myfs
@@ -499,6 +711,7 @@
         - /tmp/myfs.img
         - /tmp/myfs
 
+# NEWLINE END OF FILE ############################################
 - name: Block to test missing newline at the EOF of fstab
   when: ansible_system in ('Linux')
   block:
@@ -537,6 +750,7 @@
         - /tmp/myfs1
         - /tmp/test_fstab
 
+# EPHEMERAL ################################################
 - name: Block to test ephemeral option
   environment:
     PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
@@ -552,8 +766,7 @@
         path: /tmp/myfs_B.img
         size: 20M
 
-  ##### FORMAT FS ON LINUX
-
+    ##### FORMAT FS ON LINUX
     - name: Block to format FS on Linux
       when: ansible_system == 'Linux'
       block:
@@ -567,8 +780,7 @@
             fstype: ext3
             dev: /tmp/myfs_B.img
 
-  ##### FORMAT FS ON SOLARIS AND BSD
-
+    ##### FORMAT FS ON SOLARIS AND BSD
     - name: Create loop devices on Solaris and BSD
       ansible.builtin.shell:
         cmd: "set -o pipefail && {{ ephemeral_create_loop_dev_cmd }}"
@@ -583,14 +795,49 @@
       changed_when: true
       when: ephemeral_format_fs_cmd is defined
 
-  ##### TESTS
-
     - name: Create fstab if it does not exist
       ansible.builtin.file:
         path: "{{ ephemeral_fstab }}"
         state: touch
         mode: '0644'
 
+    # normal ephemeral mount check mode
+    - name: Get checksum of /etc/fstab before mounting anything
+      ansible.builtin.stat:
+        path: '{{ ephemeral_fstab }}'
+      register: fstab_stat_before_mount
+
+    - name: Mount the FS A with ephemeral state (check mode)
+      ansible.posix.mount:
+        path: /tmp/myfs
+        src: '{{ ephemeral_device_a }}'
+        fstype: '{{ ephemeral_fstype }}'
+        opts: rw
+        state: ephemeral
+      register: ephemeral_mount_info
+      check_mode: true
+
+    - name: Get checksum of /etc/fstab after an ephemeral mount
+      ansible.builtin.stat:
+        path: '{{ ephemeral_fstab }}'
+      register: fstab_stat_after_mount
+
+    - name: Get mountinfo
+      ansible.builtin.shell:
+        cmd: grep -c '/tmp/myfs' <(mount -v)
+        executable: "{{ shell_executable }}"
+      register: check_mountinfo
+      failed_when: false
+      changed_when: false
+
+    - name: Assert the mount occurred and the fstab is unchanged
+      ansible.builtin.assert:
+        that:
+          - check_mountinfo.stdout|int == 0
+          - ephemeral_mount_info['changed']
+          - fstab_stat_before_mount['stat']['checksum'] == fstab_stat_after_mount['stat']['checksum']
+
+    # normal ephemeral mount
     - name: Get checksum of /etc/fstab before mounting anything
       ansible.builtin.stat:
         path: '{{ ephemeral_fstab }}'
@@ -631,6 +878,48 @@
           - ephemeral_mount_info['changed']
           - fstab_stat_before_mount['stat']['checksum'] == fstab_stat_after_mount['stat']['checksum']
 
+    # remount different options check mode
+    - name: Get first mount record
+      ansible.builtin.shell:
+        cmd: grep '/tmp/myfs' <(mount -v)
+        executable: "{{ shell_executable }}"
+      register: ephemeral_mount_record_1
+      changed_when: false
+
+    - name: Try to mount FS A where FS A is already mounted (should trigger remount and changed)
+      ansible.posix.mount:
+        path: /tmp/myfs
+        src: '{{ ephemeral_device_a }}'
+        fstype: '{{ ephemeral_fstype }}'
+        opts: ro
+        state: ephemeral
+      register: ephemeral_mount_info
+      check_mode: true
+
+    - name: Get second mount record (should be different than the first)
+      ansible.builtin.shell:
+        cmd: grep '/tmp/myfs' <(mount -v)
+        executable: "{{ shell_executable }}"
+      register: ephemeral_mount_record_2
+      changed_when: false
+
+    - name: Get mountinfo
+      ansible.builtin.shell:
+        cmd: grep -c '/tmp/myfs' <(mount -v)
+        executable: "{{ shell_executable }}"
+      failed_when: false
+      register: check_mountinfo
+      changed_when: false
+
+    - name: Assert the FS A is still mounted, the options unchanged and the fstab unchanged
+      ansible.builtin.assert:
+        that:
+          - check_mountinfo.stdout|int == 1
+          - ephemeral_mount_record_1.stdout == ephemeral_mount_record_2.stdout
+          - ephemeral_mount_info['changed']
+          - fstab_stat_before_mount['stat']['checksum'] == fstab_stat_after_mount['stat']['checksum']
+
+    # remount different options
     - name: Get first mount record
       ansible.builtin.shell:
         cmd: grep '/tmp/myfs' <(mount -v)
@@ -670,6 +959,7 @@
           - ephemeral_mount_info['changed']
           - fstab_stat_before_mount['stat']['checksum'] == fstab_stat_after_mount['stat']['checksum']
 
+    # conflicting mount
     - name: Try to mount file B on file A mountpoint (should fail)
       ansible.posix.mount:
         path: /tmp/myfs
@@ -707,6 +997,39 @@
           - test_file_stat['stat']['exists']
           - ephemeral_mount_b_info is failed
 
+    # unmount check mode
+    - name: Unmount FS with state = unmounted
+      ansible.posix.mount:
+        path: /tmp/myfs
+        state: unmounted
+      check_mode: true
+
+    - name: Get fstab checksum after unmounting an ephemeral mount with state = unmounted
+      ansible.builtin.stat:
+        path: '{{ ephemeral_fstab }}'
+      register: fstab_stat_after_unmount
+
+    - name: Get mountinfo
+      ansible.builtin.shell:
+        cmd: grep -c '/tmp/myfs' <(mount -v)
+        executable: "{{ shell_executable }}"
+      register: check_mountinfo
+      failed_when: false
+      changed_when: false
+
+    - name: Try to stat our test file
+      ansible.builtin.stat:
+        path: /tmp/myfs/test_file
+      register: test_file_stat
+
+    - name: Assert that unmount did not take place and fstab unchanged
+      ansible.builtin.assert:
+        that:
+          - check_mountinfo.stdout|int == 1
+          - test_file_stat['stat']['exists']
+          - fstab_stat_before_mount['stat']['checksum'] == fstab_stat_after_unmount['stat']['checksum']
+
+    # unmount
     - name: Unmount FS with state = unmounted
       ansible.posix.mount:
         path: /tmp/myfs
@@ -759,6 +1082,7 @@
         - /tmp/myfs_B.img
         - /tmp/myfs
 
+# OPTS_NO_LOG ######################################
 - name: Block to test opts_no_log option
   when: ansible_system == 'Linux'
   block:
