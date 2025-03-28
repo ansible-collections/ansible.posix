@@ -354,6 +354,7 @@ class ActionModule(ActionBase):
                         user = C.DEFAULT_REMOTE_USER
                 else:
                     user = task_vars.get('ansible_user') or self._play_context.remote_user
+                user = self._templar.template(user)
 
             if self._templar is not None:
                 user = self._templar.template(user)
