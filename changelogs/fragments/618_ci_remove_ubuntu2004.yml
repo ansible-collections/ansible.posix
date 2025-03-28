@@ -1,0 +1,2 @@
+trivial:
+  - Remove ubuntu20.04 from CI tests (https://github.com/ansible-collections/ansible.posix/issues/612).
