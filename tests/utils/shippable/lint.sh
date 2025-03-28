@@ -4,11 +4,11 @@ set -o pipefail -eux
 
 echo "${PATH/\~/${HOME}}"
 echo "${HOME}"
-command -v ansible
 
 pip install --upgrade --user pip
 pip install --upgrade --user ansible-lint
-
-PATH="${PATH/\~/${HOME}}" ansible-lint \
-                                    --exclude changelogs/ \
-                                    --profile=production
+command -v ansible
+command -v ansible-lint
+ansible-lint --version
+#ansible-lint --exclude changelogs/ --profile=production -vv
+ansible-lint -vv
