@@ -52,6 +52,17 @@ DOCUMENTATION = '''
           - section: callback_profile_tasks
             key: summary_only
         version_added: 1.5.0
+      datetime_format:
+        description:
+          - Datetime format, as expected by the C(strftime) and C(strptime) methods.
+            An C(iso8601) alias will be translated to C('%Y-%m-%dT%H:%M:%S.%f') if that datetime standard wants to be used.
+        default: '%A %d %B %Y  %H:%M:%S %z'
+        env:
+          - name: PROFILE_TASKS_DATETIME_FORMAT
+        ini:
+          - section: callback_profile_tasks
+            key: datetime_format
+        version_added: 3.0.0
 '''
 
 EXAMPLES = '''
@@ -72,14 +83,15 @@ sample output: >
 '''
 
 import collections
-import time
+
+from datetime import datetime
 
 from ansible.module_utils.six.moves import reduce
 from ansible.plugins.callback import CallbackBase
 
 
 # define start time
-t0 = tn = time.time()
+dt0 = dtn = datetime.now().astimezone()
 
 
 def secondsToStr(t):
@@ -104,17 +116,18 @@ def filled(msg, fchar="*"):
 
 def timestamp(self):
     if self.current is not None:
-        elapsed = time.time() - self.stats[self.current]['started']
+        elapsed = (datetime.now().astimezone() - self.stats[self.current]['started']).total_seconds()
         self.stats[self.current]['elapsed'] += elapsed
 
 
-def tasktime():
-    global tn
-    time_current = time.strftime('%A %d %B %Y  %H:%M:%S %z')
-    time_elapsed = secondsToStr(time.time() - tn)
-    time_total_elapsed = secondsToStr(time.time() - t0)
-    tn = time.time()
-    return filled('%s (%s)%s%s' % (time_current, time_elapsed, ' ' * 7, time_total_elapsed))
+def tasktime(self):
+    global dtn
+    cdtn = datetime.now().astimezone()
+    datetime_current = cdtn.strftime(self.datetime_format)
+    time_elapsed = secondsToStr((cdtn - dtn).total_seconds())
+    time_total_elapsed = secondsToStr((cdtn - dt0).total_seconds())
+    dtn = cdtn
+    return filled('%s (%s)%s%s' % (datetime_current, time_elapsed, ' ' * 7, time_total_elapsed))
 
 
 class CallbackModule(CallbackBase):
@@ -134,6 +147,7 @@ class CallbackModule(CallbackBase):
         self.sort_order = None
         self.summary_only = None
         self.task_output_limit = None
+        self.datetime_format = None
 
         super(CallbackModule, self).__init__()
 
@@ -159,9 +173,14 @@ class CallbackModule(CallbackBase):
             else:
                 self.task_output_limit = int(self.task_output_limit)
 
+        self.datetime_format = self.get_option('datetime_format')
+        if self.datetime_format is not None:
+            if self.datetime_format == 'iso8601':
+                self.datetime_format = '%Y-%m-%dT%H:%M:%S.%f'
+
     def _display_tasktime(self):
         if not self.summary_only:
-            self._display.display(tasktime())
+            self._display.display(tasktime(self))
 
     def _record_task(self, task):
         """
@@ -176,10 +195,11 @@ class CallbackModule(CallbackBase):
         #            with the same UUID is executed when `serial` is specified in a playbook.
         #   elapsed: Elapsed time since the first serialized task was started
         self.current = task._uuid
+        dtn = datetime.now().astimezone()
         if self.current not in self.stats:
-            self.stats[self.current] = {'started': time.time(), 'elapsed': 0.0, 'name': task.get_name()}
+            self.stats[self.current] = {'started': dtn, 'elapsed': 0.0, 'name': task.get_name()}
         else:
-            self.stats[self.current]['started'] = time.time()
+            self.stats[self.current]['started'] = dtn
         if self._display.verbosity >= 2:
             self.stats[self.current]['path'] = task.get_path()
 
@@ -196,7 +216,7 @@ class CallbackModule(CallbackBase):
         # Align summary report header with other callback plugin summary
         self._display.banner("TASKS RECAP")
 
-        self._display.display(tasktime())
+        self._display.display(tasktime(self))
         self._display.display(filled("", fchar="="))
 
         timestamp(self)
