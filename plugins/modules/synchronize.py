@@ -449,8 +449,8 @@ def main():
         except ValueError:
             module.fail_json(msg='Could not determine controller hostname for rsync to send to')
     else:
-        source = module.params['src']
-        dest = module.params['dest']
+        source = '"' + module.params['src'] + '"'
+        dest = '"' + module.params['dest'] + '"'
     dest_port = module.params['dest_port']
     delete = module.params['delete']
     private_key = module.params['private_key']
