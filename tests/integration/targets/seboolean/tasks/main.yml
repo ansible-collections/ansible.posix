@@ -20,5 +20,4 @@
   ansible.builtin.include_tasks: seboolean.yml
   when:
     - ansible_selinux is defined
-    - ansible_selinux
     - ansible_selinux.status == 'enabled'
