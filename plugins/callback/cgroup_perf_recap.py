@@ -132,6 +132,7 @@ DOCUMENTATION = '''
 
 import csv
 import datetime
+import json
 import os
 import time
 import threading
@@ -142,7 +143,7 @@ from functools import partial
 
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six import with_metaclass
-from ansible.parsing.ajson import AnsibleJSONEncoder, json
+from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.plugins.callback import CallbackBase
 
 
