@@ -108,6 +108,7 @@ import os
 import platform
 import re
 import tempfile
+import glob
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types
@@ -121,12 +122,24 @@ class SysctlModule(object):
     # success or failure.
     LANG_ENV = {'LANG': 'C', 'LC_ALL': 'C', 'LC_MESSAGES': 'C'}
 
+    # We define a variable to keep all the directories to be read, equivalent to
+    # (/sbin/sysctl --system) option
+    SYSCTL_DIRS = [
+        '/etc/sysctl.d/*.conf',
+        '/run/sysctl.d/*.conf',
+        '/usr/local/lib/sysctl.d/*.conf',
+        '/usr/lib/sysctl.d/*.conf',
+        '/lib/sysctl.d/*.conf',
+        '/etc/sysctl.conf'
+    ]
+
     def __init__(self, module):
         self.module = module
         self.args = self.module.params
 
         self.sysctl_cmd = self.module.get_bin_path('sysctl', required=True)
         self.sysctl_file = self.args['sysctl_file']
+        self.system_Wide = self.args['system_Wide']
 
         self.proc_value = None  # current token value in proc fs
         self.file_value = None  # current token value in file
@@ -306,15 +319,22 @@ class SysctlModule(object):
             # https://github.com/ansible/ansible/issues/58158
             return
         else:
-            # system supports reloading via the -p flag to sysctl, so we'll use that
-            sysctl_args = [self.sysctl_cmd, '-p', self.sysctl_file]
-            if self.args['ignoreerrors']:
-                sysctl_args.insert(1, '-e')
+            if self.system_Wide:
+                for sysctl_file in self.SYSCTL_DIRS:
+                    for conf_file in glob.glob(sysctl_file):
+                        rc, out, err = self.module.run_command([self.sysctl_cmd, '-p', conf_file], environ_update=self.LANG_ENV)
+                        if rc != 0 or self._stderr_failed(err):
+                            self.module.fail_json(msg="Failed to reload sysctl: %s" % to_native(out) + to_native(err))
+            else:
+                # system supports reloading via the -p flag to sysctl, so we'll use that
+                sysctl_args = [self.sysctl_cmd, '-p', self.sysctl_file]
+                if self.args['ignoreerrors']:
+                    sysctl_args.insert(1, '-e')
 
-            rc, out, err = self.module.run_command(sysctl_args, environ_update=self.LANG_ENV)
+                rc, out, err = self.module.run_command(sysctl_args, environ_update=self.LANG_ENV)
 
-        if rc != 0 or self._stderr_failed(err):
-            self.module.fail_json(msg="Failed to reload sysctl: %s" % to_native(out) + to_native(err))
+            if rc != 0 or self._stderr_failed(err):
+                self.module.fail_json(msg="Failed to reload sysctl: %s" % to_native(out) + to_native(err))
 
     # ==============================================================
     #   SYSCTL FILE MANAGEMENT
@@ -401,7 +421,8 @@ def main():
             reload=dict(default=True, type='bool'),
             sysctl_set=dict(default=False, type='bool'),
             ignoreerrors=dict(default=False, type='bool'),
-            sysctl_file=dict(default='/etc/sysctl.conf', type='path')
+            sysctl_file=dict(default='/etc/sysctl.conf', type='path'),
+            system_wide=dict(default=False, type='bool'),  # system_wide parameter
         ),
         supports_check_mode=True,
         required_if=[('state', 'present', ['value'])],
