@@ -342,7 +342,9 @@ class ActionModule(ActionBase):
 
         # Determine if we need a user@ and a password
         user = None
-        password = task_vars.get('ansible_ssh_pass', None) or task_vars.get('ansible_password', None)
+        password = (task_vars.get('ansible_ssh_password', None)
+                    or task_vars.get('ansible_ssh_pass', None)
+                    or task_vars.get('ansible_password', None))
         if not dest_is_local:
             # Src and dest rsync "path" handling
             if boolean(_tmp_args.get('set_remote_user', 'yes'), strict=False):
@@ -372,7 +374,9 @@ class ActionModule(ActionBase):
                 src = self._process_origin(src_host, src, user)
                 dest = self._process_remote(_tmp_args, dest_host, dest, user, inv_port in localhost_ports)
 
-            password = dest_host_inventory_vars.get('ansible_ssh_pass', None) or dest_host_inventory_vars.get('ansible_password', None)
+            password = (dest_host_inventory_vars.get('ansible_ssh_password', None)
+                        or dest_host_inventory_vars.get('ansible_ssh_pass', None)
+                        or dest_host_inventory_vars.get('ansible_password', None))
             if self._templar is not None:
                 password = self._templar.template(password)
         else:
