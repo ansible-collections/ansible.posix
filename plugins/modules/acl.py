@@ -211,8 +211,11 @@ def build_command(module, mode, path, follow, default, recursive, recalculate_ma
                 cmd.append('--absolute-names')
             cmd.append('--omit-header')
 
-    if recursive and not use_nfsv4_acls:
-        cmd.append('--recursive')
+    if recursive:
+        if use_nfsv4_acls:
+            cmd.append('-R')  # Add recursive flag for NFSv4 ACLs
+        else:
+            cmd.append('--recursive')
 
     if recalculate_mask == 'mask' and mode in ['set', 'rm']:
         cmd.append('--mask')
@@ -226,13 +229,18 @@ def build_command(module, mode, path, follow, default, recursive, recalculate_ma
             cmd.append('-h')
 
     if default:
-        cmd.insert(1, '-d')
+        if not use_nfsv4_acls:
+            cmd.insert(1, '-d')
+        elif mode == 'set':
+            # For NFSv4 ACLs, handle default ACLs through the entry format or other means
+            # This is a placeholder for NFSv4 default ACL handling
+            pass
 
     cmd.append(path)
     return cmd
 
 
-def acl_changed(module, cmd, entry, use_nfsv4_acls=False):
+def acl_changed(module, cmd, entry, recursive=False, use_nfsv4_acls=False):
     '''Returns true if the provided command affects the existing ACLs, false otherwise.'''
     # To check the ACL changes, use the output of setfacl or nfs4_setfacl with '--test'.
     # FreeBSD do not have a --test flag, so by default, it is safer to always say "true".
@@ -247,6 +255,18 @@ def acl_changed(module, cmd, entry, use_nfsv4_acls=False):
         if line.endswith('*,*') and not use_nfsv4_acls:
             return False
         # if use_nfsv4_acls and entry is listed
+        if use_nfsv4_acls:
+            # For NFSv4 ACLs, ensure the entry is checked against the actual ACLs
+            for line in lines:
+                if recursive:
+                    # In recursive mode, ensure all entries match
+                    if entry not in line:
+                        return True
+                else:
+                    if entry in line:
+                        return False
+            return True
+
         if use_nfsv4_acls and entry == line:
             counter += 1
 
@@ -371,7 +391,7 @@ def main():
             module, 'set', path, follow,
             default, recursive, recalculate_mask, use_nfsv4_acls, entry
         )
-        changed = acl_changed(module, command, entry, use_nfsv4_acls)
+        changed = acl_changed(module, command, entry, recursive, use_nfsv4_acls)
 
         if changed and not module.check_mode:
             run_acl(module, command)
@@ -386,7 +406,7 @@ def main():
             module, 'rm', path, follow,
             default, recursive, recalculate_mask, use_nfsv4_acls, entry
         )
-        changed = acl_changed(module, command, entry, use_nfsv4_acls)
+        changed = acl_changed(module, command, entry, recursive, use_nfsv4_acls)
 
         if changed and not module.check_mode:
             run_acl(module, command, False)
