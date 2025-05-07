@@ -243,12 +243,18 @@ def acl_changed(module, cmd, entry, use_nfsv4_acls=False):
     cmd.insert(1, '--test')
     lines = run_acl(module, cmd)
     counter = 0
+    lines_checked = 0
+    lines_unchanged = 0
     for line in lines:
+        lines_checked += 1
         if line.endswith('*,*') and not use_nfsv4_acls:
-            return False
+            lines_unchanged += 1
         # if use_nfsv4_acls and entry is listed
         if use_nfsv4_acls and entry == line:
             counter += 1
+
+    if lines_unchanged == lines_checked:
+        return False
 
     # The current 'nfs4_setfacl --test' lists a new entry,
     #  which will be added at the top of list, followed by the existing entries.
