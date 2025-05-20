@@ -237,8 +237,6 @@ stages:
               test: rhel/8.8
             - name: RHEL 9.2
               test: rhel/9.2
-            - name: FreeBSD 13.2
-              test: freebsd/13.2
 
   - stage: Remote_2_15
     displayName: Remote 2.15
@@ -254,8 +252,6 @@ stages:
               test: rhel/8.7
             - name: RHEL 9.1
               test: rhel/9.1
-            - name: FreeBSD 13.2
-              test: freebsd/13.2
 
   ## Finally
 
