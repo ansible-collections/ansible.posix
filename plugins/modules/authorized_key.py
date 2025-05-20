@@ -225,6 +225,7 @@ import os.path
 import tempfile
 import re
 import shlex
+import errno
 from operator import itemgetter
 
 from ansible.module_utils._text import to_native
@@ -475,16 +476,17 @@ def parsekey(module, raw_key, rank=None):
     return (key, key_type, options, comment, rank)
 
 
-def readfile(filename):
-
-    if not os.path.isfile(filename):
-        return ''
-
-    f = open(filename)
+def readfile(module, filename):
     try:
-        return f.read()
-    finally:
-        f.close()
+        with open(filename, 'r') as f:
+            return f.read()
+    except IOError as e:
+        if e.errno == errno.EACCES:
+            module.fail_json(msg="Permission denied on file or path for authorized keys file: {}".format(filename))
+        elif e.errno == errno.ENOENT:
+            return ''
+        else:
+            raise
 
 
 def parsekeys(module, lines):
@@ -597,7 +599,7 @@ def enforce_state(module, params):
     # check current state -- just get the filename, don't create file
     do_write = False
     params["keyfile"] = keyfile(module, user, do_write, path, manage_dir)
-    existing_content = readfile(params["keyfile"])
+    existing_content = readfile(module, params["keyfile"])
     existing_keys = parsekeys(module, existing_content)
 
     # Add a place holder for keys that should exist in the state=present and
