@@ -1,0 +1,2 @@
+trivial:
+  - Add Red Hat Enterprise Linux 10.0 to the CI matrix (https://github.com/ansible-collections/ansible.posix/issues/642).
