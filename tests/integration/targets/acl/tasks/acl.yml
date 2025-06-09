@@ -46,6 +46,12 @@
     path: "{{ test_dir }}"
     state: directory
     mode: "0755"
+
+- name: Install acl package
+  ansible.builtin.package:
+    name: acl
+    state: present
+
 ##############################################################################
 - name: Grant ansible user read access to a file
   ansible.posix.acl:
