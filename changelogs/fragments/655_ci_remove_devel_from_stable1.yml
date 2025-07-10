@@ -1,0 +1,2 @@
+trivial:
+  - Remove devel branch test from CI matrix for stable-1.
