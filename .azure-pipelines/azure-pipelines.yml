@@ -42,21 +42,6 @@ resources:
 pool: Standard
 
 stages:
-  - stage: Sanity_devel
-    displayName: Ansible devel sanity
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: "{0}"
-          testFormat: devel/{0}
-          targets:
-            - name: Sanity
-              test: sanity
-            - name: Units
-              test: units
-            - name: Lint
-              test: lint
   - stage: Sanity_2_18
     displayName: Ansible 2.18 sanity
     dependsOn: []
@@ -114,20 +99,6 @@ stages:
             - name: Units
               test: units
   ## Docker
-  - stage: Docker_devel
-    displayName: Docker devel
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          testFormat: devel/linux/{0}/1
-          targets:
-            - name: Fedora 41
-              test: fedora41
-            - name: Ubuntu 22.04
-              test: ubuntu2204
-            - name: Ubuntu 24.04
-              test: ubuntu2404
   - stage: Docker_2_18
     displayName: Docker 2.18
     dependsOn: []
@@ -187,22 +158,6 @@ stages:
               test: ubuntu2204
 
   ## Remote
-  - stage: Remote_devel
-    displayName: Remote devel
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          testFormat: devel/{0}/1
-          targets:
-            - name: RHEL 10.0
-              test: rhel/10.0
-            - name: RHEL 9.5
-              test: rhel/9.5
-            - name: FreeBSD 14.2
-              test: freebsd/14.2
-            - name: FreeBSD 13.5
-              test: freebsd/13.5
   - stage: Remote_2_18
     displayName: Remote 2.18
     dependsOn: []
@@ -272,8 +227,5 @@ stages:
       - Sanity_2_18
       - Remote_2_18
       - Docker_2_18
-      - Sanity_devel
-      - Remote_devel
-      - Docker_devel
     jobs:
       - template: templates/coverage.yml
