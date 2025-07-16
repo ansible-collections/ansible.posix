@@ -27,6 +27,17 @@ DOCUMENTATION = '''
           - section: callback_profile_roles
             key: summary_only
         version_added: 1.5.0
+      datetime_format:
+        description:
+          - Datetime format, as expected by the C(strftime) and C(strptime) methods.
+            An C(iso8601) alias will be translated to C('%Y-%m-%dT%H:%M:%S.%f') if that datetime standard wants to be used.
+        default: '%A %d %B %Y  %H:%M:%S %z'
+        env:
+          - name: PROFILE_ROLES_FORMAT
+        ini:
+          - section: callback_profile_roles
+            key: datetime_format
+        version_added: 3.0.0
 '''
 
 import collections
@@ -34,9 +45,11 @@ import time
 
 from ansible.plugins.callback import CallbackBase
 from ansible.module_utils.six.moves import reduce
+from datetime import datetime
+
 
 # define start time
-t0 = tn = time.time()
+dt0 = dtn = datetime.now().astimezone()
 
 
 def secondsToStr(t):
@@ -62,18 +75,18 @@ def filled(msg, fchar="*"):
 
 def timestamp(self):
     if self.current is not None:
-        self.stats[self.current] = time.time() - self.stats[self.current]
+        self.stats[self.current] = (datetime.now().astimezone() - self.stats[self.current]).total_seconds()
         self.totals[self.current] += self.stats[self.current]
 
-
-def tasktime():
-    global tn
-    time_current = time.strftime('%A %d %B %Y  %H:%M:%S %z')
-    time_elapsed = secondsToStr(time.time() - tn)
-    time_total_elapsed = secondsToStr(time.time() - t0)
-    tn = time.time()
+def tasktime(self):
+    global dtn
+    cdtn = datetime.now().astimezone()
+    datetime_current = cdtn.strftime(self.datetime_format)
+    time_elapsed = secondsToStr((cdtn - dtn).total_seconds())
+    time_total_elapsed = secondsToStr((cdtn - dt0).total_seconds())
+    dtn = cdtn
     return filled('%s (%s)%s%s' %
-                  (time_current, time_elapsed, ' ' * 7, time_total_elapsed))
+                  (datetime_current, time_elapsed, ' ' * 7, time_total_elapsed))
 
 
 class CallbackModule(CallbackBase):
@@ -91,6 +104,7 @@ class CallbackModule(CallbackBase):
         self.current = None
 
         self.summary_only = None
+        self.datetune_format = None
 
         super(CallbackModule, self).__init__()
 
@@ -99,10 +113,14 @@ class CallbackModule(CallbackBase):
         super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
         self.summary_only = self.get_option('summary_only')
+        self.datetime_format = self.get_option('datetime_format')
+        if self.datetime_format is not None:
+            if self.datetime_format == 'iso8601':
+                self.datetime_format = '%Y-%m-%dT%H:%M:%S.%f'
 
     def _display_tasktime(self):
         if not self.summary_only:
-            self._display.display(tasktime())
+            self._display.display(tasktime(self))
 
     def _record_task(self, task):
         """
@@ -116,7 +134,7 @@ class CallbackModule(CallbackBase):
         else:
             self.current = task.action
 
-        self.stats[self.current] = time.time()
+        self.stats[self.current] = datetime.now().astimezone()
 
     def v2_playbook_on_task_start(self, task, is_conditional):
         self._record_task(task)
@@ -128,7 +146,7 @@ class CallbackModule(CallbackBase):
         # Align summary report header with other callback plugin summary
         self._display.banner("ROLES RECAP")
 
-        self._display.display(tasktime())
+        self._display.display(tasktime(self))
         self._display.display(filled("", fchar="="))
 
         timestamp(self)
