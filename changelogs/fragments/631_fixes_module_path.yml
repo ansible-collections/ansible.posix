@@ -1,6 +1,0 @@
----
-bugfixes:
-  - ansible.posix.cgroup_perf_recap - fixes json module load path (https://github.com/ansible-collections/ansible.posix/issues/630).
-trivial:
-  - ansible.posix.seboolean - remove unnecessary condition from seboolean integration tests (https://github.com/ansible-collections/ansible.posix/issues/630).
-  - ansible.posix.selinux - optimize conditions for selinux integration tests (https://github.com/ansible-collections/ansible.posix/issues/630).

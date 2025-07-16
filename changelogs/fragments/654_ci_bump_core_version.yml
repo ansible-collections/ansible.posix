@@ -1,3 +1,0 @@
-~--
-trivial:
-  - Bump ansible-core version to 2.20 of devel branch and add 2.19 to CI

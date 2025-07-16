@@ -1,2 +1,0 @@
-minor_changes:
-  - "profile_tasks and profile_roles callback plugins - avoid deleted/deprecated callback functions, instead use modern interface that was introduced a longer time ago (https://github.com/ansible-collections/ansible.posix/issues/650)."

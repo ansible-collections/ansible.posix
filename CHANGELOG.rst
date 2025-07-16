@@ -4,6 +4,27 @@ ansible.posix Release Notes
 
 .. contents:: Topics
 
+v2.1.0
+======
+
+Release Summary
+---------------
+
+This is the minor release of the ``ansible.posix`` collection.
+This changelog contains all changes to the modules and plugins
+in the stable-2 branch that have been added after the release of
+``ansible.posix`` 2.0.0
+
+Minor Changes
+-------------
+
+- profile_tasks and profile_roles callback plugins - avoid deleted/deprecated callback functions, instead use modern interface that was introduced a longer time ago (https://github.com/ansible-collections/ansible.posix/issues/650).
+
+Bugfixes
+--------
+
+- ansible.posix.cgroup_perf_recap - fixes json module load path (https://github.com/ansible-collections/ansible.posix/issues/630).
+
 v2.0.0
 ======
 
