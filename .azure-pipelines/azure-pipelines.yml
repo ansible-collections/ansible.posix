@@ -137,8 +137,8 @@ stages:
         parameters:
           testFormat: devel/linux/{0}/1
           targets:
-            - name: Fedora 41
-              test: fedora41
+            - name: Fedora 42
+              test: fedora42
             - name: Ubuntu 22.04
               test: ubuntu2204
             - name: Ubuntu 24.04
@@ -151,8 +151,8 @@ stages:
         parameters:
           testFormat: devel/linux/{0}/1
           targets:
-            - name: Fedora 41
-              test: fedora41
+            - name: Fedora 42
+              test: fedora42
             - name: Ubuntu 22.04
               test: ubuntu2204
             - name: Ubuntu 24.04
@@ -226,10 +226,10 @@ stages:
           targets:
             - name: RHEL 10.0
               test: rhel/10.0
-            - name: RHEL 9.5
-              test: rhel/9.5
-            - name: FreeBSD 14.2
-              test: freebsd/14.2
+            - name: RHEL 9.6
+              test: rhel/9.6
+            - name: FreeBSD 14.3
+              test: freebsd/14.3
             - name: FreeBSD 13.5
               test: freebsd/13.5
   - stage: Remote_2_19
@@ -242,10 +242,10 @@ stages:
           targets:
             - name: RHEL 10.0
               test: rhel/10.0
-            - name: RHEL 9.5
-              test: rhel/9.5
-            - name: FreeBSD 14.2
-              test: freebsd/14.2
+            - name: RHEL 9.6
+              test: rhel/9.6
+            - name: FreeBSD 14.3
+              test: freebsd/14.3
             - name: FreeBSD 13.5
               test: freebsd/13.5
   - stage: Remote_2_18
@@ -258,8 +258,8 @@ stages:
           targets:
             - name: RHEL 9.4
               test: rhel/9.4
-            - name: FreeBSD 13.3
-              test: freebsd/13.3
+            - name: FreeBSD 13.5
+              test: freebsd/13.5
   - stage: Remote_2_17
     displayName: Remote 2.17
     dependsOn: []
@@ -270,8 +270,8 @@ stages:
           targets:
             - name: RHEL 9.3
               test: rhel/9.3
-            - name: FreeBSD 13.3
-              test: freebsd/13.3
+            - name: FreeBSD 13.5
+              test: freebsd/13.5
   - stage: Remote_2_16
     displayName: Remote 2.16
     dependsOn: []
