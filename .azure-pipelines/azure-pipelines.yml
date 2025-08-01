@@ -149,7 +149,7 @@ stages:
     jobs:
       - template: templates/matrix.yml
         parameters:
-          testFormat: devel/linux/{0}/1
+          testFormat: 2.19/linux/{0}/1
           targets:
             - name: Fedora 42
               test: fedora42
@@ -238,7 +238,7 @@ stages:
     jobs:
       - template: templates/matrix.yml
         parameters:
-          testFormat: devel/{0}/1
+          testFormat: 2.19/{0}/1
           targets:
             - name: RHEL 10.0
               test: rhel/10.0
