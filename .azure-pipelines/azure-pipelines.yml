@@ -115,19 +115,6 @@ stages:
               test: sanity
             - name: Units
               test: units
-  - stage: Sanity_2_15
-    displayName: Ansible 2.15 sanity & Units & Lint
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: "{0}"
-          testFormat: 2.15/{0}
-          targets:
-            - name: Sanity
-              test: sanity
-            - name: Units
-              test: units
   ## Docker
   - stage: Docker_devel
     displayName: Docker devel
@@ -195,23 +182,6 @@ stages:
               test: centos7
             - name: Fedora 38
               test: fedora38
-            - name: Ubuntu 22.04
-              test: ubuntu2204
-
-  - stage: Docker_2_15
-    displayName: Docker 2.15
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          testFormat: 2.15/linux/{0}/1
-          targets:
-            - name: CentOS 7
-              test: centos7
-            - name: Fedora 37
-              test: fedora37
-            - name: openSUSE 15 py3
-              test: opensuse15
             - name: Ubuntu 22.04
               test: ubuntu2204
 
@@ -285,29 +255,11 @@ stages:
             - name: RHEL 9.2
               test: rhel/9.2
 
-  - stage: Remote_2_15
-    displayName: Remote 2.15
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          testFormat: 2.15/{0}/1
-          targets:
-            - name: RHEL 7.9
-              test: rhel/7.9
-            - name: RHEL 8.7
-              test: rhel/8.7
-            - name: RHEL 9.1
-              test: rhel/9.1
-
   ## Finally
 
   - stage: Summary
     condition: succeededOrFailed()
     dependsOn:
-      - Sanity_2_15
-      - Remote_2_15
-      - Docker_2_15
       - Sanity_2_16
       - Remote_2_16
       - Docker_2_16
