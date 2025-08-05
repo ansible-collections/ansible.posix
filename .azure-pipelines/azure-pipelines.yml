@@ -37,7 +37,7 @@ variables:
 resources:
   containers:
     - container: default
-      image: quay.io/ansible/azure-pipelines-test-container:6.0.0
+      image: quay.io/ansible/azure-pipelines-test-container:7.0.0
 
 pool: Standard
 
@@ -115,19 +115,6 @@ stages:
               test: sanity
             - name: Units
               test: units
-  - stage: Sanity_2_15
-    displayName: Ansible 2.15 sanity & Units & Lint
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: "{0}"
-          testFormat: 2.15/{0}
-          targets:
-            - name: Sanity
-              test: sanity
-            - name: Units
-              test: units
   ## Docker
   - stage: Docker_devel
     displayName: Docker devel
@@ -149,10 +136,10 @@ stages:
     jobs:
       - template: templates/matrix.yml
         parameters:
-          testFormat: devel/linux/{0}/1
+          testFormat: 2.19/linux/{0}/1
           targets:
-            - name: Fedora 42
-              test: fedora42
+            - name: Fedora 41
+              test: fedora41
             - name: Ubuntu 22.04
               test: ubuntu2204
             - name: Ubuntu 24.04
@@ -198,23 +185,6 @@ stages:
             - name: Ubuntu 22.04
               test: ubuntu2204
 
-  - stage: Docker_2_15
-    displayName: Docker 2.15
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          testFormat: 2.15/linux/{0}/1
-          targets:
-            - name: CentOS 7
-              test: centos7
-            - name: Fedora 37
-              test: fedora37
-            - name: openSUSE 15 py3
-              test: opensuse15
-            - name: Ubuntu 22.04
-              test: ubuntu2204
-
   ## Remote
   - stage: Remote_devel
     displayName: Remote devel
@@ -238,14 +208,14 @@ stages:
     jobs:
       - template: templates/matrix.yml
         parameters:
-          testFormat: devel/{0}/1
+          testFormat: 2.19/{0}/1
           targets:
             - name: RHEL 10.0
               test: rhel/10.0
-            - name: RHEL 9.6
-              test: rhel/9.6
-            - name: FreeBSD 14.3
-              test: freebsd/14.3
+            - name: RHEL 9.5
+              test: rhel/9.5
+            - name: FreeBSD 14.2
+              test: freebsd/14.2
             - name: FreeBSD 13.5
               test: freebsd/13.5
   - stage: Remote_2_18
@@ -285,29 +255,11 @@ stages:
             - name: RHEL 9.2
               test: rhel/9.2
 
-  - stage: Remote_2_15
-    displayName: Remote 2.15
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          testFormat: 2.15/{0}/1
-          targets:
-            - name: RHEL 7.9
-              test: rhel/7.9
-            - name: RHEL 8.7
-              test: rhel/8.7
-            - name: RHEL 9.1
-              test: rhel/9.1
-
   ## Finally
 
   - stage: Summary
     condition: succeededOrFailed()
     dependsOn:
-      - Sanity_2_15
-      - Remote_2_15
-      - Docker_2_15
       - Sanity_2_16
       - Remote_2_16
       - Docker_2_16
