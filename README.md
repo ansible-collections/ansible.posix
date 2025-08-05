@@ -21,7 +21,7 @@ An Ansible Collection of modules and plugins that target POSIX UNIX/Linux and de
 * Python:
   * The Python interpreter version must meet Ansible Core's requirements.
 * Ansible Core:
-  - ansible-core 2.15 or later
+  - ansible-core 2.16 or later
 
 ## Installation
 
