@@ -1,10 +1,43 @@
 ---
 # Additional tests specifically for system_wide parameter functionality
 
-- name: Test system_wide parameter comprehensive functionality
+- name: Test system_wide parameter basic functionality
   block:
+    # Test system_wide with a simple sysctl parameter
+    - name: Set vm.swappiness with system_wide=true (first time)
+      ansible.posix.sysctl:
+        name: vm.swappiness
+        value: 35
+        state: present
+        reload: false
+        system_wide: true
+      register: sysctl_system_wide_first_test
+
+    - name: Debug first test result
+      ansible.builtin.debug:
+        var: sysctl_system_wide_first_test
+
+    - name: Set vm.swappiness with system_wide=true (second time - should not change)
+      ansible.posix.sysctl:
+        name: vm.swappiness
+        value: 35
+        state: present
+        reload: false
+        system_wide: true
+      register: sysctl_system_wide_second_test
+
+    - name: Debug second test result
+      ansible.builtin.debug:
+        var: sysctl_system_wide_second_test
+
+    - name: Validate system_wide basic functionality
+      ansible.builtin.assert:
+        that:
+          - sysctl_system_wide_first_test is changed
+          - sysctl_system_wide_second_test is not changed
+
     # Test system_wide with reload=true
-    - name: Set vm.dirty_expire_centisecs with system_wide=true
+    - name: Set vm.dirty_expire_centisecs with system_wide=true and reload
       ansible.posix.sysctl:
         name: vm.dirty_expire_centisecs
         value: 3000

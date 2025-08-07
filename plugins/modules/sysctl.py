@@ -163,6 +163,7 @@ class SysctlModule(object):
         self.file_value = None  # current token value in file
         self.file_lines = []    # all lines in the file
         self.file_values = {}   # dict of token values
+        self.system_wide_file_value = None  # current token value from system-wide files
 
         self.changed = False    # will change occur
         self.set_proc = False   # does sysctl need to set value
@@ -192,19 +193,36 @@ class SysctlModule(object):
         if thisname not in self.file_values:
             self.file_values[thisname] = None
 
+        # if system_wide is enabled, also check system-wide configuration
+        if self.system_wide:
+            system_wide_values = self.read_system_wide_sysctl_files()
+            # If the value exists in system-wide config, use that for comparison
+            if thisname in system_wide_values:
+                self.system_wide_file_value = system_wide_values[thisname]
+            else:
+                self.system_wide_file_value = None
+        else:
+            self.system_wide_file_value = None
+
         # update file contents with desired token/value
         self.fix_lines()
 
         # what do we need to do now?
-        if self.file_values[thisname] is None and self.args['state'] == "present":
+        # Determine the effective current value (system-wide takes precedence if enabled)
+        if self.system_wide and self.system_wide_file_value is not None:
+            current_file_value = self.system_wide_file_value
+        else:
+            current_file_value = self.file_values[thisname]
+
+        if current_file_value is None and self.args['state'] == "present":
             self.changed = True
             self.write_file = True
-        elif self.file_values[thisname] is None and self.args['state'] == "absent":
+        elif current_file_value is None and self.args['state'] == "absent":
             self.changed = False
-        elif self.file_values[thisname] and self.args['state'] == "absent":
+        elif current_file_value and self.args['state'] == "absent":
             self.changed = True
             self.write_file = True
-        elif self.file_values[thisname] != self.args['value']:
+        elif current_file_value != self.args['value']:
             self.changed = True
             self.write_file = True
         # with reload=yes we should check if the current system values are
@@ -381,6 +399,35 @@ class SysctlModule(object):
             k = k.strip()
             v = v.strip()
             self.file_values[k] = v.strip()
+
+    # Get the token value from all system-wide sysctl files
+    def read_system_wide_sysctl_files(self):
+        """Read all system-wide sysctl configuration files when system_wide=True"""
+        system_values = {}
+        
+        for sysctl_pattern in self.SYSCTL_DIRS:
+            for conf_file in glob.glob(sysctl_pattern):
+                if os.path.isfile(conf_file):
+                    try:
+                        with open(conf_file, "r") as read_file:
+                            lines = read_file.readlines()
+                            
+                        for line in lines:
+                            line = line.strip()
+                            # don't split empty lines or comments or line without equal sign
+                            if not line or line.startswith(("#", ";")) or "=" not in line:
+                                continue
+
+                            k, v = line.split('=', 1)
+                            k = k.strip()
+                            v = v.strip()
+                            # Later files override earlier ones (mimicking sysctl --system behavior)
+                            system_values[k] = v.strip()
+                    except IOError:
+                        # Skip files that can't be read
+                        continue
+        
+        return system_values
 
     # Fix the value in the sysctl file content
     def fix_lines(self):
