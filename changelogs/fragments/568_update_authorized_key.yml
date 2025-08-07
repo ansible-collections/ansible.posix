@@ -1,3 +1,0 @@
----
-minor_changes:
-  - authorized_keys - allow using absolute path to a file as a SSH key(s) source (https://github.com/ansible-collections/ansible.posix/pull/568)
