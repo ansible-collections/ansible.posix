@@ -56,6 +56,16 @@ options:
             - Verify token value with the sysctl command and set with C(-w) if necessary.
         type: bool
         default: false
+    system_wide:
+        description:
+            - If V(true), uses C(sysctl --system) behavior to reload all sysctl configuration files.
+            - This will reload configuration from C(/etc/sysctl.d/*.conf), C(/run/sysctl.d/*.conf), 
+              C(/usr/local/lib/sysctl.d/*.conf), C(/usr/lib/sysctl.d/*.conf), C(/lib/sysctl.d/*.conf),
+              and C(/etc/sysctl.conf) in that order.
+            - If V(false), only reloads the specific sysctl file defined by O(sysctl_file).
+            - Only applies when O(reload) is V(true).
+        type: bool
+        default: false
 author:
 - David CHANIAL (@davixx)
 '''
@@ -100,6 +110,14 @@ EXAMPLES = r'''
     sysctl_set: true
     state: present
     reload: true
+
+# Set vm.swappiness and reload all system sysctl configuration files (equivalent to sysctl --system)
+- ansible.posix.sysctl:
+    name: vm.swappiness
+    value: '10'
+    state: present
+    reload: true
+    system_wide: true
 '''
 
 # ==============================================================
@@ -139,7 +157,7 @@ class SysctlModule(object):
 
         self.sysctl_cmd = self.module.get_bin_path('sysctl', required=True)
         self.sysctl_file = self.args['sysctl_file']
-        self.system_Wide = self.args['system_Wide']
+        self.system_wide = self.args['system_wide']
 
         self.proc_value = None  # current token value in proc fs
         self.file_value = None  # current token value in file
@@ -319,7 +337,7 @@ class SysctlModule(object):
             # https://github.com/ansible/ansible/issues/58158
             return
         else:
-            if self.system_Wide:
+            if self.system_wide:
                 for sysctl_file in self.SYSCTL_DIRS:
                     for conf_file in glob.glob(sysctl_file):
                         rc, out, err = self.module.run_command([self.sysctl_cmd, '-p', conf_file], environ_update=self.LANG_ENV)

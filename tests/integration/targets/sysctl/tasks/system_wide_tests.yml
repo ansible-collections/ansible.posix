@@ -1,0 +1,170 @@
+---
+# Additional tests specifically for system_wide parameter functionality
+
+- name: Test system_wide parameter comprehensive functionality
+  block:
+    # Test system_wide with reload=true
+    - name: Set vm.dirty_expire_centisecs with system_wide=true
+      ansible.posix.sysctl:
+        name: vm.dirty_expire_centisecs
+        value: 3000
+        state: present
+        reload: true
+        system_wide: true
+      register: sysctl_system_wide_reload_test
+
+    - name: Check vm.dirty_expire_centisecs value
+      ansible.builtin.command: sysctl -n vm.dirty_expire_centisecs
+      changed_when: false
+      register: sysctl_check_dirty_expire
+
+    - name: Validate system_wide with reload=true
+      ansible.builtin.assert:
+        that:
+          - sysctl_system_wide_reload_test is changed
+          - sysctl_check_dirty_expire.stdout == "3000"
+
+    # Test system_wide=false behavior (default)
+    - name: Create custom sysctl file for testing system_wide=false
+      ansible.builtin.copy:
+        content: |
+          # Custom sysctl test file
+          vm.dirty_background_ratio=5
+        dest: "{{ output_dir_test }}/custom_sysctl.conf"
+        mode: "0644"
+
+    - name: Set vm.dirty_background_ratio with system_wide=false
+      ansible.posix.sysctl:
+        name: vm.dirty_background_ratio
+        value: 10
+        state: present
+        reload: true
+        system_wide: false
+        sysctl_file: "{{ output_dir_test }}/custom_sysctl.conf"
+      register: sysctl_system_false_test
+
+    - name: Check custom sysctl file content
+      ansible.builtin.command: cat {{ output_dir_test }}/custom_sysctl.conf
+      changed_when: false
+      register: custom_sysctl_content
+
+    - name: Validate system_wide=false behavior
+      ansible.builtin.assert:
+        that:
+          - sysctl_system_false_test is changed
+          - "'vm.dirty_background_ratio=10' in custom_sysctl_content.stdout"
+
+    # Test system_wide with check mode
+    - name: Test system_wide in check mode
+      ansible.posix.sysctl:
+        name: vm.swappiness
+        value: 25
+        state: present
+        reload: true
+        system_wide: true
+      check_mode: true
+      register: sysctl_system_wide_check_mode
+
+    - name: Validate check mode works with system_wide
+      ansible.builtin.assert:
+        that:
+          - sysctl_system_wide_check_mode is changed
+
+    # Test system_wide with missing directories (should not fail)
+    - name: Test system_wide with potentially missing directories
+      ansible.posix.sysctl:
+        name: vm.overcommit_memory
+        value: 1
+        state: present
+        reload: true
+        system_wide: true
+        ignoreerrors: true
+      register: sysctl_system_wide_missing_dirs
+
+    - name: Validate system_wide handles missing directories
+      ansible.builtin.assert:
+        that:
+          - sysctl_system_wide_missing_dirs is not failed
+
+- name: Test system_wide with multiple configuration files (RHEL/CentOS only)
+  when:
+    - ansible_facts.os_family == 'RedHat'
+    - ansible_facts.virtualization_type != 'docker'
+  block:
+    # Test that system_wide processes multiple configuration files
+    - name: Create test sysctl.d file
+      ansible.builtin.copy:
+        content: |
+          # Test system-wide sysctl reload
+          vm.dirty_writeback_centisecs=500
+        dest: /etc/sysctl.d/99-ansible-test.conf
+        mode: "0644"
+        backup: true
+      register: test_sysctl_file
+
+    - name: Apply setting with system_wide to test multiple file processing
+      ansible.posix.sysctl:
+        name: vm.overcommit_memory
+        value: 1
+        state: present
+        reload: true
+        system_wide: true
+      register: sysctl_multifile_test
+
+    - name: Verify both settings are applied
+      ansible.builtin.shell: |
+        sysctl -n vm.dirty_writeback_centisecs
+        sysctl -n vm.overcommit_memory
+      changed_when: false
+      register: sysctl_multifile_check
+
+    - name: Validate multiple file processing
+      ansible.builtin.assert:
+        that:
+          - sysctl_multifile_test is changed
+          - "'500' in sysctl_multifile_check.stdout"
+          - "'1' in sysctl_multifile_check.stdout"
+
+    - name: Cleanup test sysctl.d file
+      ansible.builtin.file:
+        path: /etc/sysctl.d/99-ansible-test.conf
+        state: absent
+
+- name: Test system_wide parameter combinations
+  block:
+    # Test system_wide with sysctl_set
+    - name: Test system_wide with sysctl_set=true
+      ansible.posix.sysctl:
+        name: vm.swappiness
+        value: 15
+        state: present
+        reload: true
+        system_wide: true
+        sysctl_set: true
+      register: sysctl_system_wide_set_test
+
+    - name: Check vm.swappiness value after system_wide + sysctl_set
+      ansible.builtin.command: sysctl -n vm.swappiness
+      changed_when: false
+      register: sysctl_check_swappiness_set
+
+    - name: Validate system_wide with sysctl_set
+      ansible.builtin.assert:
+        that:
+          - sysctl_system_wide_set_test is changed
+          - sysctl_check_swappiness_set.stdout == "15"
+
+    # Test system_wide with reload=false (should not trigger system reload)
+    - name: Test system_wide with reload=false
+      ansible.posix.sysctl:
+        name: vm.dirty_ratio
+        value: 25
+        state: present
+        reload: false
+        system_wide: true
+      register: sysctl_system_wide_no_reload
+
+    - name: Validate system_wide with reload=false
+      ansible.builtin.assert:
+        that:
+          - sysctl_system_wide_no_reload is changed
