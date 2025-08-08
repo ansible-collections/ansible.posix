@@ -142,8 +142,8 @@
         value: 1
         reload: false
         sysctl_set: true
-      register: sysctl_test3
       ignore_errors: true
+      register: sysctl_test3
 
     - name: Debug sysctl_test3
       ansible.builtin.debug:
@@ -152,7 +152,7 @@
     - name: Validate results for test 3
       ansible.builtin.assert:
         that:
-          - sysctl_test3 is failed
+          - sysctl_test3.failed == true
 
     ##
     ## sysctl - sysctl_set
