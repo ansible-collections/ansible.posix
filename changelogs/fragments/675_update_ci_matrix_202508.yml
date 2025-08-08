@@ -1,0 +1,2 @@
+trivial:
+  - Update AZP CI matrix to bump test container version 7.0.0(https://github.com/ansible-collections/ansible.posix/pull/673).
