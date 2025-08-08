@@ -148,11 +148,12 @@
     - name: Debug sysctl_test3
       ansible.builtin.debug:
         var: sysctl_test3
+        verbosity: 1
 
     - name: Validate results for test 3
       ansible.builtin.assert:
         that:
-          - sysctl_test3.failed == true
+          - sysctl_test3 is failed
 
     ##
     ## sysctl - sysctl_set
