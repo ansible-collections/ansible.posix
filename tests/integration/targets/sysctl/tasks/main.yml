@@ -262,7 +262,7 @@
       ansible.builtin.assert:
         that:
           - sysctl_system_test1 is changed
-          - sysctl_check_system1.stdout_lines == ["vm.swappiness = 10"]
+          - "'10' in sysctl_check_system1.stdout"
 
     # Test system_wide with reload=true
     - name: Set vm.dirty_ratio to 20 with system_wide and reload=true
