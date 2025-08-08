@@ -141,6 +141,7 @@
         name: test.invalid
         value: 1
         reload: false
+        sysctl_set: true
       register: sysctl_test3
       ignore_errors: true
 
