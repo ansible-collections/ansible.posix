@@ -6,5 +6,6 @@
 skip_list:
   - meta-runtime[unsupported-version]  # Tis rule doesn't make any sense
   - fqcn[deep]  # This rule produces false positives for files in tests/unit/plugins/action/fixtures/
+  - no-relative-paths  # Temporary skip due to documentation parsing issue
 exclude_paths:
   - changelogs/

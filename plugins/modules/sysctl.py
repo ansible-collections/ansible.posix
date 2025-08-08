@@ -404,14 +404,14 @@ class SysctlModule(object):
     def read_system_wide_sysctl_files(self):
         """Read all system-wide sysctl configuration files when system_wide=True"""
         system_values = {}
-        
+
         for sysctl_pattern in self.SYSCTL_DIRS:
             for conf_file in glob.glob(sysctl_pattern):
                 if os.path.isfile(conf_file):
                     try:
                         with open(conf_file, "r") as read_file:
                             lines = read_file.readlines()
-                            
+
                         for line in lines:
                             line = line.strip()
                             # don't split empty lines or comments or line without equal sign
@@ -426,7 +426,7 @@ class SysctlModule(object):
                     except IOError:
                         # Skip files that can't be read
                         continue
-        
+
         return system_values
 
     # Fix the value in the sysctl file content
