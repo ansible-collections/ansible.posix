@@ -59,7 +59,7 @@ options:
     system_wide:
         description:
             - If V(true), uses C(sysctl --system) behavior to reload all sysctl configuration files.
-            - This will reload configuration from C(/etc/sysctl.d/*.conf), C(/run/sysctl.d/*.conf), 
+            - This will reload configuration from C(/etc/sysctl.d/*.conf), C(/run/sysctl.d/*.conf),
               C(/usr/local/lib/sysctl.d/*.conf), C(/usr/lib/sysctl.d/*.conf), C(/lib/sysctl.d/*.conf),
               and C(/etc/sysctl.conf) in that order.
             - If V(false), only reloads the specific sysctl file defined by O(sysctl_file).
