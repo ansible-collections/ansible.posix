@@ -22,7 +22,7 @@ For more information about communication, see the [Ansible communication guide](
 <!--start requires_ansible-->
 ## Ansible version compatibility
 
-This collection has been tested against following Ansible versions: **>=2.15**.
+This collection has been tested against following Ansible versions: **>=2.16**.
 <!--end requires_ansible-->
 
 ## Included content
@@ -74,13 +74,9 @@ None
 
 <!-- List the versions of Ansible the collection has been tested with. Must match what is in galaxy.yml. -->
 
-- ansible-core 2.19 (devel)
 - ansible-core 2.18 (stable) *
 - ansible-core 2.17 (stable)
 - ansible-core 2.16 (stable)
-- ansible-core 2.15 (stable)
-
-*Note: For ansible-core 2.18, CI only covers sanity tests and no integration tests will be run until the test environment is released.*
 
 ## Roadmap
 
