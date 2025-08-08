@@ -140,14 +140,13 @@
       ansible.posix.sysctl:
         name: test.invalid
         value: 1
-        ignoreerrors: true
+        reload: false
       register: sysctl_test3
       ignore_errors: true
 
     - name: Debug sysctl_test3
       ansible.builtin.debug:
         var: sysctl_test3
-        verbosity: 1
 
     - name: Validate results for test 3
       ansible.builtin.assert:
