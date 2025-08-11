@@ -140,8 +140,6 @@
       ansible.posix.sysctl:
         name: test.invalid
         value: 1
-        reload: false
-        sysctl_set: true
       ignore_errors: true
       register: sysctl_test3
 
