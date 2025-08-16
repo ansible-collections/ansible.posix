@@ -319,7 +319,6 @@ def main():
         active_zones=module.params['active_zones'],
         collected_zones=list(),
         undefined_zones=list(),
-        warnings=list(),
     )
 
     # Exit with failure message if requirements modules are not installed.
