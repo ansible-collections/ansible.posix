@@ -87,7 +87,8 @@ options:
         real source. V(absent) does not unmount recursively, and the module will
         fail if multiple devices are mounted on the same mount point. Using
         V(absent) with a mount point that is not registered in the I(fstab) has
-        no effect, use V(unmounted) instead.
+        no effect, use V(unmounted) instead. You can set O(keep_mountpoint) to
+        True to keep the mountpoint.
       - V(remounted) specifies that the device will be remounted for when you
         want to force a refresh on the mount itself (added in 2.9). This will
         always return RV(ignore:changed=true). If O(opts) is set, the options will be
@@ -132,6 +133,16 @@ options:
         the original file back if you somehow clobbered it incorrectly.
     type: bool
     default: false
+  keep_mountpoint:
+    description:
+    - Change the default behaviour of state=absent by keeping the mountpoint
+    - With keep_mountpoint=true, state=absent is like unmounted plus the
+      fstab update.
+    - Use it if you care about finding original mountpoint content without failing
+      and want to remove the entry in fstab. If you have no entry to clean in
+      fstab you can use state=unmounted
+    type: bool
+    default: false
 notes:
   - As of Ansible 2.3, the O(name) option has been changed to O(path) as
     default, but O(name) still works as well.
@@ -174,6 +185,23 @@ EXAMPLES = r'''
   ansible.posix.mount:
     path: /tmp/mnt-pnt
     state: remounted
+
+# The following will fail on first run
+# if /home/mydir is not empty after unmounting,
+# though unmount and remove from fstab are successfull.
+# It will be successfull on subsequent runs (already unmounted).
+- name: Unmount and remove from fstab, then if unmount was necessary try to remove mountpoint /home/mydir
+  ansible.posix.mount:
+    path: /home/mydir
+    state: absent
+# The following will not fail on first run
+# if /home/mydir is not empty after unmounting.
+# It will leave /home/mydir and its content (if any) after unmounting.
+- name: Unmount and remove from fstab, but keep /home/mydir
+  ansible.posix.mount:
+    path: /home/mydir
+    state: absent
+    keep_mountpoint: true
 
 # The following will not save changes to fstab, and only be temporary until
 # a reboot, or until calling "state: unmounted" followed by "state: mounted"
@@ -779,6 +807,7 @@ def main():
             src=dict(type='path'),
             backup=dict(type='bool', default=False),
             state=dict(type='str', required=True, choices=['absent', 'absent_from_fstab', 'mounted', 'present', 'unmounted', 'remounted', 'ephemeral']),
+            keep_mountpoint=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
         required_if=(
@@ -893,7 +922,7 @@ def main():
                     module.fail_json(
                         msg="Error unmounting %s: %s" % (name, msg))
 
-            if os.path.exists(name):
+            if os.path.exists(name) and module.params['keep_mountpoint'] is False:
                 try:
                     os.rmdir(name)
                 except (OSError, IOError) as e:
