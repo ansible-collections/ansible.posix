@@ -56,6 +56,16 @@ options:
             - Verify token value with the sysctl command and set with C(-w) if necessary.
         type: bool
         default: false
+    system_wide:
+        description:
+            - If V(true), uses C(sysctl --system) behavior to reload all sysctl configuration files.
+            - This will reload configuration from C(/etc/sysctl.d/*.conf), C(/run/sysctl.d/*.conf),
+              C(/usr/local/lib/sysctl.d/*.conf), C(/usr/lib/sysctl.d/*.conf), C(/lib/sysctl.d/*.conf),
+              and C(/etc/sysctl.conf) in that order.
+            - If V(false), only reloads the specific sysctl file defined by O(sysctl_file).
+            - Only applies when O(reload) is V(true).
+        type: bool
+        default: false
 author:
 - David CHANIAL (@davixx)
 '''
@@ -100,6 +110,14 @@ EXAMPLES = r'''
     sysctl_set: true
     state: present
     reload: true
+
+# Set vm.swappiness and reload all system sysctl configuration files (equivalent to sysctl --system)
+- ansible.posix.sysctl:
+    name: vm.swappiness
+    value: '10'
+    state: present
+    reload: true
+    system_wide: true
 '''
 
 # ==============================================================
@@ -108,6 +126,7 @@ import os
 import platform
 import re
 import tempfile
+import glob
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types
@@ -121,17 +140,30 @@ class SysctlModule(object):
     # success or failure.
     LANG_ENV = {'LANG': 'C', 'LC_ALL': 'C', 'LC_MESSAGES': 'C'}
 
+    # We define a variable to keep all the directories to be read, equivalent to
+    # (/sbin/sysctl --system) option
+    SYSCTL_DIRS = [
+        '/etc/sysctl.d/*.conf',
+        '/run/sysctl.d/*.conf',
+        '/usr/local/lib/sysctl.d/*.conf',
+        '/usr/lib/sysctl.d/*.conf',
+        '/lib/sysctl.d/*.conf',
+        '/etc/sysctl.conf'
+    ]
+
     def __init__(self, module):
         self.module = module
         self.args = self.module.params
 
         self.sysctl_cmd = self.module.get_bin_path('sysctl', required=True)
         self.sysctl_file = self.args['sysctl_file']
+        self.system_wide = self.args['system_wide']
 
         self.proc_value = None  # current token value in proc fs
         self.file_value = None  # current token value in file
         self.file_lines = []    # all lines in the file
         self.file_values = {}   # dict of token values
+        self.system_wide_file_value = None  # current token value from system-wide files
 
         self.changed = False    # will change occur
         self.set_proc = False   # does sysctl need to set value
@@ -161,19 +193,36 @@ class SysctlModule(object):
         if thisname not in self.file_values:
             self.file_values[thisname] = None
 
+        # if system_wide is enabled, also check system-wide configuration
+        if self.system_wide:
+            system_wide_values = self.read_system_wide_sysctl_files()
+            # If the value exists in system-wide config, use that for comparison
+            if thisname in system_wide_values:
+                self.system_wide_file_value = system_wide_values[thisname]
+            else:
+                self.system_wide_file_value = None
+        else:
+            self.system_wide_file_value = None
+
         # update file contents with desired token/value
         self.fix_lines()
 
         # what do we need to do now?
-        if self.file_values[thisname] is None and self.args['state'] == "present":
+        # Determine the effective current value (system-wide takes precedence if enabled)
+        if self.system_wide and self.system_wide_file_value is not None:
+            current_file_value = self.system_wide_file_value
+        else:
+            current_file_value = self.file_values[thisname]
+
+        if current_file_value is None and self.args['state'] == "present":
             self.changed = True
             self.write_file = True
-        elif self.file_values[thisname] is None and self.args['state'] == "absent":
+        elif current_file_value is None and self.args['state'] == "absent":
             self.changed = False
-        elif self.file_values[thisname] and self.args['state'] == "absent":
+        elif current_file_value and self.args['state'] == "absent":
             self.changed = True
             self.write_file = True
-        elif self.file_values[thisname] != self.args['value']:
+        elif current_file_value != self.args['value']:
             self.changed = True
             self.write_file = True
         # with reload=yes we should check if the current system values are
@@ -306,15 +355,25 @@ class SysctlModule(object):
             # https://github.com/ansible/ansible/issues/58158
             return
         else:
-            # system supports reloading via the -p flag to sysctl, so we'll use that
-            sysctl_args = [self.sysctl_cmd, '-p', self.sysctl_file]
-            if self.args['ignoreerrors']:
-                sysctl_args.insert(1, '-e')
+            if self.system_wide:
+                for sysctl_file in self.SYSCTL_DIRS:
+                    for conf_file in glob.glob(sysctl_file):
+                        sysctl_args = [self.sysctl_cmd, '-p', conf_file]
+                        if self.args['ignoreerrors']:
+                            sysctl_args.insert(1, '-e')
+                        rc, out, err = self.module.run_command(sysctl_args, environ_update=self.LANG_ENV)
+                        if rc != 0 or self._stderr_failed(err):
+                            self.module.fail_json(msg="Failed to reload sysctl: %s" % to_native(out) + to_native(err))
+            else:
+                # system supports reloading via the -p flag to sysctl, so we'll use that
+                sysctl_args = [self.sysctl_cmd, '-p', self.sysctl_file]
+                if self.args['ignoreerrors']:
+                    sysctl_args.insert(1, '-e')
 
-            rc, out, err = self.module.run_command(sysctl_args, environ_update=self.LANG_ENV)
+                rc, out, err = self.module.run_command(sysctl_args, environ_update=self.LANG_ENV)
 
-        if rc != 0 or self._stderr_failed(err):
-            self.module.fail_json(msg="Failed to reload sysctl: %s" % to_native(out) + to_native(err))
+            if rc != 0 or self._stderr_failed(err):
+                self.module.fail_json(msg="Failed to reload sysctl: %s" % to_native(out) + to_native(err))
 
     # ==============================================================
     #   SYSCTL FILE MANAGEMENT
@@ -343,6 +402,35 @@ class SysctlModule(object):
             k = k.strip()
             v = v.strip()
             self.file_values[k] = v.strip()
+
+    # Get the token value from all system-wide sysctl files
+    def read_system_wide_sysctl_files(self):
+        """Read all system-wide sysctl configuration files when system_wide=True"""
+        system_values = {}
+
+        for sysctl_pattern in self.SYSCTL_DIRS:
+            for conf_file in glob.glob(sysctl_pattern):
+                if os.path.isfile(conf_file):
+                    try:
+                        with open(conf_file, "r") as read_file:
+                            lines = read_file.readlines()
+
+                        for line in lines:
+                            line = line.strip()
+                            # don't split empty lines or comments or line without equal sign
+                            if not line or line.startswith(("#", ";")) or "=" not in line:
+                                continue
+
+                            k, v = line.split('=', 1)
+                            k = k.strip()
+                            v = v.strip()
+                            # Later files override earlier ones (mimicking sysctl --system behavior)
+                            system_values[k] = v.strip()
+                    except IOError:
+                        # Skip files that can't be read
+                        continue
+
+        return system_values
 
     # Fix the value in the sysctl file content
     def fix_lines(self):
@@ -401,7 +489,8 @@ def main():
             reload=dict(default=True, type='bool'),
             sysctl_set=dict(default=False, type='bool'),
             ignoreerrors=dict(default=False, type='bool'),
-            sysctl_file=dict(default='/etc/sysctl.conf', type='path')
+            sysctl_file=dict(default='/etc/sysctl.conf', type='path'),
+            system_wide=dict(default=False, type='bool'),  # system_wide parameter
         ),
         supports_check_mode=True,
         required_if=[('state', 'present', ['value'])],

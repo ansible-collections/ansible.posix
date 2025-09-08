@@ -140,8 +140,8 @@
       ansible.posix.sysctl:
         name: test.invalid
         value: 1
-      register: sysctl_test3
       ignore_errors: true
+      register: sysctl_test3
 
     - name: Debug sysctl_test3
       ansible.builtin.debug:
@@ -229,6 +229,91 @@
       ansible.builtin.assert:
         that:
           - sysctl_test4 is failed
+        
+      ##
+      ## sysctl --system
+      ##
+
+    - name: Set vm.swappiness to 10 with --system option
+      ansible.posix.sysctl:
+        name: vm.swappiness
+        value: 10
+        state: present
+        reload: false
+        sysctl_set: true
+        system_wide: true
+      register: sysctl_system_test1
+
+    - name: Check with sysctl command
+      ansible.builtin.command: sysctl vm.swappiness
+      changed_when: false
+      register: sysctl_check_system1
+
+    - name: Debug sysctl_system_test1 sysctl_check_system1
+      ansible.builtin.debug:
+        var: item
+        verbosity: 1
+      with_items:
+        - "{{ sysctl_system_test1 }}"
+        - "{{ sysctl_check_system1 }}"
+
+    - name: Validate results for --system option
+      ansible.builtin.assert:
+        that:
+          - sysctl_system_test1 is changed
+          - "'10' in sysctl_check_system1.stdout"
+
+    # Test system_wide with reload=true
+    - name: Set vm.dirty_ratio to 20 with system_wide and reload=true
+      ansible.posix.sysctl:
+        name: vm.dirty_ratio
+        value: 20
+        state: present
+        reload: true
+        system_wide: true
+      register: sysctl_system_reload_test
+
+    - name: Check vm.dirty_ratio value
+      ansible.builtin.command: sysctl -n vm.dirty_ratio
+      changed_when: false
+      register: sysctl_check_dirty_ratio
+
+    - name: Validate system_wide with reload
+      ansible.builtin.assert:
+        that:
+          - sysctl_system_reload_test is changed
+          - sysctl_check_dirty_ratio.stdout == "20"
+
+    # Test system_wide=false behavior (default)
+    - name: Create custom sysctl file for testing
+      ansible.builtin.copy:
+        content: |
+          # Custom sysctl test file
+          vm.dirty_background_ratio=5
+        dest: "{{ output_dir_test }}/custom_sysctl.conf"
+        mode: "0644"
+
+    - name: Set vm.dirty_background_ratio with system_wide=false
+      ansible.posix.sysctl:
+        name: vm.dirty_background_ratio
+        value: 10
+        state: present
+        reload: true
+        system_wide: false
+        sysctl_file: "{{ output_dir_test }}/custom_sysctl.conf"
+      register: sysctl_system_false_test
+
+    - name: Check custom sysctl file content
+      ansible.builtin.command: cat {{ output_dir_test }}/custom_sysctl.conf
+      changed_when: false
+      register: custom_sysctl_content
+
+    - name: Validate system_wide=false behavior
+      ansible.builtin.assert:
+        that:
+          - sysctl_system_false_test is changed
+          - "'vm.dirty_background_ratio=10' in custom_sysctl_content.stdout"
+
 
 - name: Test on RHEL VMs
   when:
@@ -366,3 +451,36 @@
         that:
           - stat_result.stat.islnk is defined and stat_result.stat.islnk
           - stat_result.stat.lnk_source == '/tmp/ansible_sysctl_test.conf'
+    
+    # Test sysctl: --system
+    - name: Set vm.swappiness to 10 with --system option
+      ansible.posix.sysctl:
+        name: vm.swappiness
+        value: 10
+        state: present
+        reload: false
+        sysctl_set: true
+        system_wide: true
+      register: sysctl_system_test1
+
+    - name: Check with sysctl command
+      ansible.builtin.command: sysctl vm.swappiness
+      changed_when: false
+      register: sysctl_check_system1
+
+    - name: Debug sysctl_system_test1 sysctl_check_system1
+      ansible.builtin.debug:
+        var: item
+        verbosity: 1
+      with_items:
+        - "{{ sysctl_system_test1 }}"
+        - "{{ sysctl_check_system1 }}"
+
+    - name: Validate results for --system option
+      ansible.builtin.assert:
+        that:
+          - sysctl_system_test1 is changed
+          - sysctl_check_system1.stdout_lines == ["vm.swappiness = 10"]
+
+- name: Include system_wide specific tests
+  ansible.builtin.include_tasks: system_wide_tests.yml
