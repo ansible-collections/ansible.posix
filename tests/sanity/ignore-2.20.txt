@@ -1,1 +1,10 @@
 tests/utils/shippable/timing.py shebang
+plugins/action/synchronize.py pylint:ansible-bad-import-from
+plugins/callback/cgroup_perf_recap.py pylint:ansible-bad-import-from
+plugins/modules/mount.py pylint:ansible-bad-import-from
+plugins/modules/sysctl.py pylint:ansible-bad-import-from
+plugins/shell/csh.py pylint:ansible-bad-import-from
+plugins/shell/fish.py pylint:ansible-bad-import-from
+tests/unit/mock/procenv.py pylint:ansible-bad-import-from
+tests/unit/mock/yaml_helper.py pylint:ansible-bad-import-from
+tests/unit/modules/conftest.py pylint:ansible-bad-import-from
