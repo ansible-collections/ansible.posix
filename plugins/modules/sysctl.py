@@ -418,6 +418,13 @@ def main():
     if module.params['state'] == 'present' and module.params['value'] == '':
         module.fail_json(msg="value cannot be blank")
 
+    # System specific tests
+    system = platform.system().lower()
+    if system == 'freebsd':
+        if module.params['sysctl_file'] not in ['/etc/sysctl.conf', '/etc/sysctl.conf.local'] and \
+           module.params['reload']:
+            module.fail_json(msg="%s can not be reloaded. Set reload=False." % module.params['sysctl_file'])
+
     result = SysctlModule(module)
 
     module.exit_json(changed=result.changed)
