@@ -28,7 +28,7 @@
 - name: Assert that the key deletion has failed
   ansible.builtin.assert:
     that:
-      - result.failed == True
+      - result is failed
 
 - name: Remove the file
   ansible.builtin.file:
