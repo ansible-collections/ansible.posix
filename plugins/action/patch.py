@@ -20,7 +20,7 @@ __metaclass__ = type
 
 import os
 
-from ansible.errors import AnsibleError, AnsibleAction, _AnsibleActionDone, AnsibleActionFail
+from ansible.errors import AnsibleError, AnsibleAction, AnsibleActionFail
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
@@ -46,7 +46,8 @@ class ActionModule(ActionBase):
             elif remote_src:
                 # everything is remote, so we just execute the module
                 # without changing any of the module arguments
-                raise _AnsibleActionDone(result=self._execute_module(task_vars=task_vars))
+                result.update(self._execute_module(task_vars=task_vars))
+                return result
 
             try:
                 src = self._find_needle('files', src)
