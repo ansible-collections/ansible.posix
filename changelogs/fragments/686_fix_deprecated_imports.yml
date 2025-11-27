@@ -1,0 +1,8 @@
+---
+minor_changes:
+  - plugins/action/synchronize.py - fix deprecated ``ansible.module_utils._text`` and ``ansible.module_utils.common._collections_compat`` imports (https://github.com/ansible-collections/ansible.posix/issues/686).
+  - plugins/action/synchronize.py - fix deprecated ``ansible.module_utils.six`` imports for CI compliance.
+  - plugins/modules/synchronize.py - fix deprecated ``ansible.module_utils._text`` import (https://github.com/ansible-collections/ansible.posix/issues/686).
+  - plugins/modules/synchronize.py - fix deprecated ``ansible.module_utils.six`` imports for CI compliance.
+  - mount - fix deprecated ``ansible.module_utils._text`` import (https://github.com/ansible-collections/ansible.posix/issues/686).
+  - mount - fix deprecated ``ansible.module_utils.six`` imports for CI compliance.
