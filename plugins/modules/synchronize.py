@@ -367,9 +367,16 @@ EXAMPLES = r'''
 import os
 import errno
 
+# TODO(Python2): shlex.quote was added in Python 3.3. This module may run on
+# target hosts with Python 2.7 (e.g., older RHEL systems in CI integration tests).
+# Remove the try/except fallback to pipes.quote when Python 2 support is dropped.
+try:
+    from shlex import quote as shlex_quote
+except ImportError:
+    from pipes import quote as shlex_quote
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_bytes, to_native
-from ansible.module_utils.six.moves import shlex_quote
 
 
 client_addr = None

@@ -19,10 +19,9 @@ __metaclass__ = type
 
 import os.path
 from collections.abc import MutableSequence
+from shlex import quote as shlex_quote
 
 from ansible import constants as C
-from ansible.module_utils.six import string_types
-from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
@@ -417,7 +416,7 @@ class ActionModule(ActionBase):
             # Replicate what we do in the module argumentspec handling for lists
             if not isinstance(_tmp_args.get('rsync_opts'), MutableSequence):
                 tmp_rsync_opts = _tmp_args.get('rsync_opts', [])
-                if isinstance(tmp_rsync_opts, string_types):
+                if isinstance(tmp_rsync_opts, str):
                     tmp_rsync_opts = tmp_rsync_opts.split(',')
                 elif isinstance(tmp_rsync_opts, (int, float)):
                     tmp_rsync_opts = [to_text(tmp_rsync_opts)]
