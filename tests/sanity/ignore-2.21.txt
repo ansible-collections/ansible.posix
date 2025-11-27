@@ -1,6 +1,5 @@
 tests/utils/shippable/timing.py shebang
 plugins/callback/cgroup_perf_recap.py pylint:ansible-bad-import-from
-plugins/modules/mount.py pylint:ansible-bad-import-from
 plugins/modules/sysctl.py pylint:ansible-bad-import-from
 plugins/shell/csh.py pylint:ansible-bad-import-from
 plugins/shell/fish.py pylint:ansible-bad-import-from
