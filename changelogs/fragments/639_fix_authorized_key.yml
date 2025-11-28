@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - ansible.posix.authorized_key - fixes error on permission denied in authorized_key module (https://github.com/ansible-collections/ansible.posix/issues/462).
