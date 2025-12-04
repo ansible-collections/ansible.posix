@@ -56,6 +56,12 @@ options:
             - Verify token value with the sysctl command and set with C(-w) if necessary.
         type: bool
         default: false
+    allow_duplicate:
+        description:
+            - If C(true), allows duplicate entries in the sysctl file.
+              If C(false), it behaves the same as in versions prior to 2.1.0.
+        type: bool
+        default: false
 author:
 - David CHANIAL (@davixx)
 '''
@@ -165,7 +171,11 @@ class SysctlModule(object):
         self.fix_lines()
 
         # what do we need to do now?
-        if self.file_values[thisname] is None and self.args['state'] == "present":
+        if self.args['allow_duplicate'] and self.args['state'] == "present":
+            # with allow_duplicate we always add the new value
+            self.changed = True
+            self.write_file = True
+        elif self.file_values[thisname] is None and self.args['state'] == "present":
             self.changed = True
             self.write_file = True
         elif self.file_values[thisname] is None and self.args['state'] == "absent":
@@ -348,6 +358,7 @@ class SysctlModule(object):
     def fix_lines(self):
         checked = []
         self.fixed_lines = []
+
         for line in self.file_lines:
             if not line.strip() or line.strip().startswith(("#", ";")) or "=" not in line:
                 self.fixed_lines.append(line)
@@ -356,16 +367,25 @@ class SysctlModule(object):
             k, v = tmpline.split('=', 1)
             k = k.strip()
             v = v.strip()
-            if k not in checked:
-                checked.append(k)
-                if k == self.args['name']:
-                    if self.args['state'] == "present":
-                        new_line = "%s=%s\n" % (k, self.args['value'])
+
+            if self.args['allow_duplicate'] and self.args['state'] == "present":
+                new_line = "%s=%s\n" % (k, v)
+                self.fixed_lines.append(new_line)
+                if k == self.args['name'] and v == self.args['value']:
+                    checked.append(k)
+            else:
+                if k not in checked:
+                    checked.append(k)
+                    if k == self.args['name']:
+                        if self.args['state'] == "present":
+                            new_line = "%s=%s\n" % (k, self.args['value'])
+                            self.fixed_lines.append(new_line)
+                    else:
+                        new_line = "%s=%s\n" % (k, v)
                         self.fixed_lines.append(new_line)
                 else:
                     new_line = "%s=%s\n" % (k, v)
                     self.fixed_lines.append(new_line)
-
         if self.args['name'] not in checked and self.args['state'] == "present":
             new_line = "%s=%s\n" % (self.args['name'], self.args['value'])
             self.fixed_lines.append(new_line)
@@ -401,7 +421,8 @@ def main():
             reload=dict(default=True, type='bool'),
             sysctl_set=dict(default=False, type='bool'),
             ignoreerrors=dict(default=False, type='bool'),
-            sysctl_file=dict(default='/etc/sysctl.conf', type='path')
+            sysctl_file=dict(default='/etc/sysctl.conf', type='path'),
+            allow_duplicate=dict(default=False, type='bool',)
         ),
         supports_check_mode=True,
         required_if=[('state', 'present', ['value'])],
