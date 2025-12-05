@@ -1,0 +1,5 @@
+---
+trivial:
+  - AZP - Update AZP matrix to follow ansible-test changes.
+  - Add ignore file for Ansible Core 2.21.
+  - Remove ignore lines for ansible-bad-import-from in 2.20 sanity tests.
