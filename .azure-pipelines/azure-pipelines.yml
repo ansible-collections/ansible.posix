@@ -240,8 +240,8 @@ stages:
         parameters:
           testFormat: 2.17/{0}/1
           targets:
-            - name: RHEL 9.3
-              test: rhel/9.3
+            - name: RHEL 10.0
+              test: rhel/10.0
             - name: FreeBSD 13.5
               test: freebsd/13.5
   - stage: Remote_2_16
@@ -252,10 +252,8 @@ stages:
         parameters:
           testFormat: 2.16/{0}/1
           targets:
-            - name: RHEL 8.8
-              test: rhel/8.8
-            - name: RHEL 9.2
-              test: rhel/9.2
+            - name: RHEL 9.6
+              test: rhel/9.6
 
   ## Finally
 
