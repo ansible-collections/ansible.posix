@@ -252,10 +252,10 @@ stages:
         parameters:
           testFormat: 2.16/{0}/1
           targets:
-            - name: RHEL 8.8
-              test: rhel/8.8
-            - name: RHEL 9.2
-              test: rhel/9.2
+            - name: RHEL 8.9
+              test: rhel/8.9
+            - name: RHEL 9.3
+              test: rhel/9.3
 
   ## Finally
 
