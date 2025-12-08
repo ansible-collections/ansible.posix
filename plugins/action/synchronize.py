@@ -339,6 +339,8 @@ class ActionModule(ActionBase):
         dest = _tmp_args.get('dest', None)
         if src is None or dest is None:
             return dict(failed=True, msg="synchronize requires both src and dest parameters are set")
+        if isinstance(src, str):
+            src = [src]
 
         # Determine if we need a user@ and a password
         user = None
@@ -365,11 +367,11 @@ class ActionModule(ActionBase):
             # use the mode to define src and dest's url
             if _tmp_args.get('mode', 'push') == 'pull':
                 # src is a remote path: <user>@<host>, dest is a local path
-                src = self._process_remote(_tmp_args, src_host, src, user, inv_port in localhost_ports)
+                src = [self._process_remote(_tmp_args, src_host, e, user, inv_port in localhost_ports) for e in src]
                 dest = self._process_origin(dest_host, dest, user)
             else:
                 # src is a local path, dest is a remote path: <user>@<host>
-                src = self._process_origin(src_host, src, user)
+                src = [self._process_origin(src_host, e, user) for e in src]
                 dest = self._process_remote(_tmp_args, dest_host, dest, user, inv_port in localhost_ports)
 
             password = dest_host_inventory_vars.get('ansible_ssh_pass', None) or dest_host_inventory_vars.get('ansible_password', None)
@@ -378,7 +380,7 @@ class ActionModule(ActionBase):
         else:
             # Still need to munge paths (to account for roles) even if we aren't
             # copying files between hosts
-            src = self._get_absolute_path(path=src)
+            src = [self._get_absolute_path(path=e) for e in src]
             dest = self._get_absolute_path(path=dest)
 
         _tmp_args['_local_rsync_password'] = password

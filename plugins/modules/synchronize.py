@@ -361,6 +361,17 @@ EXAMPLES = r'''
         src: /tmp/localpath/
         dest: /tmp/remotepath
         rsync_path: /usr/gnu/bin/rsync
+
+# Source files from multiple folders and merge them on the remote
+# Files of the same name in /tmp/path_c/ will take precedence over those in /tmp/path_b/, and same for path_b to path_a
+- name: Copy files from multiple folders and merge them into dest
+  ansible.posix.synchronize:
+    src: 
+    - /tmp/path_a/
+    - /tmp/path_b/
+    - /tmp/path_c/
+    dest: /tmp/dest/
+    recursive: True
 '''
 
 
@@ -396,9 +407,9 @@ def substitute_controller(path):
 
 
 def is_rsh_needed(source, dest):
-    if source.startswith('rsync://') or dest.startswith('rsync://'):
+    if all(e.startswith('rsync://') for e in source) or dest.startswith('rsync://'):
         return False
-    if ':' in source or ':' in dest:
+    if any(':' in e for e in source) or ':' in dest:
         return True
     return False
 
@@ -406,7 +417,7 @@ def is_rsh_needed(source, dest):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            src=dict(type='path', required=True),
+            src=dict(type='list', required=True),
             dest=dict(type='path', required=True),
             dest_port=dict(type='int'),
             delete=dict(type='bool', default=False),
@@ -540,11 +551,10 @@ def main():
     if dirs:
         cmd.append('--dirs')
 
-    if source.startswith('rsync://') and dest.startswith('rsync://'):
+    if all(e.startswith('rsync://') for e in source) and dest.startswith('rsync://'):
         module.fail_json(msg='either src or dest must be a localhost', rc=1)
 
     if is_rsh_needed(source, dest):
-
         # https://github.com/ansible/ansible/issues/15907
         has_rsh = False
         for rsync_opt in rsync_opts:
@@ -600,7 +610,7 @@ def main():
     changed_marker = '<<CHANGED>>'
     cmd.append('--out-format=%s' % shlex_quote(changed_marker + '%i %n%L'))
 
-    cmd.append(shlex_quote(source))
+    [cmd.append(shlex_quote(e)) for e in source]
     cmd.append(shlex_quote(dest))
     cmdstr = ' '.join(cmd)
 
