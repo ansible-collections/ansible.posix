@@ -43,7 +43,7 @@ pool: Standard
 
 stages:
   - stage: Sanity_devel
-    displayName: Ansible devel sanity
+    displayName: Ansible devel Sanity & Units & Lint
     dependsOn: []
     jobs:
       - template: templates/matrix.yml
@@ -57,8 +57,23 @@ stages:
               test: units
             - name: Lint
               test: lint
+  - stage: Sanity_2_20
+    displayName: Ansible 2.20 Sanity & Units & Lint
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          nameFormat: "{0}"
+          testFormat: 2.20/{0}
+          targets:
+            - name: Sanity
+              test: sanity
+            - name: Units
+              test: units
+            - name: Lint
+              test: lint
   - stage: Sanity_2_19
-    displayName: Ansible 2.19 sanitay & Units & Lint
+    displayName: Ansible 2.19 Sanity & Units & Lint
     dependsOn: []
     jobs:
       - template: templates/matrix.yml
@@ -73,7 +88,7 @@ stages:
             - name: Lint
               test: lint
   - stage: Sanity_2_18
-    displayName: Ansible 2.18 sanity & Units & Lint
+    displayName: Ansible 2.18 Sanity & Units & Lint
     dependsOn: []
     jobs:
       - template: templates/matrix.yml
@@ -88,7 +103,7 @@ stages:
             - name: Lint
               test: lint
   - stage: Sanity_2_17
-    displayName: Ansible 2.17 sanity & Units & Lint
+    displayName: Ansible 2.17 Sanity & Units & Lint
     dependsOn: []
     jobs:
       - template: templates/matrix.yml
@@ -103,7 +118,7 @@ stages:
             - name: Lint
               test: lint
   - stage: Sanity_2_16
-    displayName: Ansible 2.16 sanity & Units & Lint
+    displayName: Ansible 2.16 Sanity & Units & Lint
     dependsOn: []
     jobs:
       - template: templates/matrix.yml
@@ -115,6 +130,8 @@ stages:
               test: sanity
             - name: Units
               test: units
+            - name: Lint
+              test: lint
   ## Docker
   - stage: Docker_devel
     displayName: Docker devel
@@ -123,6 +140,20 @@ stages:
       - template: templates/matrix.yml
         parameters:
           testFormat: devel/linux/{0}/1
+          targets:
+            - name: Fedora 42
+              test: fedora42
+            - name: Ubuntu 22.04
+              test: ubuntu2204
+            - name: Ubuntu 24.04
+              test: ubuntu2404
+  - stage: Docker_2_20
+    displayName: Docker 2.20
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          testFormat: 2.20/linux/{0}/1
           targets:
             - name: Fedora 42
               test: fedora42
@@ -202,6 +233,22 @@ stages:
               test: freebsd/14.3
             - name: FreeBSD 13.5
               test: freebsd/13.5
+  - stage: Remote_2_20
+    displayName: Remote 2.20
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          testFormat: 2.20/{0}/1
+          targets:
+            - name: RHEL 10.0
+              test: rhel/10.0
+            - name: RHEL 9.6
+              test: rhel/9.6
+            - name: FreeBSD 14.3
+              test: freebsd/14.3
+            - name: FreeBSD 13.5
+              test: freebsd/13.5
   - stage: Remote_2_19
     displayName: Remote 2.19
     dependsOn: []
@@ -226,6 +273,8 @@ stages:
         parameters:
           testFormat: 2.18/{0}/1
           targets:
+            - name: RHEL 10.0
+              test: rhel/10.0
             - name: RHEL 9.4
               test: rhel/9.4
             - name: FreeBSD 13.5
@@ -238,8 +287,9 @@ stages:
         parameters:
           testFormat: 2.17/{0}/1
           targets:
-            - name: RHEL 9.3
-              test: rhel/9.3
+            # 2.17 remote target doesn't have RHEL 9 image
+            - name: RHEL 10.0
+              test: rhel/10.0
             - name: FreeBSD 13.5
               test: freebsd/13.5
   - stage: Remote_2_16
@@ -250,10 +300,9 @@ stages:
         parameters:
           testFormat: 2.16/{0}/1
           targets:
-            - name: RHEL 8.8
-              test: rhel/8.8
-            - name: RHEL 9.2
-              test: rhel/9.2
+            # 2.16 remote target only has RHEL 9.6 image
+            - name: RHEL 9.6
+              test: rhel/9.6
 
   ## Finally
 
@@ -272,6 +321,9 @@ stages:
       - Sanity_2_19
       - Remote_2_19
       - Docker_2_19
+      - Sanity_2_20
+      - Remote_2_20
+      - Docker_2_20
       - Sanity_devel
       - Remote_devel
       - Docker_devel

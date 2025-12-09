@@ -1,0 +1,4 @@
+trivial:
+  - Updatng AZP CI matrix to ignore ansible-bad-import-from on six(https://github.com/ansible-collections/ansible.posix/pull/682).
+  - Skipped sanity[cannot-ignore] to keep backward compatibility with Python2.
+  - Consolidate all ansible-lint option locations into .ansible-lint file.
