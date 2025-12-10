@@ -244,16 +244,16 @@ def acl_changed(module, cmd, entry, use_nfsv4_acls=False):
     lines = run_acl(module, cmd)
     counter = 0
     for line in lines:
-        if line.endswith('*,*') and not use_nfsv4_acls:
-            return False
+        if not use_nfsv4_acls and not line.endswith('*,*'):
+            return True
         # if use_nfsv4_acls and entry is listed
         if use_nfsv4_acls and entry == line:
             counter += 1
 
     # The current 'nfs4_setfacl --test' lists a new entry,
-    #  which will be added at the top of list, followed by the existing entries.
-    # So if the entry has already been registered, the entry should be find twice.
-    if counter == 2:
+    # which will be added at the top of the list, followed by the existing entries.
+    # So if the entry has already been registered, the entry should be found twice.
+    if not use_nfsv4_acls or counter == 2:
         return False
     return True
 
