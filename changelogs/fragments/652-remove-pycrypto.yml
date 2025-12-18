@@ -1,0 +1,2 @@
+bugfixes:
+  - Remove unmaintained and vulnerable ``pycrypto`` dependency from unit test requirements.
