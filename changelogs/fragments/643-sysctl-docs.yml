@@ -1,0 +1,3 @@
+---
+trivial:
+  - sysctl - added the attributes section to the module documentation to reflect check_mode support (https://github.com/ansible-collections/ansible.posix/issues/643).
