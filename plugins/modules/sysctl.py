@@ -56,6 +56,17 @@ options:
             - Verify token value with the sysctl command and set with C(-w) if necessary.
         type: bool
         default: false
+attributes:
+  check_mode:
+    support: full
+    description: Can run in check_mode and return changed status prediction without modifying target.
+  diff_mode:
+    support: none
+    description: Does not support differences output.
+  platform:
+    platforms: posix
+    support: full
+    description: Supported on POSIX-compliant systems.
 author:
 - David CHANIAL (@davixx)
 '''
