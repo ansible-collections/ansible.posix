@@ -249,3 +249,21 @@
       - "'default:mask::rwx' in getfacl_output.stdout_lines"
       - "'default:other::r-x' in getfacl_output.stdout_lines"
       - "'default:group:{{ test_group }}:rw-' not in getfacl_output.stdout_lines"
+
+- name: Trigger acl module with NFSv4 and no permissions
+  ansible.posix.acl:
+    path: "{{ test_dir }}"
+    entity: "{{ test_user }}"
+    etype: user
+    state: absent
+    use_nfsv4_acls: true
+  register: crash_test
+  ignore_errors: true
+
+- name: Verify the module did not crash with a TypeError
+  ansible.builtin.assert:
+    that:
+      - crash_test is failed
+      - "'unsupported operand type' not in (crash_test.module_stderr | default(''))"
+      - "crash_test.msg is search('permissions.*required')"
+    msg: "The module crashed with a TypeError instead of failing with a helpful error message!"
