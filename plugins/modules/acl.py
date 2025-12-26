@@ -335,6 +335,9 @@ def main():
         if state == 'absent' and permissions and not use_nfsv4_acls:
             module.fail_json(msg="'permissions' MUST NOT be set when 'state=absent'.")
 
+        if use_nfsv4_acls and state in ['present', 'absent'] and permissions is None:
+            module.fail_json(msg="The 'permissions' parameter is required when 'use_nfsv4_acls' is true.")
+
         if state == 'absent' and not entity:
             module.fail_json(msg="'entity' MUST be set when 'state=absent'.")
 

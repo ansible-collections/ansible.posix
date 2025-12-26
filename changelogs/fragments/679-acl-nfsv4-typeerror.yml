@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - acl - fix a `TypeError` crash when `use_nfsv4_acls=true` and `permissions` are omitted by adding a validation check that fails gracefully with a helpful message (https://github.com/ansible-collections/ansible.posix/issues/679).
