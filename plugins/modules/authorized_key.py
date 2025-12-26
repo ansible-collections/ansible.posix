@@ -568,32 +568,47 @@ def enforce_state(module, params):
     follow = params.get('follow', False)
     error_msg = "Error getting key from: %s"
 
-    # if the key is a url or file, request it and use it as key source
-    if key.startswith("http"):
-        try:
-            resp, info = fetch_url(module, key)
-            if info['status'] != 200:
-                module.fail_json(msg=error_msg % key)
-            else:
-                key = resp.read()
-        except Exception:
-            module.fail_json(msg=error_msg % key)
+    # Split the raw input into individual lines first
+    # This is the key to supporting mixed URLs and raw keys
+    raw_sources = [s.strip() for s in key.splitlines() if s.strip()]
+    final_keys = []
 
-        # resp.read gives bytes on python3, convert to native string type
-        key = to_native(key, errors='surrogate_or_strict')
+    for source in raw_sources:
+        if source.startswith('#'):
+            continue
 
-    if key.startswith("file"):
-        # if the key is an absolute path, check for existense and use it as a key source
-        key_path = urlparse(key).path
-        if not os.path.exists(key_path):
-            module.fail_json(msg="Path to a key file not found: %s" % key_path)
-        if not os.path.isfile(key_path):
-            module.fail_json(msg="Path to a key is a directory and must be a file: %s" % key_path)
-        try:
-            with open(key_path, 'r') as source_fh:
-                key = source_fh.read()
-        except OSError as e:
-            module.fail_json(msg="Failed to read key file %s : %s" % (key_path, to_native(e)))
+        validate_certs = params.get('validate_certs', True)
+        # Identify if this specific line is a URL
+        if source.startswith(('http://', 'https://')):
+            try:
+                resp, info = fetch_url(module, source, validate_certs=validate_certs)
+                if info['status'] != 200:
+                    module.fail_json(msg=error_msg % source)
+
+                # Fetch the keys from the URL and convert to native string
+                url_content = to_native(resp.read(), errors='surrogate_or_strict')
+                if url_content:
+                    final_keys.append(url_content)
+            except Exception:
+                module.fail_json(msg=error_msg % source)
+
+        # Identify if this specific line is a local file path
+        elif source.startswith("file://"):
+            key_path = urlparse(source).path
+            if not os.path.exists(key_path):
+                module.fail_json(msg="Path to a key file not found: %s" % key_path)
+            try:
+                with open(key_path, 'r') as source_fh:
+                    final_keys.append(source_fh.read())
+            except OSError as e:
+                module.fail_json(msg="Failed to read key file %s : %s" % (key_path, to_native(e)))
+
+        # If it's not a URL or a File, it's a raw SSH key
+        else:
+            final_keys.append(source)
+
+    # Join everything back together for the rest of the module's existing logic
+    key = "\n".join(final_keys)
 
     # extract individual keys into an array, skipping blank lines and comments
     new_keys = [s for s in key.splitlines() if s and not s.startswith('#')]
