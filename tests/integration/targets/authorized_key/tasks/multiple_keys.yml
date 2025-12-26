@@ -95,3 +95,35 @@
       - result.changed == False
       - multiple_keys_comments.stdout == multiple_key_exclusive.strip()
       - result.key_options == None
+
+- name: Create local key source simulating a URL response
+  ansible.builtin.copy:
+    dest: "{{ output_dir | expanduser }}/simulated_url.txt"
+    content: |
+      ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDXJ1HrhQEXOexamplekey1fromurl test1@example.com
+      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGexamplekey2fromurl test2@example.com
+    mode: "0644"
+
+- name: Add mixed keys (file source + raw key)
+  ansible.posix.authorized_key:
+    user: root
+    key: |
+      file://{{ output_dir | expanduser }}/simulated_url.txt
+      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqmqp9pP9pP9pP9pP9pP9pP9pP9pP9pP9pP9pP test@example.com
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
+    exclusive: true
+  register: mixed_source_result
+
+- name: Get the file content for mixed source verification
+  ansible.builtin.command: /bin/cat "{{ output_dir | expanduser }}/authorized_keys"
+  changed_when: false
+  register: mixed_file_content
+
+- name: Assert mixed sources were merged and processed correctly
+  ansible.builtin.assert:
+    that:
+      - mixed_source_result.changed == True
+      - mixed_file_content.stdout_lines | length == 3
+      - "'test1@example.com' in mixed_file_content.stdout"
+      - "'test@example.com' in mixed_file_content.stdout"
