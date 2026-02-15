@@ -210,7 +210,7 @@ firewalld_info:
 '''
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 from ansible_collections.ansible.posix.plugins.module_utils._respawn import respawn_module, HAS_RESPAWN_UTIL
 from ansible_collections.ansible.posix.plugins.module_utils.version import StrictVersion
 

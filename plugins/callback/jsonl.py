@@ -50,7 +50,7 @@ import copy
 from functools import partial
 
 from ansible.inventory.host import Host
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.plugins.callback import CallbackBase
 

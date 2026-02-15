@@ -141,7 +141,7 @@ from abc import ABCMeta, abstractmethod
 
 from functools import partial
 
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.six import with_metaclass
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.plugins.callback import CallbackBase

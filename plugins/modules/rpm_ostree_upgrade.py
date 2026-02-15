@@ -71,7 +71,7 @@ import os
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.text.converters import to_native, to_text
 
 
 def rpm_ostree_transaction(module):
