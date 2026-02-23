@@ -6,8 +6,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    callback: timer
-    callback_type: aggregate
+    name: timer
+    type: aggregate
     requirements:
       - whitelist in configuration
     short_description: Adds time to play stats
@@ -46,4 +46,6 @@ class CallbackModule(CallbackBase):
     def v2_playbook_on_stats(self, stats):
         end_time = datetime.utcnow()
         runtime = end_time - self.start_time
-        self._display.display("Playbook run took %s days, %s hours, %s minutes, %s seconds" % (self.days_hours_minutes_seconds(runtime)))
+        # Align summary report header with other callback plugin summary
+        self._display.banner("PLAYBOOK RECAP")
+        self._display.display("Playbook run took %s days, %s hours, %s minutes, %s seconds\n\r" % (self.days_hours_minutes_seconds(runtime)))

@@ -1,0 +1,10 @@
+---
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2024, Ansible Project
+
+skip_list:
+  - meta-runtime[unsupported-version]  # Tis rule doesn't make any sense
+  - fqcn[deep]  # This rule produces false positives for files in tests/unit/plugins/action/fixtures/
+exclude_paths:
+  - changelogs/

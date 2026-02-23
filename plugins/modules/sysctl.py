@@ -19,7 +19,7 @@ version_added: "1.0.0"
 options:
     name:
         description:
-            - The dot-separated path (also known as I(key)) specifying the sysctl variable.
+            - The dot-separated path (also known as O(key)) specifying the sysctl variable.
         required: true
         aliases: [ 'key' ]
         type: str
@@ -38,14 +38,14 @@ options:
         description:
             - Use this option to ignore errors about unknown keys.
         type: bool
-        default: 'no'
+        default: false
     reload:
         description:
-            - If C(yes), performs a I(/sbin/sysctl -p) if the C(sysctl_file) is
-              updated. If C(no), does not reload I(sysctl) even if the
-              C(sysctl_file) is updated.
+            - If V(true), performs a C(/sbin/sysctl -p) if the O(sysctl_file) is
+              updated. If V(false), does not reload C(sysctl) even if the
+              O(sysctl_file) is updated.
         type: bool
-        default: 'yes'
+        default: true
     sysctl_file:
         description:
             - Specifies the absolute path to C(sysctl.conf), if not C(/etc/sysctl.conf).
@@ -53,9 +53,9 @@ options:
         type: path
     sysctl_set:
         description:
-            - Verify token value with the sysctl command and set with -w if necessary
+            - Verify token value with the sysctl command and set with C(-w) if necessary.
         type: bool
-        default: 'no'
+        default: false
 author:
 - David CHANIAL (@davixx)
 '''
@@ -78,21 +78,21 @@ EXAMPLES = r'''
     name: kernel.panic
     value: '3'
     sysctl_file: /tmp/test_sysctl.conf
-    reload: no
+    reload: false
 
 # Set ip forwarding on in /proc and verify token value with the sysctl command
 - ansible.posix.sysctl:
     name: net.ipv4.ip_forward
     value: '1'
-    sysctl_set: yes
+    sysctl_set: true
 
 # Set ip forwarding on in /proc and in the sysctl file and reload if necessary
 - ansible.posix.sysctl:
     name: net.ipv4.ip_forward
     value: '1'
-    sysctl_set: yes
+    sysctl_set: true
     state: present
-    reload: yes
+    reload: true
 '''
 
 # ==============================================================
@@ -366,7 +366,7 @@ class SysctlModule(object):
     # Completely rewrite the sysctl file
     def write_sysctl(self):
         # open a tmp file
-        fd, tmp_path = tempfile.mkstemp('.conf', '.ansible_m_sysctl_', os.path.dirname(self.sysctl_file))
+        fd, tmp_path = tempfile.mkstemp('.conf', '.ansible_m_sysctl_', os.path.dirname(os.path.realpath(self.sysctl_file)))
         f = open(tmp_path, "w")
         try:
             for l in self.fixed_lines:
@@ -377,7 +377,7 @@ class SysctlModule(object):
         f.close()
 
         # replace the real one
-        self.module.atomic_move(tmp_path, self.sysctl_file)
+        self.module.atomic_move(tmp_path, os.path.realpath(self.sysctl_file))
 
 
 # ==============================================================

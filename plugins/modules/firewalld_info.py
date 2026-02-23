@@ -17,11 +17,11 @@ options:
     active_zones:
         description: Gather information about active zones.
         type: bool
-        default: no
+        default: false
     zones:
         description:
             - Gather information about specific zones.
-            - If only works if C(active_zones) is set to C(false).
+            - If only works if O(active_zones=false).
         required: false
         type: list
         elements: str
@@ -36,7 +36,12 @@ author:
 EXAMPLES = r'''
 - name: Gather information about active zones
   ansible.posix.firewalld_info:
-    active_zones: yes
+    active_zones: true
+  register: result
+
+- name: Print default zone for debugging
+  ansible.builtin.debug:
+    var: result.firewalld_info.default_zone
 
 - name: Gather information about specific zones
   ansible.posix.firewalld_info:
@@ -44,6 +49,7 @@ EXAMPLES = r'''
       - public
       - external
       - internal
+  register: result
 '''
 
 RETURN = r'''
@@ -78,7 +84,7 @@ firewalld_info:
             returned: success
             type: str
             sample: 0.8.2
-        default_zones:
+        default_zone:
             description:
               - The zone name of default zone.
             returned: success
@@ -205,7 +211,8 @@ firewalld_info:
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
-from distutils.version import StrictVersion
+from ansible_collections.ansible.posix.plugins.module_utils._respawn import respawn_module, HAS_RESPAWN_UTIL
+from ansible_collections.ansible.posix.plugins.module_utils.version import StrictVersion
 
 
 try:
@@ -316,6 +323,12 @@ def main():
     )
 
     # Exit with failure message if requirements modules are not installed.
+    if not HAS_DBUS and not HAS_FIREWALLD and HAS_RESPAWN_UTIL:
+        # Only respawn the module if both libraries are missing.
+        # If only one is available, then usage of the "wrong" (i.e. not the system one)
+        # python interpreter is likely not the problem.
+        respawn_module("firewall")
+
     if not HAS_DBUS:
         module.fail_json(msg=missing_required_lib('python-dbus'))
     if not HAS_FIREWALLD:
@@ -343,8 +356,9 @@ def main():
             specified_zones = module.params['zones']
             collect_zones = list(set(specified_zones) & set(all_zones))
             ignore_zones = list(set(specified_zones) - set(collect_zones))
-            warn.append(
-                'Please note: zone:(%s) have been ignored in the gathering process.' % ','.join(ignore_zones))
+            if ignore_zones:
+                warn.append(
+                    'Please note: zone:(%s) have been ignored in the gathering process.' % ','.join(ignore_zones))
         else:
             collect_zones = get_all_zones(client)
 

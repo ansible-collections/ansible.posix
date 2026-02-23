@@ -1,8 +1,9 @@
+---
 # -------------------------------------------------------------
 # comments
 
 - name: Add rsa key with existing comment
-  authorized_key:
+  ansible.posix.authorized_key:
     user: root
     key: "{{ rsa_key_basic }}"
     state: present
@@ -10,7 +11,7 @@
   register: result
 
 - name: Change the comment on an existing key
-  authorized_key:
+  ansible.posix.authorized_key:
     user: root
     key: "{{ rsa_key_basic }}"
     comment: user@acme.com
@@ -18,18 +19,18 @@
     path: "{{ output_dir | expanduser }}/authorized_keys"
   register: result
 
-- name: get the file content
-  shell: cat "{{ output_dir | expanduser }}/authorized_keys" | fgrep DATA_BASIC
-  changed_when: no
+- name: Get the file content
+  ansible.builtin.command: fgrep DATA_BASIC "{{ output_dir | expanduser }}/authorized_keys"
+  changed_when: false
   register: content
 
 - name: Assert that comment on an existing key was changed
-  assert:
+  ansible.builtin.assert:
     that:
       - "'user@acme.com' in content.stdout"
 
 - name: Set the same key with comment to ensure no changes are reported
-  authorized_key:
+  ansible.posix.authorized_key:
     user: root
     key: "{{ rsa_key_basic }}"
     comment: user@acme.com
@@ -38,11 +39,12 @@
   register: result
 
 - name: Assert that no changes were made when running again
-  assert:
+  ansible.builtin.assert:
     that:
       - not result.changed
 
-- debug:
+- name: Debug the result and content
+  ansible.builtin.debug:
     var: "{{ item }}"
     verbosity: 1
   with_items:

@@ -4,6 +4,227 @@ ansible.posix Release Notes
 
 .. contents:: Topics
 
+v2.1.0
+======
+
+Release Summary
+---------------
+
+This is the minor release of the ``ansible.posix`` collection.
+This changelog contains all changes to the modules and plugins
+in the stable-2 branch that have been added after the release of
+``ansible.posix`` 2.0.0
+
+Minor Changes
+-------------
+
+- profile_tasks and profile_roles callback plugins - avoid deleted/deprecated callback functions, instead use modern interface that was introduced a longer time ago (https://github.com/ansible-collections/ansible.posix/issues/650).
+
+Bugfixes
+--------
+
+- ansible.posix.cgroup_perf_recap - fixes json module load path (https://github.com/ansible-collections/ansible.posix/issues/630).
+
+v2.0.0
+======
+
+Release Summary
+---------------
+
+This is the major release of the ``ansible.posix`` collection.
+This changelog contains all changes to the modules and plugins
+in this collection that have been added after the release of
+``ansible.posix`` 1.6.2
+
+Minor Changes
+-------------
+
+- authorized_keys - allow using absolute path to a file as a SSH key(s) source (https://github.com/ansible-collections/ansible.posix/pull/568)
+- callback plugins - Add recap information to timer, profile_roles and profile_tasks callback outputs (https://github.com/ansible-collections/ansible.posix/pull/387).
+
+Breaking Changes / Porting Guide
+--------------------------------
+
+- firewalld - Changed the type of forward and masquerade options from str to bool (https://github.com/ansible-collections/ansible.posix/issues/582).
+- firewalld - Changed the type of icmp_block_inversion option from str to bool (https://github.com/ansible-collections/ansible.posix/issues/586).
+
+Removed Features (previously deprecated)
+----------------------------------------
+
+- skippy - Remove skippy pluglin as it is no longer supported(https://github.com/ansible-collections/ansible.posix/issues/350).
+
+Bugfixes
+--------
+
+- acl - Fixed to set ACLs on paths mounted with NFS version 4 correctly (https://github.com/ansible-collections/ansible.posix/issues/240).
+- mount - Handle ``boot`` option on Linux, NetBSD and OpenBSD correctly (https://github.com/ansible-collections/ansible.posix/issues/364).
+- mount - If a comment is appended to a fstab entry, state present creates a double-entry (https://github.com/ansible-collections/ansible.posix/issues/595).
+
+v1.6.2
+======
+
+Release Summary
+---------------
+
+This is the bugfix release of the stable version ``ansible.posix`` collection.
+This changelog contains all changes to the modules and plugins
+in this collection that have been added after the release of
+``ansible.posix`` 1.6.1.
+
+Bugfixes
+--------
+
+- backport - Drop ansible-core 2.14 and set 2.15 minimum version (https://github.com/ansible-collections/ansible.posix/issues/578).
+
+v1.6.1
+======
+
+Release Summary
+---------------
+
+This is the bugfix release of the stable version ``ansible.posix`` collection.
+This changelog contains all changes to the modules and plugins
+in this collection that have been added after the release of
+``ansible.posix`` 1.6.1.
+
+Bugfixes
+--------
+
+- acl - Fixed to set ACLs on paths mounted with NFS version 4 correctly (https://github.com/ansible-collections/ansible.posix/issues/240).
+- mount - Handle ``boot`` option on Linux, NetBSD and OpenBSD correctly (https://github.com/ansible-collections/ansible.posix/issues/364).
+- skippy - Revert removal of skippy plugin. It will be removed in version 2.0.0 (https://github.com/ansible-collections/ansible.posix/issues/573).
+
+v1.6.0
+======
+
+Release Summary
+---------------
+
+This is the minor release of the ``ansible.posix`` collection.
+This changelog contains all changes to the modules and plugins
+in this collection that have been added after the release of
+``ansible.posix`` 1.5.4.
+
+Major Changes
+-------------
+
+- Dropping support for Ansible 2.9, ansible-core 2.15 will be minimum required version for this release
+
+Minor Changes
+-------------
+
+- Add summary_only parameter to profile_roles and profile_tasks callbacks.
+- firewalld - add functionality to set forwarding (https://github.com/ansible-collections/ansible.posix/pull/548).
+- firewalld - added offline flag implementation (https://github.com/ansible-collections/ansible.posix/pull/484)
+- firewalld - respawn module to use the system python interpreter when the ``firewall`` python module is not available for ``ansible_python_interpreter`` (https://github.com/ansible-collections/ansible.posix/pull/460).
+- firewalld_info - Only warn about ignored zones, when there are zones ignored.
+- firewalld_info - respawn module to use the system python interpreter when the ``firewall`` python module is not available for ``ansible_python_interpreter`` (https://github.com/ansible-collections/ansible.posix/pull/460).
+- mount - add no_log option for opts parameter (https://github.com/ansible-collections/ansible.posix/pull/563).
+- seboolean - respawn module to use the system python interpreter when the ``selinux`` python module is not available for ``ansible_python_interpreter`` (https://github.com/ansible-collections/ansible.posix/pull/460).
+- selinux - respawn module to use the system python interpreter when the ``selinux`` python module is not available for ``ansible_python_interpreter`` (https://github.com/ansible-collections/ansible.posix/pull/460).
+
+Removed Features (previously deprecated)
+----------------------------------------
+
+- skippy - Remove skippy pluglin as it is no longer supported(https://github.com/ansible-collections/ansible.posix/issues/350).
+
+Bugfixes
+--------
+
+- Bugfix in the documentation regarding the path option for authorised_key(https://github.com/ansible-collections/ansible.posix/issues/483).
+- seboolean - make it work with disabled SELinux
+- synchronize - maintain proper formatting of the remote paths (https://github.com/ansible-collections/ansible.posix/pull/361).
+- sysctl - fix sysctl to work properly on symlinks (https://github.com/ansible-collections/ansible.posix/issues/111).
+
+v1.5.4
+======
+
+Minor Changes
+-------------
+
+- json and jsonl - Add the ``ANSIBLE_JSON_INDENT`` parameter
+- json and jsonl - Add the ``path`` attribute into the play and task output
+
+Bugfixes
+--------
+
+- Fix sysctl integration test failing on newer versions of core. Previously NoneType was allowable, now it fails to convert to a str type.
+- Support new sanity test for the ansible-core devel branch CI test (https://github.com/ansible-collections/ansible.posix/issues/446).
+- firewall - Fix issue where adding an interface to a zone would fail when the daemon is offline
+- firewall - Fix issue where opening a specific port resulted in opening the whole protocol of the specified port
+- firewalld - Consider value of masquerade and icmp_block_inversion parameters when a boolean like value is passed
+
+v1.5.2
+======
+
+Release Summary
+---------------
+
+This is the minor release of the ``ansible.posix`` collection.
+This changelog contains all changes to the modules and plugins
+in this collection that have been added after the release of
+``ansible.posix`` 1.5.1.
+
+Minor Changes
+-------------
+
+- Add jsonl callback plugin to ansible.posix collection
+- firewalld - add `protocol` parameter
+
+Bugfixes
+--------
+
+- Fixed a bug where firewalld module fails to create/remove zones when the daemon is stopped
+- rhel_facts - Call exit_json with all keyword arguments
+
+v1.5.1
+======
+
+Minor Changes
+-------------
+
+- mount - Add ``absent_from_fstab`` state (https://github.com/ansible-collections/ansible.posix/pull/166).
+- mount - Add ``ephemeral`` value for the ``state`` parameter, that allows to mount a filesystem without altering the ``fstab`` file (https://github.com/ansible-collections/ansible.posix/pull/267).
+- r4e_rpm_ostree - new module for validating package state on RHEL for Edge
+- rhel_facts - new facts module to handle RHEL specific facts
+- rhel_rpm_ostree - new module to handle RHEL rpm-ostree specific package management functionality
+- rpm_ostree_upgrade - new module to automate rpm-ostree upgrades
+- rpm_ostree_upgrade - new module to manage upgrades for rpm-ostree based systems
+
+Bugfixes
+--------
+
+- Removed contentious terminology to match reference documentation in profile_tasks.
+- firewall - Fixed to output a more complete missing library message.
+- synchronize - Fixed hosts involved in rsync require the same password
+
+v1.4.0
+======
+
+Release Summary
+---------------
+
+This is the minor release of the ``ansible.posix`` collection.
+This changelog contains all changes to the modules in this collection that
+have been added after the release of ``ansible.posix`` 1.3.0.
+
+Minor Changes
+-------------
+
+- firewalld - Show warning message that variable type of ``masquerade`` and ``icmp_block_inversion`` will be changed from ``str`` to ``boolean`` in the future release (https://github.com/ansible-collections/ansible.posix/pull/254).
+- selinux - optionally update kernel boot params when disabling/re-enabling SELinux (https://github.com/ansible-collections/ansible.posix/pull/142).
+
+Bugfixes
+--------
+
+- Fix for whitespace in source full path causing error ```code 23) at main.c(1330) [sender=3.2.3]``` (https://github.com/ansible-collections/ansible.posix/pull/278)
+- Include ``PSF-license.txt`` file for ``plugins/module_utils/_version.py``.
+- Use vendored version of ``distutils.version`` instead of the deprecated Python standard library to address PEP 632 (https://github.com/ansible-collections/ansible.posix/issues/303).
+- firewalld - Correct usage of queryForwardPort (https://github.com/ansible-collections/ansible.posix/issues/247).
+- firewalld - Refine the handling of exclusive options (https://github.com/ansible-collections/ansible.posix/issues/255).
+- mount - add a newline at the end of line in ``fstab`` (https://github.com/ansible-collections/ansible.posix/issues/210).
+- profile_tasks - Correctly calculate task execution time with serial execution (https://github.com/ansible-collections/ansible.posix/issues/83).
+- seboolean - add ``python3-libsemanage`` package dependency for RHEL8+ systems.
 
 v1.3.0
 ======

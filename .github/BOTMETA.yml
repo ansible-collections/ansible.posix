@@ -1,3 +1,4 @@
+---
 automerge: false
 files:
   $module_utils/mount.py:
@@ -39,7 +40,6 @@ files:
     labels: debug
   $plugins/patch.py:
     labels: patch
-  $plugins/skippy.py:
   $plugins/synchronize.py:
     labels: synchronize
   $plugins/timer.py:

@@ -22,12 +22,12 @@ options:
     type: str
   persistent:
     description:
-      - Set to C(yes) if the boolean setting should survive a reboot.
+      - Set to V(true) if the boolean setting should survive a reboot.
     type: bool
-    default: 'no'
+    default: false
   state:
     description:
-      - Desired boolean value
+      - Desired boolean value.
     type: bool
     required: true
   ignore_selinux_state:
@@ -40,6 +40,7 @@ notes:
 requirements:
 - libselinux-python
 - libsemanage-python
+- python3-libsemanage
 author:
 - Stephen Fromm (@sfromm)
 '''
@@ -48,8 +49,8 @@ EXAMPLES = r'''
 - name: Set httpd_can_network_connect flag on and keep it persistent across reboots
   ansible.posix.seboolean:
     name: httpd_can_network_connect
-    state: yes
-    persistent: yes
+    state: true
+    persistent: true
 '''
 
 import os
@@ -72,29 +73,12 @@ except ImportError:
     HAVE_SEMANAGE = False
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.six import binary_type
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_text
+from ansible_collections.ansible.posix.plugins.module_utils._respawn import respawn_module, HAS_RESPAWN_UTIL
 
 
 def get_runtime_status(ignore_selinux_state=False):
     return True if ignore_selinux_state is True else selinux.is_selinux_enabled()
-
-
-def has_boolean_value(module, name):
-    bools = []
-    try:
-        rc, bools = selinux.security_get_boolean_names()
-    except OSError:
-        module.fail_json(msg="Failed to get list of boolean names")
-    # work around for selinux who changed its API, see
-    # https://github.com/ansible/ansible/issues/25651
-    if len(bools) > 0:
-        if isinstance(bools[0], binary_type):
-            name = to_bytes(name)
-    if name in bools:
-        return True
-    else:
-        return False
 
 
 def get_boolean_value(module, name):
@@ -172,7 +156,10 @@ def semanage_set_boolean_value(module, handle, name, value):
         semanage.semanage_handle_destroy(handle)
         module.fail_json(msg="Failed to modify boolean key with semanage")
 
-    if semanage.semanage_bool_set_active(handle, boolkey, sebool) < 0:
+    if (
+            selinux.is_selinux_enabled()
+            and semanage.semanage_bool_set_active(handle, boolkey, sebool) < 0
+    ):
         semanage.semanage_handle_destroy(handle)
         module.fail_json(msg="Failed to set boolean key active with semanage")
 
@@ -280,11 +267,17 @@ def main():
         supports_check_mode=True,
     )
 
+    if not HAVE_SELINUX and not HAVE_SEMANAGE and HAS_RESPAWN_UTIL:
+        # Only respawn the module if both libraries are missing.
+        # If only one is available, then usage of the "wrong" (i.e. not the system one)
+        # python interpreter is likely not the problem.
+        respawn_module("selinux")
+
     if not HAVE_SELINUX:
         module.fail_json(msg=missing_required_lib('libselinux-python'), exception=SELINUX_IMP_ERR)
 
     if not HAVE_SEMANAGE:
-        module.fail_json(msg=missing_required_lib('libsemanage-python'), exception=SEMANAGE_IMP_ERR)
+        module.fail_json(msg=missing_required_lib('libsemanage-python or python3-libsemanage'), exception=SEMANAGE_IMP_ERR)
 
     ignore_selinux_state = module.params['ignore_selinux_state']
 
@@ -307,12 +300,9 @@ def main():
         # Feature only available in selinux library since 2012.
         name = selinux.selinux_boolean_sub(name)
 
-    if not has_boolean_value(module, name):
-        module.fail_json(msg="SELinux boolean %s does not exist." % name)
-
     if persistent:
         changed = semanage_boolean_value(module, name, state)
-    else:
+    elif selinux.is_selinux_enabled():
         cur_value = get_boolean_value(module, name)
         if cur_value != state:
             changed = True

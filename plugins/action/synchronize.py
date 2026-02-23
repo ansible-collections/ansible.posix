@@ -77,7 +77,14 @@ class ActionModule(ActionBase):
 
         if self._host_is_ipv6_address(host):
             return '[%s%s]:%s' % (user_prefix, host, path)
-        return '%s%s:%s' % (user_prefix, host, path)
+
+        # preserve formatting of remote paths if host or user@host is explicitly defined in the path
+        if ':' not in path:
+            return '%s%s:%s' % (user_prefix, host, path)
+        elif '@' not in path:
+            return '%s%s' % (user_prefix, path)
+        else:
+            return path
 
     def _process_origin(self, host, path, user):
 
@@ -177,7 +184,7 @@ class ActionModule(ActionBase):
 
         # Store remote connection type
         self._remote_transport = self._connection.transport
-        use_ssh_args = _tmp_args.pop('use_ssh_args', None)
+        use_ssh_args = _tmp_args.pop('use_ssh_args', False)
 
         if use_ssh_args and self._connection.transport == 'ssh':
             ssh_args = [
@@ -185,7 +192,7 @@ class ActionModule(ActionBase):
                 self._connection.get_option('ssh_common_args'),
                 self._connection.get_option('ssh_extra_args'),
             ]
-            _tmp_args['ssh_args'] = ' '.join([a for a in ssh_args if a])
+            _tmp_args['_ssh_args'] = ' '.join([a for a in ssh_args if a])
 
         # Handle docker connection options
         if self._remote_transport in DOCKER:
@@ -225,7 +232,6 @@ class ActionModule(ActionBase):
 
         # Parameter name needed by the ansible module
         _tmp_args['_local_rsync_path'] = task_vars.get('ansible_rsync_path') or 'rsync'
-        _tmp_args['_local_rsync_password'] = task_vars.get('ansible_ssh_pass') or task_vars.get('ansible_password')
 
         # rsync thinks that one end of the connection is localhost and the
         # other is the host we're running the task for  (Note: We use
@@ -285,9 +291,6 @@ class ActionModule(ActionBase):
         # told (via delegate_to) that a different host is the source of the
         # rsync
         if not use_delegate and remote_transport:
-            # Create a connection to localhost to run rsync on
-            new_stdin = self._connection._new_stdin
-
             # Unlike port, there can be only one shell
             localhost_shell = None
             for host in C.LOCALHOST:
@@ -316,7 +319,11 @@ class ActionModule(ActionBase):
                 localhost_executable = C.DEFAULT_EXECUTABLE
             self._play_context.executable = localhost_executable
 
-            new_connection = connection_loader.get('local', self._play_context, new_stdin)
+            try:
+                new_connection = connection_loader.get('local', self._play_context)
+            except TypeError:
+                # Needed for ansible-core < 2.15
+                new_connection = connection_loader.get('local', self._play_context, self._connection._new_stdin)
             self._connection = new_connection
             # Override _remote_is_local as an instance attribute specifically for the synchronize use case
             # ensuring we set local tmpdir correctly
@@ -333,8 +340,9 @@ class ActionModule(ActionBase):
         if src is None or dest is None:
             return dict(failed=True, msg="synchronize requires both src and dest parameters are set")
 
-        # Determine if we need a user@
+        # Determine if we need a user@ and a password
         user = None
+        password = task_vars.get('ansible_ssh_pass', None) or task_vars.get('ansible_password', None)
         if not dest_is_local:
             # Src and dest rsync "path" handling
             if boolean(_tmp_args.get('set_remote_user', 'yes'), strict=False):
@@ -344,9 +352,11 @@ class ActionModule(ActionBase):
                         user = task_vars.get('ansible_user') or self._play_context.remote_user
                     if not user:
                         user = C.DEFAULT_REMOTE_USER
-
                 else:
                     user = task_vars.get('ansible_user') or self._play_context.remote_user
+
+            if self._templar is not None:
+                user = self._templar.template(user)
 
             # Private key handling
             # Use the private_key parameter if passed else use context private_key_file
@@ -361,12 +371,17 @@ class ActionModule(ActionBase):
                 # src is a local path, dest is a remote path: <user>@<host>
                 src = self._process_origin(src_host, src, user)
                 dest = self._process_remote(_tmp_args, dest_host, dest, user, inv_port in localhost_ports)
+
+            password = dest_host_inventory_vars.get('ansible_ssh_pass', None) or dest_host_inventory_vars.get('ansible_password', None)
+            if self._templar is not None:
+                password = self._templar.template(password)
         else:
             # Still need to munge paths (to account for roles) even if we aren't
             # copying files between hosts
             src = self._get_absolute_path(path=src)
             dest = self._get_absolute_path(path=dest)
 
+        _tmp_args['_local_rsync_password'] = password
         _tmp_args['src'] = src
         _tmp_args['dest'] = dest
 

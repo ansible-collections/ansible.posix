@@ -1,241 +1,250 @@
+---
 # -------------------------------------------------------------
 # basic ssh-dss key
 
-- name: add basic ssh-dss key
-  authorized_key: user=root key="{{ dss_key_basic }}" state=present path="{{ output_dir | expanduser }}/authorized_keys"
+- name: Add basic ssh-dss key
+  ansible.posix.authorized_key:
+    user: root
+    key: "{{ dss_key_basic }}"
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
   register: result
 
-- name: assert that the key was added
-  assert:
+- name: Assert that the key was added
+  ansible.builtin.assert:
     that:
-      - 'result.changed == True'
-      - 'result.key == dss_key_basic'
-      - 'result.key_options == None'
+      - result.changed == True
+      - result.key == dss_key_basic
+      - result.key_options == None
 
-- name: re-add basic ssh-dss key
-  authorized_key: user=root key="{{ dss_key_basic }}" state=present path="{{ output_dir | expanduser }}/authorized_keys"
+- name: Re-add basic ssh-dss key
+  ansible.posix.authorized_key:
+    user: root
+    key: "{{ dss_key_basic }}"
+    state: present
+    path: "{{ output_dir | expanduser }}/authorized_keys"
   register: result
 
-- name: assert that nothing changed
-  assert:
+- name: Assert that nothing changed
+  ansible.builtin.assert:
     that:
-      - 'result.changed == False'
+      - result.changed == False
 
 # -------------------------------------------------------------
 # ssh-dss key with an unquoted option
 
-- name: add ssh-dss key with an unquoted option
-  authorized_key:
+- name: Add ssh-dss key with an unquoted option
+  ansible.posix.authorized_key:
     user: root
     key: "{{ dss_key_unquoted_option }}"
     state: present
     path: "{{ output_dir | expanduser }}/authorized_keys"
   register: result
 
-- name: assert that the key was added
-  assert:
+- name: Assert that the key was added
+  ansible.builtin.assert:
     that:
-      - 'result.changed == True'
-      - 'result.key == dss_key_unquoted_option'
-      - 'result.key_options == None'
+      - result.changed == True
+      - result.key == dss_key_unquoted_option
+      - result.key_options == None
 
-- name: re-add ssh-dss key with an unquoted option
-  authorized_key:
+- name: Re-add ssh-dss key with an unquoted option
+  ansible.posix.authorized_key:
     user: root
     key: "{{ dss_key_unquoted_option }}"
     state: present
     path: "{{ output_dir | expanduser }}/authorized_keys"
   register: result
 
-- name: assert that nothing changed
-  assert:
+- name: Assert that nothing changed
+  ansible.builtin.assert:
     that:
-      - 'result.changed == False'
+      - result.changed == False
 
 # -------------------------------------------------------------
 # ssh-dss key with a leading command="/bin/foo"
 
-- name: add ssh-dss key with a leading command
-  authorized_key:
+- name: Add ssh-dss key with a leading command
+  ansible.posix.authorized_key:
     user: root
     key: "{{ dss_key_command }}"
     state: present
     path: "{{ output_dir | expanduser }}/authorized_keys"
   register: result
 
-- name: assert that the key was added
-  assert:
+- name: Assert that the key was added
+  ansible.builtin.assert:
     that:
-      - 'result.changed == True'
-      - 'result.key == dss_key_command'
-      - 'result.key_options == None'
+      - result.changed == True
+      - result.key == dss_key_command
+      - result.key_options == None
 
-- name: re-add ssh-dss key with a leading command
-  authorized_key:
+- name: Re-add ssh-dss key with a leading command
+  ansible.posix.authorized_key:
     user: root
     key: "{{ dss_key_command }}"
     state: present
     path: "{{ output_dir | expanduser }}/authorized_keys"
   register: result
 
-- name: assert that nothing changed
-  assert:
+- name: Assert that nothing changed
+  ansible.builtin.assert:
     that:
-      - 'result.changed == False'
+      - result.changed == False
 
 # -------------------------------------------------------------
 # ssh-dss key with a complex quoted leading command
 # ie. command="/bin/echo foo 'bar baz'"
 
-- name: add ssh-dss key with a complex quoted leading command
-  authorized_key:
+- name: Add ssh-dss key with a complex quoted leading command
+  ansible.posix.authorized_key:
     user: root
     key: "{{ dss_key_complex_command }}"
     state: present
     path: "{{ output_dir | expanduser }}/authorized_keys"
   register: result
 
-- name: assert that the key was added
-  assert:
+- name: Assert that the key was added
+  ansible.builtin.assert:
     that:
-      - 'result.changed == True'
-      - 'result.key == dss_key_complex_command'
-      - 'result.key_options == None'
+      - result.changed == True
+      - result.key == dss_key_complex_command
+      - result.key_options == None
 
-- name: re-add ssh-dss key with a complex quoted leading command
-  authorized_key:
+- name: Re-add ssh-dss key with a complex quoted leading command
+  ansible.posix.authorized_key:
     user: root
     key: "{{ dss_key_complex_command }}"
     state: present
     path: "{{ output_dir | expanduser }}/authorized_keys"
   register: result
 
-- name: assert that nothing changed
-  assert:
+- name: Assert that nothing changed
+  ansible.builtin.assert:
     that:
-      - 'result.changed == False'
+      - result.changed == False
 
 # -------------------------------------------------------------
 # ssh-dss key with a command and a single option, which are
 # in a comma-separated list
 
-- name: add ssh-dss key with a command and a single option
-  authorized_key:
+- name: Add ssh-dss key with a command and a single option
+  ansible.posix.authorized_key:
     user: root
     key: "{{ dss_key_command_single_option }}"
     state: present
     path: "{{ output_dir | expanduser }}/authorized_keys"
   register: result
 
-- name: assert that the key was added
-  assert:
+- name: Assert that the key was added
+  ansible.builtin.assert:
     that:
-      - 'result.changed == True'
-      - 'result.key == dss_key_command_single_option'
-      - 'result.key_options == None'
+      - result.changed == True
+      - result.key == dss_key_command_single_option
+      - result.key_options == None
 
-- name: re-add ssh-dss key with a command and a single option
-  authorized_key:
+- name: Re-add ssh-dss key with a command and a single option
+  ansible.posix.authorized_key:
     user: root
     key: "{{ dss_key_command_single_option }}"
     state: present
     path: "{{ output_dir | expanduser }}/authorized_keys"
   register: result
 
-- name: assert that nothing changed
-  assert:
+- name: Assert that nothing changed
+  ansible.builtin.assert:
     that:
-      - 'result.changed == False'
+      - result.changed == False
 
 # -------------------------------------------------------------
 # ssh-dss key with a command and multiple other options
 
-- name: add ssh-dss key with a command and multiple options
-  authorized_key:
+- name: Add ssh-dss key with a command and multiple options
+  ansible.posix.authorized_key:
     user: root
     key: "{{ dss_key_command_multiple_options }}"
     state: present
     path: "{{ output_dir | expanduser }}/authorized_keys"
   register: result
 
-- name: assert that the key was added
-  assert:
+- name: Assert that the key was added
+  ansible.builtin.assert:
     that:
-      - 'result.changed == True'
-      - 'result.key == dss_key_command_multiple_options'
-      - 'result.key_options == None'
+      - result.changed == True
+      - result.key == dss_key_command_multiple_options
+      - result.key_options == None
 
-- name: re-add ssh-dss key with a command and multiple options
-  authorized_key:
+- name: Re-add ssh-dss key with a command and multiple options
+  ansible.posix.authorized_key:
     user: root
     key: "{{ dss_key_command_multiple_options }}"
     state: present
     path: "{{ output_dir | expanduser }}/authorized_keys"
   register: result
 
-- name: assert that nothing changed
-  assert:
+- name: Assert that nothing changed
+  ansible.builtin.assert:
     that:
-      - 'result.changed == False'
+      - result.changed == False
 
 # -------------------------------------------------------------
 # ssh-dss key with multiple trailing parts, which are space-
 # separated and not quoted in any way
 
-- name: add ssh-dss key with trailing parts
-  authorized_key:
+- name: Add ssh-dss key with trailing parts
+  ansible.posix.authorized_key:
     user: root
     key: "{{ dss_key_trailing }}"
     state: present
     path: "{{ output_dir | expanduser }}/authorized_keys"
   register: result
 
-- name: assert that the key was added
-  assert:
+- name: Assert that the key was added
+  ansible.builtin.assert:
     that:
-      - 'result.changed == True'
-      - 'result.key == dss_key_trailing'
-      - 'result.key_options == None'
+      - result.changed == True
+      - result.key == dss_key_trailing
+      - result.key_options == None
 
-- name: re-add ssh-dss key with trailing parts
-  authorized_key:
+- name: Re-add ssh-dss key with trailing parts
+  ansible.posix.authorized_key:
     user: root
     key: "{{ dss_key_trailing }}"
     state: present
     path: "{{ output_dir | expanduser }}/authorized_keys"
   register: result
 
-- name: assert that nothing changed
-  assert:
+- name: Assert that nothing changed
+  ansible.builtin.assert:
     that:
-      - 'result.changed == False'
+      - result.changed == False
 
 # -------------------------------------------------------------
 # basic ssh-dss key with mutliple permit-open options
 # https://github.com/ansible/ansible-modules-core/issues/1715
 
-- name: add basic ssh-dss key with multi-opts
-  authorized_key:
+- name: Add basic ssh-dss key with multi-opts
+  ansible.posix.authorized_key:
     user: root
     key: "{{ dss_key_basic }}"
-    key_options: 'no-agent-forwarding,no-X11-forwarding,permitopen="10.9.8.1:8080",permitopen="10.9.8.1:9001"'
+    key_options: no-agent-forwarding,no-X11-forwarding,permitopen="10.9.8.1:8080",permitopen="10.9.8.1:9001"
     state: present
     path: "{{ output_dir | expanduser }}/authorized_keys"
   register: result
 
-- name: assert that the key with multi-opts was added
-  assert:
+- name: Assert that the key with multi-opts was added
+  ansible.builtin.assert:
     that:
-      - 'result.changed == True'
-      - 'result.key == dss_key_basic'
-      - 'result.key_options == "no-agent-forwarding,no-X11-forwarding,permitopen=\"10.9.8.1:8080\",permitopen=\"10.9.8.1:9001\""'
+      - result.changed == True
+      - result.key == dss_key_basic
+      - result.key_options == "no-agent-forwarding,no-X11-forwarding,permitopen=\"10.9.8.1:8080\",permitopen=\"10.9.8.1:9001\""
 
-- name: get the file content
-  shell: cat "{{ output_dir | expanduser }}/authorized_keys" | fgrep DATA_BASIC
-  changed_when: no
+- name: Get the file content
+  ansible.builtin.command: fgrep DATA_BASIC "{{ output_dir | expanduser }}/authorized_keys"
+  changed_when: false
   register: content
 
-- name: validate content
-  assert:
+- name: Validate content
+  ansible.builtin.assert:
     that:
-      - 'content.stdout == "no-agent-forwarding,no-X11-forwarding,permitopen=\"10.9.8.1:8080\",permitopen=\"10.9.8.1:9001\" ssh-dss DATA_BASIC root@testing"'
+      - content.stdout == "no-agent-forwarding,no-X11-forwarding,permitopen=\"10.9.8.1:8080\",permitopen=\"10.9.8.1:9001\" ssh-dss DATA_BASIC root@testing"

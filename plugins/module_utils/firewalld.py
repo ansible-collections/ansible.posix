@@ -4,11 +4,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from ansible_collections.ansible.posix.plugins.module_utils.version import LooseVersion
+from ansible_collections.ansible.posix.plugins.module_utils._respawn import respawn_module, HAS_RESPAWN_UTIL
+from ansible.module_utils.basic import missing_required_lib
 
 __metaclass__ = type
 
-# Imports and info for sanity checking
-from distutils.version import LooseVersion
 
 FW_VERSION = None
 fw = None
@@ -314,7 +315,8 @@ class FirewallTransaction(object):
                         installed version (%s) likely too old. Requires firewalld >= 0.2.11" % FW_VERSION)
 
         if import_failure:
+            if HAS_RESPAWN_UTIL:
+                respawn_module("firewall")
             module.fail_json(
-                msg='Python Module not found: firewalld and its python module are required for this module, \
-                        version 0.2.11 or newer required (0.3.9 or newer for offline operations)'
+                msg=missing_required_lib('firewall') + '. Version 0.2.11 or newer required (0.3.9 or newer for offline operations)'
             )

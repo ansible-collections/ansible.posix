@@ -14,75 +14,76 @@ DOCUMENTATION = r'''
 module: synchronize
 short_description: A wrapper around rsync to make common tasks in your playbooks quick and easy
 description:
-    - C(synchronize) is a wrapper around rsync to make common tasks in your playbooks quick and easy.
+    - M(ansible.posix.synchronize) is a wrapper around C(rsync) to make common tasks in your playbooks quick and easy.
     - It is run and originates on the local host where Ansible is being run.
-    - Of course, you could just use the C(command) action to call rsync yourself, but you also have to add a fair number of
+    - Of course, you could just use the M(ansible.builtin.command) action to call C(rsync) yourself, but you also have to add a fair number of
       boilerplate options and host facts.
-    - This module is not intended to provide access to the full power of rsync, but does make the most common
-      invocations easier to implement. You `still` may need to call rsync directly via C(command) or C(shell) depending on your use case.
+    - This module is not intended to provide access to the full power of C(rsync), but does make the most common
+      invocations easier to implement.
+      You I(still) may need to call C(rsync) directly via M(ansible.builtin.command) or M(ansible.builtin.shell) depending on your use case.
 version_added: "1.0.0"
 options:
   src:
     description:
       - Path on the source host that will be synchronized to the destination.
       - The path can be absolute or relative.
-    type: str
+    type: path
     required: true
   dest:
     description:
       - Path on the destination host that will be synchronized from the source.
       - The path can be absolute or relative.
-    type: str
+    type: path
     required: true
   dest_port:
     description:
       - Port number for ssh on the destination host.
-      - Prior to Ansible 2.0, the ansible_ssh_port inventory var took precedence over this value.
+      - Prior to Ansible 2.0, the C(ansible_ssh_port) inventory var took precedence over this value.
       - This parameter defaults to the value of C(ansible_port), the C(remote_port) config setting
         or the value from ssh client configuration if none of the former have been set.
     type: int
   mode:
     description:
       - Specify the direction of the synchronization.
-      - In push mode the localhost or delegate is the source.
-      - In pull mode the remote host in context is the source.
+      - In V(push) mode the localhost or delegate is the source.
+      - In V(pull) mode the remote host in context is the source.
     type: str
     choices: [ pull, push ]
     default: push
   archive:
     description:
-      - Mirrors the rsync archive flag, enables recursive, links, perms, times, owner, group flags and -D.
+      - Mirrors the rsync archive flag, enables recursive, links, perms, times, owner, group flags, and C(-D).
     type: bool
-    default: yes
+    default: true
   checksum:
     description:
-      - Skip based on checksum, rather than mod-time & size; Note that that "archive" option is still enabled by default - the "checksum" option will
-        not disable it.
+      - Skip based on checksum, rather than mod-time & size; Note that that O(archive) option is still enabled by default -
+        the O(checksum) option will not disable it.
     type: bool
-    default: no
+    default: false
   compress:
     description:
       - Compress file data during the transfer.
       - In most cases, leave this enabled unless it causes problems.
     type: bool
-    default: yes
+    default: true
   existing_only:
     description:
       - Skip creating new files on receiver.
     type: bool
-    default: no
+    default: false
   delete:
     description:
-      - Delete files in I(dest) that do not exist (after transfer, not before) in the I(src) path.
-      - This option requires I(recursive=yes).
+      - Delete files in O(dest) that do not exist (after transfer, not before) in the O(src) path.
+      - This option requires O(recursive=true).
       - This option ignores excluded files and behaves like the rsync opt C(--delete-after).
     type: bool
-    default: no
+    default: false
   dirs:
     description:
       - Transfer directories without recursing.
     type: bool
-    default: no
+    default: false
   recursive:
     description:
       - Recurse into directories.
@@ -97,7 +98,7 @@ options:
     description:
       - Copy symlinks as the item that they point to (the referent) is copied, rather than the symlink.
     type: bool
-    default: no
+    default: false
   perms:
     description:
       - Preserve permissions.
@@ -130,45 +131,38 @@ options:
     default: 0
   set_remote_user:
     description:
-      - Put user@ for the remote paths.
+      - Put C(user@) for the remote paths.
       - If you have a custom ssh config to define the remote user for a host
-        that does not match the inventory user, you should set this parameter to C(no).
+        that does not match the inventory user, you should set this parameter to V(false).
     type: bool
-    default: yes
-  use_ssh_args:
-    description:
-      - In Ansible 2.10 and lower, it uses the ssh_args specified in C(ansible.cfg).
-      - In Ansible 2.11 and onwards, when set to C(true), it uses all SSH connection configurations like
-        C(ansible_ssh_args), C(ansible_ssh_common_args), and C(ansible_ssh_extra_args).
-    type: bool
-    default: no
+    default: true
   ssh_connection_multiplexing:
     description:
       - SSH connection multiplexing for rsync is disabled by default to prevent misconfigured ControlSockets from resulting in failed SSH connections.
         This is accomplished by setting the SSH C(ControlSocket) to C(none).
-      - Set this option to C(yes) to allow multiplexing and reduce SSH connection overhead.
-      - Note that simply setting this option to C(yes) is not enough;
+      - Set this option to V(true) to allow multiplexing and reduce SSH connection overhead.
+      - Note that simply setting this option to V(true) is not enough;
         You must also configure SSH connection multiplexing in your SSH client config by setting values for
         C(ControlMaster), C(ControlPersist) and C(ControlPath).
     type: bool
-    default: no
+    default: false
   rsync_opts:
     description:
       - Specify additional rsync options by passing in an array.
       - Note that an empty string in C(rsync_opts) will end up transfer the current working directory.
     type: list
-    default:
+    default: []
     elements: str
   partial:
     description:
       - Tells rsync to keep the partial file which should make a subsequent transfer of the rest of the file much faster.
     type: bool
-    default: no
+    default: false
   verify_host:
     description:
       - Verify destination host key.
     type: bool
-    default: no
+    default: false
   private_key:
     description:
       - Specify the private key to use for SSH-based rsync connections (e.g. C(~/.ssh/id_rsa)).
@@ -178,41 +172,65 @@ options:
       - Add a destination to hard link against during the rsync.
     type: list
     default:
-    elements: str
+    elements: path
   delay_updates:
     description:
       - This option puts the temporary file from each updated file into a holding directory until the end of the transfer,
         at which time all the files are renamed into place in rapid succession.
     type: bool
-    default: yes
+    default: true
     version_added: '1.3.0'
+  use_ssh_args:
+    description:
+      - In Ansible 2.10 and lower, it uses the ssh_args specified in C(ansible.cfg).
+      - In Ansible 2.11 and onwards, when set to V(true), it uses all SSH connection configurations like
+        C(ansible_ssh_args), C(ansible_ssh_common_args), and C(ansible_ssh_extra_args).
+    type: bool
+    default: false
+  _local_rsync_path:
+    description: Internal use only.
+    type: path
+    default: 'rsync'
+    required: false
+  _local_rsync_password:
+    description: Internal use only, never logged.
+    type: str
+    required: false
+  _substitute_controller:
+    description: Internal use only.
+    type: bool
+    default: false
+  _ssh_args:
+    description: Internal use only. See O(use_ssh_args) for ssh arg settings.
+    type: str
+    required: false
 
 notes:
-   - rsync must be installed on both the local and remote host.
-   - For the C(synchronize) module, the "local host" is the host `the synchronize task originates on`, and the "destination host" is the host
-     `synchronize is connecting to`.
-   - The "local host" can be changed to a different host by using `delegate_to`.  This enables copying between two remote hosts or entirely on one
-     remote machine.
+   - C(rsync) must be installed on both the local and remote host.
+   - For the M(ansible.posix.synchronize) module, the "local host" is the host I(the synchronize task originates on),
+     and the "destination host" is the host I(synchronize is connecting to).
+   - The "local host" can be changed to a different host by using C(delegate_to).
+     This enables copying between two remote hosts or entirely on one remote machine.
    - >
-     The user and permissions for the synchronize `src` are those of the user running the Ansible task on the local host (or the remote_user for a
-     delegate_to host when delegate_to is used).
+     The user and permissions for the synchronize O(src) are those of the user running the Ansible task on the local host (or the remote_user for a
+     C(delegate_to) host when C(delegate_to) is used).
    - The user and permissions for the synchronize `dest` are those of the `remote_user` on the destination host or the `become_user` if `become=yes` is active.
    - In Ansible 2.0 a bug in the synchronize module made become occur on the "local host".  This was fixed in Ansible 2.0.1.
-   - Currently, synchronize is limited to elevating permissions via passwordless sudo.  This is because rsync itself is connecting to the remote machine
-     and rsync doesn't give us a way to pass sudo credentials in.
+   - Currently, M(ansible.posix.synchronize) is limited to elevating permissions via passwordless sudo.
+     This is because rsync itself is connecting to the remote machine and rsync doesn't give us a way to pass sudo credentials in.
    - Currently there are only a few connection types which support synchronize (ssh, paramiko, local, and docker) because a sync strategy has been
      determined for those connection types.  Note that the connection for these must not need a password as rsync itself is making the connection and
      rsync does not provide us a way to pass a password to the connection.
-   - Expect that dest=~/x will be ~<remote_user>/x even if using sudo.
+   - Expect that O(dest=~/x) will be V(~<remote_user>/x) even if using sudo.
    - Inspect the verbose output to validate the destination user/host/path are what was expected.
    - To exclude files and directories from being synchronized, you may add C(.rsync-filter) files to the source directory.
    - rsync daemon must be up and running with correct permission when using rsync protocol in source or destination path.
-   - The C(synchronize) module enables `--delay-updates` by default to avoid leaving a destination in a broken in-between state if the underlying rsync process
+   - The C(synchronize) module enables C(--delay-updates) by default to avoid leaving a destination in a broken in-between state if the underlying rsync process
      encounters an error. Those synchronizing large numbers of files that are willing to trade safety for performance should disable this option.
    - link_destination is subject to the same limitations as the underlying rsync daemon. Hard links are only preserved if the relative subtrees
      of the source and destination are the same. Attempts to hardlink into a directory that is a subdirectory of the source will be prevented.
 seealso:
-- module: copy
+- module: ansible.builtin.copy
 - module: community.windows.win_robocopy
 author:
 - Timothy Appnel (@tima)
@@ -235,7 +253,7 @@ EXAMPLES = r'''
     src: rsync://somehost.com/path/
     dest: /some/absolute/path/
 
-- name:  Synchronization using rsync protocol on delegate host (push)
+- name: Synchronization using rsync protocol on delegate host (push)
   ansible.posix.synchronize:
     src: /some/absolute/path/
     dest: rsync://somehost.com/path/
@@ -252,27 +270,27 @@ EXAMPLES = r'''
   ansible.posix.synchronize:
     src: some/relative/path
     dest: /some/absolute/path
-    archive: no
+    archive: false
 
 - name: Synchronization with --archive options enabled except for --recursive
   ansible.posix.synchronize:
     src: some/relative/path
     dest: /some/absolute/path
-    recursive: no
+    recursive: false
 
 - name: Synchronization with --archive options enabled except for --times, with --checksum option enabled
   ansible.posix.synchronize:
     src: some/relative/path
     dest: /some/absolute/path
-    checksum: yes
-    times: no
+    checksum: true
+    times: false
 
 - name: Synchronization without --archive options enabled except use --links
   ansible.posix.synchronize:
     src: some/relative/path
     dest: /some/absolute/path
-    archive: no
-    links: yes
+    archive: false
+    links: true
 
 - name: Synchronization of two paths both on the control machine
   ansible.posix.synchronize:
@@ -302,8 +320,8 @@ EXAMPLES = r'''
   ansible.posix.synchronize:
     src: some/relative/path
     dest: /some/absolute/path
-    delete: yes
-    recursive: yes
+    delete: true
+    recursive: true
 
 # This specific command is granted su privileges on the destination
 - name: Synchronize using an alternate rsync command
@@ -362,11 +380,11 @@ def substitute_controller(path):
     if not client_addr:
         ssh_env_string = os.environ.get('SSH_CLIENT', None)
         try:
-            client_addr, _ = ssh_env_string.split(None, 1)
+            client_addr, _ = ssh_env_string.split(None, 1)  # pylint: disable=disallowed-name
         except AttributeError:
             ssh_env_string = os.environ.get('SSH_CONNECTION', None)
             try:
-                client_addr, _ = ssh_env_string.split(None, 1)
+                client_addr, _ = ssh_env_string.split(None, 1)  # pylint: disable=disallowed-name
             except AttributeError:
                 pass
         if not client_addr:
@@ -388,8 +406,8 @@ def is_rsh_needed(source, dest):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            src=dict(type='str', required=True),
-            dest=dict(type='str', required=True),
+            src=dict(type='path', required=True),
+            dest=dict(type='path', required=True),
             dest_port=dict(type='int'),
             delete=dict(type='bool', default=False),
             private_key=dict(type='path'),
@@ -412,13 +430,14 @@ def main():
             set_remote_user=dict(type='bool', default=True),
             rsync_timeout=dict(type='int', default=0),
             rsync_opts=dict(type='list', default=[], elements='str'),
-            ssh_args=dict(type='str'),
+            _ssh_args=dict(type='str'),
+            use_ssh_args=dict(type='bool', default=False),
             ssh_connection_multiplexing=dict(type='bool', default=False),
             partial=dict(type='bool', default=False),
             verify_host=dict(type='bool', default=False),
             delay_updates=dict(type='bool', default=True),
             mode=dict(type='str', default='push', choices=['pull', 'push']),
-            link_dest=dict(type='list', elements='str'),
+            link_dest=dict(type='list', elements='path'),
         ),
         supports_check_mode=True,
     )
@@ -454,7 +473,7 @@ def main():
     owner = module.params['owner']
     group = module.params['group']
     rsync_opts = module.params['rsync_opts']
-    ssh_args = module.params['ssh_args']
+    ssh_args = module.params['_ssh_args']
     ssh_connection_multiplexing = module.params['ssh_connection_multiplexing']
     verify_host = module.params['verify_host']
     link_dest = module.params['link_dest']
@@ -572,7 +591,7 @@ def main():
         # hardlink is actually a change
         cmd.append('-vv')
         for x in link_dest:
-            link_path = os.path.abspath(os.path.expanduser(x))
+            link_path = os.path.abspath(x)
             destination_path = os.path.abspath(os.path.dirname(dest))
             if destination_path.find(link_path) == 0:
                 module.fail_json(msg='Hardlinking into a subdirectory of the source would cause recursion. %s and %s' % (destination_path, dest))
@@ -581,14 +600,8 @@ def main():
     changed_marker = '<<CHANGED>>'
     cmd.append('--out-format=%s' % shlex_quote(changed_marker + '%i %n%L'))
 
-    # expand the paths
-    if '@' not in source:
-        source = os.path.expanduser(source)
-    if '@' not in dest:
-        dest = os.path.expanduser(dest)
-
-    cmd.append(source)
-    cmd.append(dest)
+    cmd.append(shlex_quote(source))
+    cmd.append(shlex_quote(dest))
     cmdstr = ' '.join(cmd)
 
     # If we are using password authentication, write the password into the pipe
