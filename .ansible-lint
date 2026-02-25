@@ -7,5 +7,9 @@ skip_list:
   - meta-runtime[unsupported-version]  # This rule doesn't make any sense
   - fqcn[deep]  # This rule produces false positives for files in tests/unit/plugins/action/fixtures/
   - sanity[cannot-ignore]  # This rule is skipped to keep backward compatibility with Python 2
+
 exclude_paths:
   - changelogs/
+  - .github/
+  - tests/
+  - meta/
