@@ -17,8 +17,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os.path
-
 from ansible import constants as C
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves import shlex_quote
@@ -301,8 +299,6 @@ class ActionModule(ActionBase):
                         break
                 if localhost_shell:
                     break
-            else:
-                localhost_shell = os.path.basename(C.DEFAULT_EXECUTABLE)
             self._play_context.shell = localhost_shell
 
             # Unlike port, there can be only one executable
