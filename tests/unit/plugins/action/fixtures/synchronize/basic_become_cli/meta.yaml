@@ -32,7 +32,8 @@ asserts:
   - self.final_module_args['dest'] == 'root@el6host:/tmp/deleteme'
   - self.task.become == None
   - self.task.become_user == None
-  - self._play_context.shell == 'sh'
+  - self._play_context.shell == None
+  - self._play_context.executable == '/bin/sh'
   - self._play_context.remote_addr == 'el6host'
   - self._play_context.remote_user == 'root'
   - self._play_context.become == False

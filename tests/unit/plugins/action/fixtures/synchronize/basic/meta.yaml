@@ -11,7 +11,8 @@ hostvars:
 asserts:
   - hasattr(SAM._connection, 'ismock')
   - SAM._connection.transport == 'local'
-  - self._play_context.shell == 'sh'
+  - self._play_context.shell == None
+  - self._play_context.executable == '/bin/sh'
   - self.execute_called
   - self.final_module_args['_local_rsync_path'] == 'rsync'
   - self.final_module_args['src'] == '/tmp/deleteme'
