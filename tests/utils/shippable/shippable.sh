@@ -65,13 +65,16 @@ fi
 export ANSIBLE_COLLECTIONS_PATH="${PWD}/../../../"
 
 # START: HACK install dependencies
-if [ "${ansible_version}" == "2.9" ] || [ "${ansible_version}" == "2.10" ]; then
-    # Note: Since community.general 5.x, Ansible Core versions prior to 2.11 are not supported.
-    # So we need to use 4.8.1 for Ansible 2.9 and Ansible Engine 2.10.
-    retry git clone --depth=1 --single-branch -b 4.8.1 https://github.com/ansible-collections/community.general.git "${ANSIBLE_COLLECTIONS_PATH}/ansible_collections/community/general"
+if [ "${ansible_version}" == "2.16" ]; then
+# Note: Since community.general 12.x dropped support for ansible-core 2.16,
+# we need to use stable-11 for ansible-core 2.16.
+    target_branch='stable-11'
 else
-    retry git clone --depth=1 --single-branch https://github.com/ansible-collections/community.general.git "${ANSIBLE_COLLECTIONS_PATH}/ansible_collections/community/general"
+    target_branch='main'
 fi
+
+retry git clone --depth=1 --single-branch -b "${target_branch}" https://github.com/ansible-collections/community.general.git "${ANSIBLE_COLLECTIONS_PATH}/ansible_collections/community/general"
+
 # Note:  we're installing with git to work around Galaxy being a huge PITA (https://github.com/ansible/galaxy/issues/2429)
 # END: HACK
 

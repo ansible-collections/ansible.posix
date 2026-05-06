@@ -122,6 +122,39 @@ stages:
             - name: Lint
               test: lint
 
+  - stage: Sanity_2_17
+    displayName: Ansible 2.17 Sanity & Units & Lint
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          nameFormat: "{0}"
+          testFormat: 2.17/{0}
+          targets:
+            - name: Sanity
+              test: sanity
+            - name: Units
+              test: units
+            - name: Lint
+              test: lint
+
+    # 2.16 is LTS
+  - stage: Sanity_2_16
+    displayName: Ansible 2.16 Sanity & Units & Lint
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          nameFormat: "{0}"
+          testFormat: 2.16/{0}
+          targets:
+            - name: Sanity
+              test: sanity
+            - name: Units
+              test: units
+            - name: Lint
+              test: lint
+
   ## Docker
   - stage: Docker_devel
     displayName: Docker devel
@@ -133,10 +166,10 @@ stages:
           targets:
             - name: Fedora 44
               test: fedora44
-            - name: Ubuntu 22.04
-              test: ubuntu2204
             - name: Ubuntu 24.04
               test: ubuntu2404
+            - name: Ubuntu 26.04
+              test: ubuntu2604
 
   - stage: Docker_2_21
     displayName: Docker 2.21
@@ -144,10 +177,10 @@ stages:
     jobs:
       - template: templates/matrix.yml
         parameters:
-          testFormat: devel/linux/{0}/1
+          testFormat: 2.21/linux/{0}/1
           targets:
-            - name: Fedora 44
-              test: fedora44
+            - name: Fedora 43
+              test: fedora43
             - name: Ubuntu 22.04
               test: ubuntu2204
             - name: Ubuntu 24.04
@@ -198,6 +231,32 @@ stages:
             - name: Ubuntu 24.04
               test: ubuntu2404
 
+  - stage: Docker_2_17
+    displayName: Docker 2.17
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          testFormat: 2.17/linux/{0}/1
+          targets:
+            - name: Fedora 39
+              test: fedora39
+            - name: Ubuntu 22.04
+              test: ubuntu2204
+
+  - stage: Docker_2_16
+    displayName: Docker 2.16
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          testFormat: 2.16/linux/{0}/1
+          targets:
+            - name: Fedora 38
+              test: fedora38
+            - name: Ubuntu 22.04
+              test: ubuntu2204
+
   ## Remote
   - stage: Remote_devel
     displayName: Remote devel
@@ -222,7 +281,7 @@ stages:
     jobs:
       - template: templates/matrix.yml
         parameters:
-          testFormat: devel/{0}/1
+          testFormat: 2.21/{0}/1
           targets:
             - name: RHEL 10.1
               test: rhel/10.1
@@ -282,11 +341,41 @@ stages:
             - name: FreeBSD 13.5
               test: freebsd/13.5
 
+  - stage: Remote_2_17
+    displayName: Remote 2.17
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          testFormat: 2.17/{0}/1
+          targets:
+            - name: RHEL 10.0
+              test: rhel/10.0
+            - name: FreeBSD 13.5
+              test: freebsd/13.5
+
+  - stage: Remote_2_16
+    displayName: Remote 2.16
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          testFormat: 2.16/{0}/1
+          targets:
+            - name: RHEL 10.1
+              test: rhel/10.1
+
   ## Finally
 
   - stage: Summary
     condition: succeededOrFailed()
     dependsOn:
+      - Sanity_2_16
+      - Remote_2_16
+      - Docker_2_16
+      - Sanity_2_17
+      - Remote_2_17
+      - Docker_2_17
       - Sanity_2_18
       - Remote_2_18
       - Docker_2_18
