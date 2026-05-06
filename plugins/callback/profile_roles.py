@@ -33,7 +33,7 @@ import collections
 import time
 
 from ansible.plugins.callback import CallbackBase
-from ansible.module_utils.six.moves import reduce
+from functools import reduce
 
 # define start time
 t0 = tn = time.time()

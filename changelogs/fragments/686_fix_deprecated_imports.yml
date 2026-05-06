@@ -1,0 +1,19 @@
+---
+minor_changes:
+  - acl - fix deprecated ``ansible.module_utils._text`` import (https://github.com/ansible-collections/ansible.posix/issues/686).
+  - authorized_key - fix deprecated ``ansible.module_utils._text`` and ``ansible.module_utils.six`` imports (https://github.com/ansible-collections/ansible.posix/issues/686).
+  - cgroup_perf_recap callback - fix deprecated ``ansible.module_utils._text`` and ``ansible.module_utils.six`` imports (https://github.com/ansible-collections/ansible.posix/issues/686).
+  - csh shell plugin - fix deprecated ``ansible.module_utils.six`` imports (https://github.com/ansible-collections/ansible.posix/issues/686).
+  - firewalld_info - fix deprecated ``ansible.module_utils._text`` import (https://github.com/ansible-collections/ansible.posix/issues/686).
+  - fish shell plugin - fix deprecated ``ansible.module_utils.six`` imports (https://github.com/ansible-collections/ansible.posix/issues/686).
+  - json callback - fix deprecated ``ansible.module_utils._text`` import (https://github.com/ansible-collections/ansible.posix/issues/686).
+  - jsonl callback - fix deprecated ``ansible.module_utils._text`` import (https://github.com/ansible-collections/ansible.posix/issues/686).
+  - mount - fix deprecated ``ansible.module_utils._text`` and ``ansible.module_utils.six`` imports (https://github.com/ansible-collections/ansible.posix/issues/686).
+  - patch - fix deprecated ``ansible.module_utils._text`` import (https://github.com/ansible-collections/ansible.posix/issues/686).
+  - profile_roles callback - fix deprecated ``ansible.module_utils.six`` import (https://github.com/ansible-collections/ansible.posix/issues/686).
+  - profile_tasks callback - fix deprecated ``ansible.module_utils.six`` import (https://github.com/ansible-collections/ansible.posix/issues/686).
+  - rhel_rpm_ostree - fix deprecated ``ansible.module_utils._text`` import (https://github.com/ansible-collections/ansible.posix/issues/686).
+  - rpm_ostree_upgrade - fix deprecated ``ansible.module_utils._text`` import (https://github.com/ansible-collections/ansible.posix/issues/686).
+  - seboolean - fix deprecated ``ansible.module_utils._text`` import (https://github.com/ansible-collections/ansible.posix/issues/686).
+  - synchronize - fix deprecated ``ansible.module_utils._text``, ``ansible.module_utils.common._collections_compat``, and ``ansible.module_utils.six`` imports (https://github.com/ansible-collections/ansible.posix/issues/686).
+  - sysctl - fix deprecated ``ansible.module_utils._text`` and ``ansible.module_utils.six`` imports (https://github.com/ansible-collections/ansible.posix/issues/686).

@@ -13,8 +13,7 @@ DOCUMENTATION = '''
       - shell_common
 '''
 
-from ansible.module_utils.six import text_type
-from ansible.module_utils.six.moves import shlex_quote
+from shlex import quote as shlex_quote
 from ansible.plugins.shell.sh import ShellModule as ShModule
 
 
@@ -42,7 +41,7 @@ class ShellModule(ShModule):
             if v is None:
                 ret.append('set -e %s;' % k)
             else:
-                ret.append('set -lx %s %s;' % (k, shlex_quote(text_type(v))))
+                ret.append('set -lx %s %s;' % (k, shlex_quote(str(v))))
         return ' '.join(ret)
 
     def build_module_command(self, env_string, shebang, cmd, arg_path=None):
