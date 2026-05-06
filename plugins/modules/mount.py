@@ -100,9 +100,12 @@ options:
       - V(absent_from_fstab) specifies that the device mount's entry will be
         removed from I(fstab). This option does not unmount it or delete the
         mountpoint.
+      - V(commented) specifies that the device mount's entry will be commented out in
+        I(fstab). This option does not unmount it or delete the mountpoint. If O(force)
+        is set to C(true), the line will be commented out even if it is currently active.
     type: str
     required: true
-    choices: [ absent, absent_from_fstab, mounted, present, unmounted, remounted, ephemeral ]
+    choices: [ absent, absent_from_fstab, commented, mounted, present, unmounted, remounted, ephemeral ]
   fstab:
     description:
       - File to use instead of C(/etc/fstab).
@@ -130,6 +133,12 @@ options:
     description:
       - Create a backup file including the timestamp information so you can get
         the original file back if you somehow clobbered it incorrectly.
+    type: bool
+    default: false
+  force:
+    description:
+      - When O(state=commented), if C(true) will comment out the line even if it is
+        currently active. Use with caution.
     type: bool
     default: false
 notes:
@@ -174,6 +183,21 @@ EXAMPLES = r'''
   ansible.posix.mount:
     path: /tmp/mnt-pnt
     state: remounted
+
+- name: Create a new commented entry in fstab for a volume
+  ansible.posix.mount:
+    src: 192.168.1.100:/nfs/ssd/shared_data
+    path: /mnt/shared_data
+    opts: rw,sync,hard
+    boot: false
+    state: commented
+    fstype: nfs
+
+- name: Comment out a mount point in fstab
+  ansible.posix.mount:
+    src: /mnt/smb_share
+    state: commented
+    force: true
 
 # The following will not save changes to fstab, and only be temporary until
 # a reboot, or until calling "state: unmounted" followed by "state: mounted"
@@ -279,6 +303,10 @@ def _set_mount_save_old(module, args):
     old_lines = []
     exists = False
     changed = False
+
+    state = module.params.get('state')
+    force = module.params.get('force', False)
+
     escaped_args = dict([(k, _escape_fstab(v)) for k, v in iteritems(args)])
     new_line = '%(src)s %(name)s %(fstype)s %(opts)s %(dump)s %(passno)s\n'
 
@@ -298,12 +326,17 @@ def _set_mount_save_old(module, args):
 
             continue
 
-        if line.strip().startswith('#'):
-            to_write.append(line)
+        # Check if the current line is commented in the file
+        is_commented = line.strip().startswith('#')
 
+        # Parse the content (strip the leading # for matching purposes)
+        # We use lstrip('#') then strip() to handle cases like '#  /dev/sdb...'
+        parse_line = line.lstrip('#').strip()
+        if not parse_line:
+            to_write.append(line)
             continue
 
-        fields = line.split('#')[0].split()
+        fields = parse_line.split('#')[0].split()
 
         # Check if we got a valid line for splitting
         # (on Linux the 5th and the 6th field is optional)
@@ -353,23 +386,47 @@ def _set_mount_save_old(module, args):
         # If we got here we found a match - let's check if there is any
         # difference
         exists = True
-        args_to_check = ('src', 'fstype', 'opts', 'dump', 'passno')
 
-        if platform.system() == 'SunOS':
-            args_to_check = ('src', 'fstype', 'passno', 'boot', 'opts')
-
-        for t in args_to_check:
-            if ld[t] != escaped_args[t]:
-                ld[t] = escaped_args[t]
-                changed = True
-
-        if changed:
-            to_write.append(new_line % ld)
+        if state == 'commented':
+            if is_commented:
+                # Already commented - check if it needs parameter updates within the comment
+                to_write.append(line)
+            else:
+                # Active line found - comment it out if forced
+                if force:
+                    to_write.append('# ' + line)
+                    changed = True
+                else:
+                    to_write.append(line)
         else:
-            to_write.append(line)
+            # state is 'present' or 'mounted'
+            # We want an ACTIVE line.
+            args_to_check = ('src', 'fstype', 'opts', 'dump', 'passno')
+            if platform.system() == 'SunOS':
+                args_to_check = ('src', 'fstype', 'passno', 'boot', 'opts')
+
+            for t in args_to_check:
+                if ld[t] != escaped_args[t]:
+                    ld[t] = escaped_args[t]
+                    changed = True
+
+            if is_commented:
+                # Line exists and was previously commented, so remove the comment
+                to_write.append(parse_line)
+                changed = True
+            elif changed:
+                # Line needs updating
+                to_write.append(new_line % ld)
+                changed = True
+            else:
+                # Already active and correct
+                to_write.append(line)
 
     if not exists:
-        to_write.append(new_line % escaped_args)
+        if state == 'commented':
+            to_write.append('# ' + new_line % escaped_args)
+        else:
+            to_write.append(new_line % escaped_args)
         changed = True
 
     if changed and not module.check_mode:
@@ -778,10 +835,14 @@ def main():
             passno=dict(type='str', no_log=False, default='0'),
             src=dict(type='path'),
             backup=dict(type='bool', default=False),
-            state=dict(type='str', required=True, choices=['absent', 'absent_from_fstab', 'mounted', 'present', 'unmounted', 'remounted', 'ephemeral']),
+            state=dict(type='str', required=True, choices=[
+                'absent', 'absent_from_fstab', 'commented', 'mounted', 'present', 'unmounted', 'remounted', 'ephemeral'
+            ]),
+            force=dict(type='bool', default=False)
         ),
         supports_check_mode=True,
         required_if=(
+            ['state', 'commented', ['src', 'fstype']],
             ['state', 'mounted', ['src', 'fstype']],
             ['state', 'present', ['src', 'fstype']],
             ['state', 'ephemeral', ['src', 'fstype']]
@@ -993,7 +1054,7 @@ def main():
                 pass
 
             module.fail_json(msg="Error mounting %s: %s" % (name, msg))
-    elif state == 'present':
+    elif state == 'present' or state == 'commented':
         name, changed = set_mount(module, args)
     elif state == 'remounted':
         if not module.check_mode:
