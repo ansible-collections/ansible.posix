@@ -106,14 +106,31 @@ stages:
             - name: Lint
               test: lint
 
-  - stage: Sanity_2_18
-    displayName: Ansible 2.18 Sanity & Units & Lint
+  - stage: Sanity_2_18_LTS
+    displayName: Ansible 2.18 LTS Sanity & Units & Lint
     dependsOn: []
     jobs:
       - template: templates/matrix.yml
         parameters:
           nameFormat: "{0}"
           testFormat: 2.18/{0}
+          targets:
+            - name: Sanity
+              test: sanity
+            - name: Units
+              test: units
+            - name: Lint
+              test: lint
+
+  # 2.16 is LTS, skipping 2.17 as it is EOL
+  - stage: Sanity_2_16_LTS
+    displayName: Ansible 2.16 LTS Sanity & Units & Lint
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          nameFormat: "{0}"
+          testFormat: 2.16/{0}
           targets:
             - name: Sanity
               test: sanity
@@ -183,8 +200,8 @@ stages:
             - name: Ubuntu 24.04
               test: ubuntu2404
 
-  - stage: Docker_2_18
-    displayName: Docker 2.18
+  - stage: Docker_2_18_LTS
+    displayName: Docker 2.18 LTS
     dependsOn: []
     jobs:
       - template: templates/matrix.yml
@@ -197,6 +214,19 @@ stages:
               test: ubuntu2204
             - name: Ubuntu 24.04
               test: ubuntu2404
+
+  - stage: Docker_2_16_LTS
+    displayName: Docker 2.16 LTS
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          testFormat: 2.16/linux/{0}/1
+          targets:
+            - name: CentOS 7
+              test: centos7
+            - name: Ubuntu 20.04
+              test: ubuntu2004
 
   ## Remote
   - stage: Remote_devel
@@ -267,8 +297,8 @@ stages:
             - name: FreeBSD 13.5
               test: freebsd/13.5
 
-  - stage: Remote_2_18
-    displayName: Remote 2.18
+  - stage: Remote_2_18_LTS
+    displayName: Remote 2.18 LTS
     dependsOn: []
     jobs:
       - template: templates/matrix.yml
@@ -282,14 +312,29 @@ stages:
             - name: FreeBSD 13.5
               test: freebsd/13.5
 
-  ## Finally
+  - stage: Remote_2_16_LTS
+    displayName: Remote 2.16 LTS
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          testFormat: 2.16/{0}/1
+          targets:
+            - name: RHEL 9.7
+              test: rhel/9.7
+            - name: RHEL 10.1
+              test: rhel/10.1
 
+  ## Finally
   - stage: Summary
     condition: succeededOrFailed()
     dependsOn:
-      - Sanity_2_18
-      - Remote_2_18
-      - Docker_2_18
+      - Sanity_2_16_LTS
+      - Remote_2_16_LTS
+      - Docker_2_16_LTS
+      - Sanity_2_18_LTS
+      - Remote_2_18_LTS
+      - Docker_2_18_LTS
       - Sanity_2_19
       - Remote_2_19
       - Docker_2_19
