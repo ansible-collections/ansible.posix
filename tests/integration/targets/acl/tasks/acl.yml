@@ -1,20 +1,6 @@
 ---
 # (c) 2017, Martin Krizek <mkrizek@redhat.com>
-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 - name: Create ansible user
   ansible.builtin.user:
@@ -43,15 +29,17 @@
 
 - name: Create ansible dir
   ansible.builtin.file:
-    path: "{{ test_dir }}"
+    path: "{{ item.path }}"
     state: directory
-    mode: "0755"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: "{{ test_dir }}", mode: "0755" }
+    - { path: "{{ test_recursive_dir }}", mode: "0755" }
 
 - name: Install acl package
   ansible.builtin.package:
     name: acl
     state: present
-
 ##############################################################################
 - name: Grant ansible user read access to a file
   ansible.posix.acl:
@@ -249,3 +237,38 @@
       - "'default:mask::rwx' in getfacl_output.stdout_lines"
       - "'default:other::r-x' in getfacl_output.stdout_lines"
       - "'default:group:{{ test_group }}:rw-' not in getfacl_output.stdout_lines"
+
+##############################################################################
+
+- name: create file
+  ansible.builtin.copy:
+    dest: "{{ test_recursive_dir }}/txt.txt"
+    mode: '0440'
+    content: "hw"
+
+- name: Change ACLs recursively
+  ansible.posix.acl:
+    path: "{{ test_recursive_dir }}"
+    entity: "{{ test_user }}"
+    etype: user
+    permissions: rX
+    state: present
+    recursive: true
+  register: output_acl_change
+
+- name: Remove ACLs recursively again
+  ansible.posix.acl:
+    path: "{{ test_recursive_dir }}"
+    entity: "{{ test_user }}"
+    etype: user
+    permissions: r
+    state: present
+    recursive: true
+  register: output_acl_remove
+
+- assert:
+    that:
+      - output_acl_change is changed
+      - output_acl_change is not failed
+      - output_acl_remove is changed
+      - output_acl_remove is not failed
