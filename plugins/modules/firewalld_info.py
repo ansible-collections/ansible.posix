@@ -333,10 +333,6 @@ def main():
     if not HAS_FIREWALLD:
         module.fail_json(msg=missing_required_lib('python-firewall'))
 
-    # If you want to show warning messages in the task running process,
-    # you can append the message to the 'warn' list.
-    warn = list()
-
     try:
         client = fw_client.FirewallClient()
 
@@ -356,8 +352,7 @@ def main():
             collect_zones = list(set(specified_zones) & set(all_zones))
             ignore_zones = list(set(specified_zones) - set(collect_zones))
             if ignore_zones:
-                warn.append(
-                    'Please note: zone:(%s) have been ignored in the gathering process.' % ','.join(ignore_zones))
+                module.warn(f'Please note: zone:({",".join(ignore_zones)}) have been ignored in the gathering process.')
         else:
             collect_zones = get_all_zones(client)
 
@@ -396,7 +391,6 @@ def main():
     result['collected_zones'] = collect_zones
     result['undefined_zones'] = ignore_zones
     result['firewalld_info'] = firewalld_info
-    result['warnings'] = warn
     module.exit_json(**result)
 
 
