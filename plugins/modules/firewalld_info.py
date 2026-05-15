@@ -352,7 +352,7 @@ def main():
             collect_zones = list(set(specified_zones) & set(all_zones))
             ignore_zones = list(set(specified_zones) - set(collect_zones))
             if ignore_zones:
-                module.warn(f'Please note: zone:({",".join(ignore_zones)}) have been ignored in the gathering process.')
+                module.warn('Please note: zone:(%s) have been ignored in the gathering process.' % ", ".join(ignore_zones))
         else:
             collect_zones = get_all_zones(client)
 
