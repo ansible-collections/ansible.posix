@@ -78,10 +78,15 @@ ansible-doc -t callback ansible.posix.profile_tasks
 
 The following ansible-core versions have been tested with this collection:
 
-- ansible-core 2.20 (devel)
-- ansible-core 2.19 (stable) *
-- ansible-core 2.18 (stable)
-- ansible-core 2.17 (stable)
+- ansible-core 2.22 (devel)
+- ansible-core 2.21 (stable)
+- ansible-core 2.20 (stable)
+- ansible-core 2.19 (stable)
+- ansible-core 2.18 (LTS)
+- ansible-core 2.17 (EoL)
+- ansible-core 2.16 (EoL)
+
+For most up to date support info, see the [ansible-core support matrix](https://docs.ansible.com/projects/ansible/latest/reference_appendices/release_and_maintenance.html#ansible-core-support-matrix)
 
 ## Contributing
 
