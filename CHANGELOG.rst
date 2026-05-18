@@ -4,6 +4,50 @@ ansible.posix Release Notes
 
 .. contents:: Topics
 
+v2.2.0
+======
+
+Release Summary
+---------------
+
+This is the minor release of the ``ansible.posix`` collection.
+This changelog contains all changes to the modules and plugins
+in the stable-2 branch that have been added after the release of
+``ansible.posix`` 2.1.0
+
+Minor Changes
+-------------
+
+- acl - fix deprecated ``ansible.module_utils._text`` import (https://github.com/ansible-collections/ansible.posix/issues/686).
+- authorized_key - fix deprecated ``ansible.module_utils._text`` and ``ansible.module_utils.six`` imports (https://github.com/ansible-collections/ansible.posix/issues/686).
+- cgroup_perf_recap callback - fix deprecated ``ansible.module_utils._text`` and ``ansible.module_utils.six`` imports (https://github.com/ansible-collections/ansible.posix/issues/686).
+- csh shell plugin - fix deprecated ``ansible.module_utils.six`` imports (https://github.com/ansible-collections/ansible.posix/issues/686).
+- firewalld_info - fix deprecated ``ansible.module_utils._text`` import (https://github.com/ansible-collections/ansible.posix/issues/686).
+- firewalld_info - use module.warn instead of passing ``warnings`` to ``exit_json`` (https://github.com/ansible-collections/ansible.posix/issues/710).
+- fish shell plugin - fix deprecated ``ansible.module_utils.six`` imports (https://github.com/ansible-collections/ansible.posix/issues/686).
+- json callback - fix deprecated ``ansible.module_utils._text`` import (https://github.com/ansible-collections/ansible.posix/issues/686).
+- jsonl callback - fix deprecated ``ansible.module_utils._text`` import (https://github.com/ansible-collections/ansible.posix/issues/686).
+- mount - fix deprecated ``ansible.module_utils._text`` and ``ansible.module_utils.six`` imports (https://github.com/ansible-collections/ansible.posix/issues/686).
+- patch - fix deprecated ``ansible.module_utils._text`` import (https://github.com/ansible-collections/ansible.posix/issues/686).
+- profile_roles callback - fix deprecated ``ansible.module_utils.six`` import (https://github.com/ansible-collections/ansible.posix/issues/686).
+- profile_tasks - Add option to provide a different date/time format (https://github.com/ansible-collections/ansible.posix/issues/279).
+- profile_tasks callback - fix deprecated ``ansible.module_utils.six`` import (https://github.com/ansible-collections/ansible.posix/issues/686).
+- removed ANSIBLE_METADATA from remaining plugins.
+- rhel_rpm_ostree - fix deprecated ``ansible.module_utils._text`` import (https://github.com/ansible-collections/ansible.posix/issues/686).
+- rpm_ostree_upgrade - fix deprecated ``ansible.module_utils._text`` import (https://github.com/ansible-collections/ansible.posix/issues/686).
+- seboolean - fix deprecated ``ansible.module_utils._text`` import (https://github.com/ansible-collections/ansible.posix/issues/686).
+- synchronize - fix deprecated ``ansible.module_utils._text``, ``ansible.module_utils.common._collections_compat``, and ``ansible.module_utils.six`` imports (https://github.com/ansible-collections/ansible.posix/issues/686).
+- sysctl - fix deprecated ``ansible.module_utils._text`` and ``ansible.module_utils.six`` imports (https://github.com/ansible-collections/ansible.posix/issues/686).
+
+Bugfixes
+--------
+
+- acl - correctly assert needed changes when pointing to a directory and recursive is set to true.
+- ansible.posix.authorized_key - fixes error on permission denied in authorized_key module (https://github.com/ansible-collections/ansible.posix/issues/462).
+- firewalld_info - stop returning warnings as return values; this has been deprecated by ansible-core (https://github.com/ansible-collections/ansible.posix/pull/670).
+- mount - stop returning warnings as return values; this has been deprecated by ansible-core (https://github.com/ansible-collections/ansible.posix/pull/670).
+- patch - removed use of deprecated ``_AnsibleActionDone`` API (https://github.com/ansible-collections/ansible.posix/pull/687).
+
 v2.1.0
 ======
 

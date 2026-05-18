@@ -1,2 +1,0 @@
-bugfixes:
-  - acl - correctly assert needed changes when pointing to a directory and recursive is set to true.

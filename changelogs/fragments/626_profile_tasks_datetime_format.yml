@@ -1,3 +1,0 @@
----
-minor_changes:
-  - profile_tasks - Add option to provide a different date/time format (https://github.com/ansible-collections/ansible.posix/issues/279).
