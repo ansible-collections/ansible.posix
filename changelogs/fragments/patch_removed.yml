@@ -1,0 +1,3 @@
+---
+removed_features:
+    - patch - removed deprecated _AnsibleActionDone API (https://github.com/ansible-collections/ansible.posix/pull/687).
