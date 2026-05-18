@@ -1,0 +1,3 @@
+bugfixes:
+  - "firewalld_info - stop returning warnings as return values; this has been deprecated by ansible-core (https://github.com/ansible-collections/ansible.posix/pull/670)."
+  - "mount - stop returning warnings as return values; this has been deprecated by ansible-core (https://github.com/ansible-collections/ansible.posix/pull/670)."
