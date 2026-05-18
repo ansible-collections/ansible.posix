@@ -20,6 +20,7 @@
 - name: Assert turn active_zones true
   ansible.builtin.assert:
     that:
+      - result.collected_zones == ['public']
 
 - name: Ensure firewalld_zones with zone list
   ansible.posix.firewalld_info:
@@ -31,3 +32,6 @@
 - name: Assert specified zones
   ansible.builtin.assert:
     that:
+      - result.collected_zones == ['public']
+      - result.undefined_zones == ['invalid_zone']
+      - '"invalid_zone" in result.warnings[0]'
