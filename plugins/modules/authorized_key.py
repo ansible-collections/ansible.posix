@@ -229,10 +229,17 @@ import errno
 import traceback
 from operator import itemgetter
 
-from ansible.module_utils._text import to_native
+# TODO(Python2): urllib.parse is available in Python 3. This module may run on
+# target hosts with Python 2.7 (e.g., older RHEL systems in CI integration tests).
+# Remove the try/except fallback to urlparse when Python 2 support is dropped.
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
+
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.urls import fetch_url
-from ansible.module_utils.six.moves.urllib.parse import urlparse
 
 
 class keydict(dict):

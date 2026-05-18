@@ -86,7 +86,7 @@ import collections
 
 from datetime import datetime
 
-from ansible.module_utils.six.moves import reduce
+from functools import reduce
 from ansible.plugins.callback import CallbackBase
 
 

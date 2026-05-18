@@ -7,7 +7,7 @@ import tempfile
 
 from ansible_collections.ansible.posix.tests.unit.compat import unittest
 from ansible_collections.ansible.posix.tests.unit.compat.mock import MagicMock
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes
 
 from ansible_collections.ansible.posix.plugins.modules.mount import (
     get_linux_mounts,

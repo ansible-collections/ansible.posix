@@ -107,12 +107,20 @@ EXAMPLES = r'''
 import os
 import platform
 import re
+import sys
 import tempfile
 
+# TODO(Python2): On Python 2, string_types is basestring (str + unicode).
+# This module may run on target hosts with Python 2.7.
+# Remove the Python 2 branch when Python 2 support is dropped.
+if sys.version_info >= (3, 0):
+    string_types = str
+else:
+    string_types = basestring  # pylint: disable=undefined-variable
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import string_types
+from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE
-from ansible.module_utils._text import to_native
 
 
 class SysctlModule(object):
