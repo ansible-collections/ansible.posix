@@ -1,3 +1,0 @@
----
-minor_changes:
-    - removed ANSIBLE_METADATA from remaining plugins.
