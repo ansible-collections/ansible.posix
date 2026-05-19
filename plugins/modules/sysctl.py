@@ -44,6 +44,7 @@ options:
             - If V(true), performs a C(/sbin/sysctl -p) if the O(sysctl_file) is
               updated. If V(false), does not reload C(sysctl) even if the
               O(sysctl_file) is updated.
+            - For FreeBSD, can not be used with O(sysctl_file) other than C(/etc/sysctl.conf) or C(/etc/sysctl.conf.local).
         type: bool
         default: true
     sysctl_file:
@@ -154,6 +155,11 @@ class SysctlModule(object):
     def process(self):
 
         self.platform = platform.system().lower()
+
+        # system specific tests
+        freebsd_sysctl_files = ['/etc/sysctl.conf', '/etc/sysctl.conf.local']
+        if self.platform == 'freebsd' and self.sysctl_file not in freebsd_sysctl_files and self.args['reload']:
+            self.module.fail_json(msg="%s can not be reloaded. Set reload=False." % self.sysctl_file)
 
         # Whitespace is bad
         self.args['name'] = self.args['name'].strip()
@@ -425,13 +431,6 @@ def main():
         module.fail_json(msg="name cannot be blank")
     if module.params['state'] == 'present' and module.params['value'] == '':
         module.fail_json(msg="value cannot be blank")
-
-    # System specific tests
-    system = platform.system().lower()
-    if system == 'freebsd':
-        if module.params['sysctl_file'] not in ['/etc/sysctl.conf', '/etc/sysctl.conf.local'] and \
-           module.params['reload']:
-            module.fail_json(msg="%s can not be reloaded. Set reload=False." % module.params['sysctl_file'])
 
     result = SysctlModule(module)
 

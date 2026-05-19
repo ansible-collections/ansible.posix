@@ -1,0 +1,3 @@
+---
+bugfixes:
+    - sysctl - reload sysctl only if the sysctl file is ``/etc/sysctl.conf`` or ``/etc/sysctl.conf.local`` (https://github.com/ansible-collections/ansible.posix/issues/663).
