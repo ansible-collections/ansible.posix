@@ -801,20 +801,24 @@ def main():
             dict(
                 opts='-',
                 passno='-',
-                fstab=module.params.get('fstab', '/etc/vfstab'),
+                fstab=module.params['fstab'],
                 boot='yes' if module.params['boot'] else 'no',
             )
         )
+        if args['fstab'] is None:
+            args['fstab'] = '/etc/vfstab'
     else:
         args.update(
             dict(
                 opts='defaults',
                 dump='0',
                 passno='0',
-                fstab=module.params.get('fstab', '/etc/fstab'),
+                fstab=module.params['fstab'],
                 boot='yes',
             )
         )
+        if args['fstab'] is None:
+            args['fstab'] = '/etc/fstab'
 
         # FreeBSD doesn't have any 'default' so set 'rw' instead
         if PLATFORM == 'freebsd':
