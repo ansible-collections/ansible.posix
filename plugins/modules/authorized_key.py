@@ -121,10 +121,10 @@ EXAMPLES = r'''
   ansible.posix.authorized_key:
     user: deploy
     state: present
-    key: '{{ item }}'
-  with_file:
-    - public_keys/doe-jane
-    - public_keys/doe-john
+    key: "{{ lookup('file', item) }}"
+    loop:
+      - public_keys/doe-jane
+      - public_keys/doe-john
 
 - name: Set authorized key defining key options
   ansible.posix.authorized_key:
