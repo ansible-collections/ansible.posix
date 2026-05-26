@@ -138,6 +138,17 @@ notes:
   - Using O(state=remounted) with O(opts) set may create unexpected results based on
     the existing options already defined on mount, so care should be taken to
     ensure that conflicting options are not present before hand.
+attributes:
+  check_mode:
+    support: full
+    description: Can run in check_mode and return changed status prediction without modifying target.
+  diff_mode:
+    support: none
+    description: Does not support differences output.
+  platform:
+    platforms: posix
+    support: full
+    description: Supported on POSIX-compliant systems.
 '''
 
 EXAMPLES = r'''
