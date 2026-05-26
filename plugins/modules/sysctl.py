@@ -12,9 +12,12 @@ __metaclass__ = type
 DOCUMENTATION = r'''
 ---
 module: sysctl
-short_description: Manage entries in sysctl.conf.
+short_description: Manage sysctl entries
 description:
     - This module manipulates sysctl entries and optionally performs a C(/sbin/sysctl -p) after changing them.
+    - If you are using C(systemd-sysctl(8)), note that it won't use the file C(/etc/sysctl.conf).
+    - If you are using C(procps) sysctl, it reads C(/etc/sysctl.conf).
+    - Read more about L(sysctl.conf, https://www.man7.org/linux/man-pages/man5/sysctl.conf.5.html).
 version_added: "1.0.0"
 options:
     name:
@@ -41,15 +44,14 @@ options:
         default: false
     reload:
         description:
-            - If V(true), performs a C(/sbin/sysctl -p) if the O(sysctl_file) is
-              updated. If V(false), does not reload C(sysctl) even if the
-              O(sysctl_file) is updated.
+            - If V(true), performs a C(/sbin/sysctl -p) if the O(sysctl_file) is updated.
+            - If V(false), does not reload C(sysctl) even if the O(sysctl_file) is updated.
             - For FreeBSD, can not be used with O(sysctl_file) other than C(/etc/sysctl.conf) or C(/etc/sysctl.conf.local).
         type: bool
         default: true
     sysctl_file:
         description:
-            - Specifies the absolute path to C(sysctl.conf), if not C(/etc/sysctl.conf).
+            - Specifies the absolute path to sysctl file, if not C(/etc/sysctl.conf).
         default: /etc/sysctl.conf
         type: path
     sysctl_set:
