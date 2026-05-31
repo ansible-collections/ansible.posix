@@ -7,11 +7,17 @@ parameters:
   - name: jobs
     type: object
 
+  # An optional container resource name to use for the test jobs.
+  # Defaults to "default" if not specified.
+  - name: container
+    type: string
+    default: default
+
 jobs:
   - ${{ each job in parameters.jobs }}:
     - job: test_${{ replace(replace(replace(job.test, '/', '_'), '.', '_'), '-', '_') }}
       displayName: ${{ job.name }}
-      container: default
+      container: ${{ parameters.container }}
       workspace:
         clean: all
       steps:
