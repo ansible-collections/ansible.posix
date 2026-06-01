@@ -25,6 +25,6 @@ asserts:
   - self._play_context.shell == None
   - self.execute_called
   - self.final_module_args['_local_rsync_path'] == 'rsync'
-  - self.final_module_args['src'] == '/tmp/deleteme'
+  - self.final_module_args['src'] == ['/tmp/deleteme']
   - self.final_module_args['dest'] == 'root@el6host:/tmp/deleteme'
   - self.final_module_args['private_key'] == '~/.ssh/id_rsa'
