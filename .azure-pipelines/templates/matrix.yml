@@ -14,6 +14,12 @@ parameters:
     type: object
     default: []
 
+  # An optional container resource name to use for the test jobs.
+  # Defaults to "default" if not specified.
+  - name: container
+    type: string
+    default: default
+
   # An optional format string used to generate the job name.
   # - {0} is the name of an item in the targets list.
   - name: nameFormat
@@ -43,6 +49,7 @@ parameters:
 jobs:
   - template: test.yml
     parameters:
+      container: ${{ parameters.container }}
       jobs:
         - ${{ if eq(length(parameters.groups), 0) }}:
           - ${{ each target in parameters.targets }}:

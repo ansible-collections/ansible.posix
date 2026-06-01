@@ -37,8 +37,9 @@ variables:
 resources:
   containers:
     - container: default
+      image: quay.io/ansible/azure-pipelines-test-container:8.0.0
+    - container: legacy
       image: quay.io/ansible/azure-pipelines-test-container:7.0.0
-
 pool: Standard
 
 stages:
@@ -128,6 +129,7 @@ stages:
     jobs:
       - template: templates/matrix.yml
         parameters:
+          container: legacy
           nameFormat: "{0}"
           testFormat: 2.17/{0}
           targets:
@@ -145,6 +147,7 @@ stages:
     jobs:
       - template: templates/matrix.yml
         parameters:
+          container: legacy
           nameFormat: "{0}"
           testFormat: 2.16/{0}
           targets:
@@ -237,6 +240,7 @@ stages:
     jobs:
       - template: templates/matrix.yml
         parameters:
+          container: legacy
           testFormat: 2.17/linux/{0}/1
           targets:
             - name: Fedora 39
@@ -250,6 +254,7 @@ stages:
     jobs:
       - template: templates/matrix.yml
         parameters:
+          container: legacy
           testFormat: 2.16/linux/{0}/1
           targets:
             - name: Fedora 38
@@ -347,6 +352,7 @@ stages:
     jobs:
       - template: templates/matrix.yml
         parameters:
+          container: legacy
           testFormat: 2.17/{0}/1
           targets:
             - name: RHEL 10.0
@@ -360,6 +366,7 @@ stages:
     jobs:
       - template: templates/matrix.yml
         parameters:
+          container: legacy
           testFormat: 2.16/{0}/1
           targets:
             - name: RHEL 10.1
