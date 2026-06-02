@@ -37,26 +37,13 @@ variables:
 resources:
   containers:
     - container: default
+      image: quay.io/ansible/azure-pipelines-test-container:8.0.0
+    - container: legacy
       image: quay.io/ansible/azure-pipelines-test-container:7.0.0
 
 pool: Standard
 
 stages:
-  - stage: Sanity_devel
-    displayName: Ansible devel sanity & Units & Lint
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: "{0}"
-          testFormat: devel/{0}
-          targets:
-            - name: Sanity
-              test: sanity
-            - name: Units
-              test: units
-            - name: Lint
-              test: lint
   - stage: Sanity_2_19
     displayName: Ansible 2.19 sanity & Units & Lint
     dependsOn: []
@@ -93,6 +80,7 @@ stages:
     jobs:
       - template: templates/matrix.yml
         parameters:
+          container: legacy
           nameFormat: "{0}"
           testFormat: 2.17/{0}
           targets:
@@ -108,6 +96,7 @@ stages:
     jobs:
       - template: templates/matrix.yml
         parameters:
+          container: legacy
           nameFormat: "{0}"
           testFormat: 2.16/{0}
           targets:
@@ -115,21 +104,10 @@ stages:
               test: sanity
             - name: Units
               test: units
+            - name: Lint
+              test: lint
+
   ## Docker
-  - stage: Docker_devel
-    displayName: Docker devel
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          testFormat: devel/linux/{0}/1
-          targets:
-            - name: Fedora 42
-              test: fedora42
-            - name: Ubuntu 22.04
-              test: ubuntu2204
-            - name: Ubuntu 24.04
-              test: ubuntu2404
   - stage: Docker_2_19
     displayName: Docker 2.19
     dependsOn: []
@@ -164,6 +142,7 @@ stages:
     jobs:
       - template: templates/matrix.yml
         parameters:
+          container: legacy
           testFormat: 2.17/linux/{0}/1
           targets:
             - name: Fedora 39
@@ -176,32 +155,15 @@ stages:
     jobs:
       - template: templates/matrix.yml
         parameters:
+          container: legacy
           testFormat: 2.16/linux/{0}/1
           targets:
-            - name: CentOS 7
-              test: centos7
             - name: Fedora 38
               test: fedora38
             - name: Ubuntu 22.04
               test: ubuntu2204
 
   ## Remote
-  - stage: Remote_devel
-    displayName: Remote devel
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          testFormat: devel/{0}/1
-          targets:
-            - name: RHEL 10.0
-              test: rhel/10.0
-            - name: RHEL 9.6
-              test: rhel/9.6
-            - name: FreeBSD 14.3
-              test: freebsd/14.3
-            - name: FreeBSD 13.5
-              test: freebsd/13.5
   - stage: Remote_2_19
     displayName: Remote 2.19
     dependsOn: []
@@ -210,10 +172,10 @@ stages:
         parameters:
           testFormat: 2.19/{0}/1
           targets:
-            - name: RHEL 10.0
-              test: rhel/10.0
-            - name: RHEL 9.5
-              test: rhel/9.5
+            - name: RHEL 10.1
+              test: rhel/10.1
+            - name: RHEL 9.7
+              test: rhel/9.7
             - name: FreeBSD 14.2
               test: freebsd/14.2
             - name: FreeBSD 13.5
@@ -226,8 +188,10 @@ stages:
         parameters:
           testFormat: 2.18/{0}/1
           targets:
-            - name: RHEL 9.4
-              test: rhel/9.4
+            - name: RHEL 10.1
+              test: rhel/10.1
+            - name: RHEL 9.7
+              test: rhel/9.7
             - name: FreeBSD 13.5
               test: freebsd/13.5
   - stage: Remote_2_17
@@ -236,10 +200,11 @@ stages:
     jobs:
       - template: templates/matrix.yml
         parameters:
+          container: legacy
           testFormat: 2.17/{0}/1
           targets:
-            - name: RHEL 9.3
-              test: rhel/9.3
+            - name: RHEL 10.0
+              test: rhel/10.0
             - name: FreeBSD 13.5
               test: freebsd/13.5
   - stage: Remote_2_16
@@ -248,12 +213,11 @@ stages:
     jobs:
       - template: templates/matrix.yml
         parameters:
+          container: legacy
           testFormat: 2.16/{0}/1
           targets:
-            - name: RHEL 8.8
-              test: rhel/8.8
-            - name: RHEL 9.2
-              test: rhel/9.2
+            - name: RHEL 10.1
+              test: rhel/10.1
 
   ## Finally
 
@@ -272,8 +236,5 @@ stages:
       - Sanity_2_19
       - Remote_2_19
       - Docker_2_19
-      - Sanity_devel
-      - Remote_devel
-      - Docker_devel
     jobs:
       - template: templates/coverage.yml
