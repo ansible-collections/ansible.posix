@@ -1,0 +1,3 @@
+---
+trivial:
+  - Replace AZP remote test FreeBSD-14.2 with 14.3 for Ansible Core 2.19.
