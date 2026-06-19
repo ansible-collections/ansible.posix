@@ -27,8 +27,10 @@ options:
     description:
       - Path on the source host that will be synchronized to the destination.
       - The path can be absolute or relative.
-    type: path
+      - Support multi path
+    type: list
     required: true
+    elements: path
   dest:
     description:
       - Path on the destination host that will be synchronized from the source.
@@ -350,6 +352,14 @@ EXAMPLES = r'''
     dest: /tmp/path_b/foo.txt
     link_dest: /tmp/path_a/
 
+# Save hardlink src moved
+- name: Use hardlinks when synchronizing filesystems src
+  ansible.posix.synchronize:
+    src:
+      - /tmp/path_a
+      - /tmp/path_b
+    dest: /tmp
+
 # Specify the rsync binary to use on remote host and on local host
 - hosts: groupofhosts
   vars:
@@ -403,9 +413,9 @@ def substitute_controller(path):
 
 
 def is_rsh_needed(source, dest):
-    if source.startswith('rsync://') or dest.startswith('rsync://'):
+    if all(src.startswith('rsync://') for src in source) or dest.startswith('rsync://'):
         return False
-    if ':' in source or ':' in dest:
+    if any(':' in src for src in source) or ':' in dest:
         return True
     return False
 
@@ -413,7 +423,7 @@ def is_rsh_needed(source, dest):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            src=dict(type='path', required=True),
+            src=dict(type='list', elements='path', required=True),
             dest=dict(type='path', required=True),
             dest_port=dict(type='int'),
             delete=dict(type='bool', default=False),
@@ -547,7 +557,7 @@ def main():
     if dirs:
         cmd.append('--dirs')
 
-    if source.startswith('rsync://') and dest.startswith('rsync://'):
+    if all(src.startswith('rsync://') for src in source) and dest.startswith('rsync://'):
         module.fail_json(msg='either src or dest must be a localhost', rc=1)
 
     if is_rsh_needed(source, dest):
@@ -607,7 +617,7 @@ def main():
     changed_marker = '<<CHANGED>>'
     cmd.append('--out-format=%s' % shlex_quote(changed_marker + '%i %n%L'))
 
-    cmd.append(shlex_quote(source))
+    [cmd.append(shlex_quote(src)) for src in source]
     cmd.append(shlex_quote(dest))
     cmdstr = ' '.join(cmd)
 

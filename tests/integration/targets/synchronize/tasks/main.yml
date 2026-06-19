@@ -348,3 +348,77 @@
     - directory a/foo.txt
     - directory a
     - directory b
+
+- name: Setup - test for multipath the moved hardlink
+  ansible.builtin.file:
+    state: directory
+    path: "{{ output_dir }}/{{ item }}"
+    mode: "0755"
+    recurse: true
+  loop:
+    - directory_a/data
+    - directory_a/data_tmp
+    - directory_b/data
+    - directory_b/data_tmp
+
+- name: Setup - create test new files
+  ansible.builtin.copy:
+    dest: "{{ output_dir }}/directory_a/data/foo.txt"
+    mode: "0644"
+    content: hello world
+
+- name: Setup - moved test file for save attr
+  ansible.posix.synchronize:
+    src: "{{ output_dir }}/directory_a/data/foo.txt"
+    dest: "{{ output_dir }}/directory_b/data/foo.txt"
+  delegate_to: "{{ inventory_hostname }}"
+  register: sync_result
+  ignore_errors: true
+
+- name: Setup - create hardlink for directory_a
+  ansible.builtin.file:
+    src: "{{ output_dir }}/directory_a/data/foo.txt"
+    dest: "{{ output_dir }}/directory_a/data_tmp/foo.txt"
+    state: hard
+    mode: "0644"
+
+- name: Setup - get stat hardlink
+  ansible.builtin.stat:
+    path: "{{ output_dir }}/directory_a/data/foo.txt"
+  register: stat_result_a
+
+- name: Copy multipath src the hardlink
+  ansible.posix.synchronize:
+    src:
+      - "{{ output_dir }}/directory_a/data"
+      - "{{ output_dir }}/directory_a/data_tmp"
+    dest: "{{ output_dir }}/directory_b"
+    times: false
+    rsync_opts:
+      - "--hard-links"
+  delegate_to: "{{ inventory_hostname }}"
+  register: sync_result
+
+- name: Get stat information for directory_b
+  ansible.builtin.stat:
+    path: "{{ output_dir }}/directory_b/data_tmp/foo.txt"
+  register: stat_result_b
+
+- name: Ensure file exists and checksum matches and hardlink moved
+  ansible.builtin.assert:
+    that:
+      - "'changed' in sync_result"
+      - sync_result.changed == true
+      - stat_result_b.stat.exists == True
+      - stat_result_a.stat.checksum == stat_result_b.stat.checksum
+      - stat_result_a.stat.nlink == stat_result_b.stat.nlink
+      - "'hf' in sync_result.msg"
+      - "'data_tmp/foo.txt => data/foo.txt' in sync_result.msg"
+
+- name: Cleanup
+  ansible.builtin.file:
+    state: absent
+    path: "{{ output_dir }}/{{ item }}"
+  loop:
+    - directory_a
+    - directory_b
