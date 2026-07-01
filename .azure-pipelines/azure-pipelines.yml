@@ -271,10 +271,10 @@ stages:
         parameters:
           testFormat: devel/{0}/1
           targets:
-            - name: RHEL 10.1
-              test: rhel/10.1
-            - name: RHEL 9.7
-              test: rhel/9.7
+            - name: RHEL 10.2
+              test: rhel/10.2
+            - name: RHEL 9.8
+              test: rhel/9.8
             - name: FreeBSD 14.4
               test: freebsd/14.4
             - name: FreeBSD 15.0
