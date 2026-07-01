@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- name: Setup testing environment
+- name: Setup for testing environment
   ansible.builtin.import_tasks: setup_steps.yml
 
 - name: Test for multiple keys handling
@@ -37,3 +37,12 @@
 
 - name: Test for permission denied files
   ansible.builtin.import_tasks: check_permissions.yml
+
+- name: CVE-2026-11837 Setup for symlink tests
+  ansible.builtin.import_tasks: check_symlink_setup.yml
+
+- name: CVE-2026-11837 Test for symlink tests
+  ansible.builtin.import_tasks: check_symlink.yml
+
+- name: CVE-2026-11837 Cleanup symlink test
+  ansible.builtin.import_tasks: check_symlink_cleanup.yml
