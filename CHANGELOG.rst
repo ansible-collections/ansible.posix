@@ -4,6 +4,27 @@ ansible.posix Release Notes
 
 .. contents:: Topics
 
+v2.2.1
+======
+
+Release Summary
+---------------
+
+This is the minor release of the ``ansible.posix`` collection.
+This changelog contains all changes to the modules and plugins
+in the stable-2 branch that have been added after the release of
+``ansible.posix`` 2.2.0
+
+Security Fixes
+--------------
+
+- authorized_key - fix local privilege escalation via symlink-following when running as root (https://github.com/ansible-collections/ansible.posix/issues/759).
+
+Bugfixes
+--------
+
+- sysctl - reload sysctl only if the sysctl file is ``/etc/sysctl.conf`` or ``/etc/sysctl.conf.local`` (https://github.com/ansible-collections/ansible.posix/issues/663).
+
 v2.2.0
 ======
 

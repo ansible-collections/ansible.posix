@@ -1,2 +1,0 @@
-security_fixes:
-  - authorized_key - fix local privilege escalation via symlink-following when running as root (https://github.com/ansible-collections/ansible.posix/issues/759).
