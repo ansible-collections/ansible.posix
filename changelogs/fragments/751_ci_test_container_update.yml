@@ -1,3 +1,0 @@
----
-trivial:
-  - Update Azure Pipelines test container to 8.0.0 and use legacy container for ansible-core 2.16/2.17.
