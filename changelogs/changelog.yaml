@@ -602,3 +602,20 @@ releases:
     - 763_ci_azp_update_devel.yml
     - freebsd_sysctl.yml
     release_date: '2026-07-01'
+  2.2.2:
+    changes:
+      bugfixes:
+      - README - Added ``Red Hat Automation Hub`` as correct contact information for
+        Red Hat Ansible Automation Platform subscribers.
+      release_summary: 'This is the minor release of the ``ansible.posix`` collection.
+
+        This changelog contains all changes to the modules and plugins
+
+        in the stable-2 branch that have been added after the release of
+
+        ``ansible.posix`` 2.2.1'
+    fragments:
+    - 2.2.2.yml
+    - 767_remove_unsupported_version_skip.yml
+    - 768_update_support_section.yml
+    release_date: '2026-07-08'

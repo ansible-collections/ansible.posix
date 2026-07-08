@@ -1,4 +1,0 @@
----
-trivial:
-  - ansible-lint - Removed ``meta-runtime[unsupported-version]`` from the skip_list in ``.ansible-lint``.
-...

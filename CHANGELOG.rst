@@ -4,6 +4,22 @@ ansible.posix Release Notes
 
 .. contents:: Topics
 
+v2.2.2
+======
+
+Release Summary
+---------------
+
+This is the minor release of the ``ansible.posix`` collection.
+This changelog contains all changes to the modules and plugins
+in the stable-2 branch that have been added after the release of
+``ansible.posix`` 2.2.1
+
+Bugfixes
+--------
+
+- README - Added ``Red Hat Automation Hub`` as correct contact information for Red Hat Ansible Automation Platform subscribers.
+
 v2.2.1
 ======
 
