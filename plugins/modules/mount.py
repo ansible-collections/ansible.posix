@@ -90,8 +90,8 @@ options:
         no effect, use V(unmounted) instead.
       - V(absent_mount) specifies that the mount point entry O(path) will be removed
         from I(fstab) and will also unmount the mounted device. The associated
-        mountpoint will not be removed. A mounted device will be unmounted regardless 
-        of O(src) or its real source. V(absent_mount) does not unmount recursively, 
+        mountpoint will not be removed. A mounted device will be unmounted regardless
+        of O(src) or its real source. V(absent_mount) does not unmount recursively,
         and the module will fail if multiple devices are mounted on the same mount
         point. Using V(absent_mount) with a mount point that is not registered in the
         I(fstab) has no effect, use V(unmounted) instead.
@@ -789,7 +789,8 @@ def main():
             passno=dict(type='str', no_log=False, default='0'),
             src=dict(type='path'),
             backup=dict(type='bool', default=False),
-            state=dict(type='str', required=True, choices=['absent', 'absent_from_fstab', 'absent_mount', 'mounted', 'present', 'unmounted', 'remounted', 'ephemeral']),
+            state=dict(type='str', required=True,
+                      choices=['absent', 'absent_from_fstab', 'absent_mount', 'mounted', 'present', 'unmounted', 'remounted', 'ephemeral']),
         ),
         supports_check_mode=True,
         required_if=(
