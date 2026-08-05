@@ -789,8 +789,20 @@ def main():
             passno=dict(type='str', no_log=False, default='0'),
             src=dict(type='path'),
             backup=dict(type='bool', default=False),
-            state=dict(type='str', required=True,
-                      choices=['absent', 'absent_from_fstab', 'absent_mount', 'mounted', 'present', 'unmounted', 'remounted', 'ephemeral']),
+            state=dict(
+                type='str',
+                required=True,
+                choices=[
+                    'absent',
+                    'absent_from_fstab',
+                    'absent_mount',
+                    'mounted',
+                    'present',
+                    'unmounted',
+                    'remounted',
+                    'ephemeral'
+                ]
+            ),
         ),
         supports_check_mode=True,
         required_if=(
