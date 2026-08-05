@@ -297,10 +297,17 @@
   when: ansible_system in ('FreeBSD', 'Linux')
   register: dest_stat
 
+- name: Check if the mountpoint still exists
+  ansible.builtin.stat:
+    path: '{{ output_dir }}/mount_dest'
+  when: ansible_system in ('FreeBSD', 'Linux')
+  register: mountpoint_stat
+
 - name: Check that we did not unmount
   ansible.builtin.assert:
     that:
       - unmount_result['changed']
+      - mountpoint_stat['stat']['exists']
       - dest_stat['stat']['exists']
   when: ansible_system in ('FreeBSD', 'Linux')
 
@@ -318,10 +325,56 @@
   when: ansible_system in ('FreeBSD', 'Linux')
   register: dest_stat
 
+- name: Check that the mountpoint no longer exists
+  ansible.builtin.stat:
+    path: '{{ output_dir }}/mount_dest'
+  when: ansible_system in ('FreeBSD', 'Linux')
+  register: mountpoint_stat
+
 - name: Check that we unmounted
   ansible.builtin.assert:
     that:
       - unmount_result['changed']
+      - not mountpoint_stat['stat']['exists']
+      - not dest_stat['stat']['exists']
+  when: ansible_system in ('FreeBSD', 'Linux')
+
+# unmount (absent_mount)
+- name: Bind mount a filesystem (Linux)
+  ansible.posix.mount:
+    src: '{{ output_dir }}/mount_source'
+    name: '{{ output_dir }}/mount_dest'
+    state: mounted
+    fstype: None
+    opts: bind
+  when: ansible_system == 'Linux'
+  register: bind_result_linux
+
+- name: Unmount the bind mount while keeping the mountpoint
+  ansible.posix.mount:
+    name: '{{ output_dir }}/mount_dest'
+    state: absent_mount
+  when: ansible_system in ('Linux', 'FreeBSD')
+  register: unmount_result
+
+- name: Make sure the file no longer exists in dest
+  ansible.builtin.stat:
+    path: '{{ output_dir }}/mount_dest/test_file'
+  when: ansible_system in ('FreeBSD', 'Linux')
+  register: dest_stat
+
+- name: Check if the mountpoint still exists
+  ansible.builtin.stat:
+    path: '{{ output_dir }}/mount_dest'
+  when: ansible_system in ('FreeBSD', 'Linux')
+  register: mountpoint_stat
+
+- name: Check that we unmounted and that the mountpoint still exists
+  ansible.builtin.assert:
+    that:
+      - (ansible_system == 'Linux' and bind_result_linux['changed']) or (ansible_system == 'FreeBSD' and bind_result_freebsd['changed'])
+      - unmount_result['changed']
+      - mountpoint_stat['stat']['exists']
       - not dest_stat['stat']['exists']
   when: ansible_system in ('FreeBSD', 'Linux')
 

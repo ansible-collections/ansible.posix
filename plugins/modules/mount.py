@@ -88,6 +88,13 @@ options:
         fail if multiple devices are mounted on the same mount point. Using
         V(absent) with a mount point that is not registered in the I(fstab) has
         no effect, use V(unmounted) instead.
+      - V(absent_mount) specifies that the mount point entry O(path) will be removed
+        from I(fstab) and will also unmount the mounted device. The associated
+        mountpoint will not be removed. A mounted device will be unmounted regardless 
+        of O(src) or its real source. V(absent_mount) does not unmount recursively, 
+        and the module will fail if multiple devices are mounted on the same mount
+        point. Using V(absent_mount) with a mount point that is not registered in the
+        I(fstab) has no effect, use V(unmounted) instead.
       - V(remounted) specifies that the device will be remounted for when you
         want to force a refresh on the mount itself (added in 2.9). This will
         always return RV(ignore:changed=true). If O(opts) is set, the options will be
@@ -102,7 +109,7 @@ options:
         mountpoint.
     type: str
     required: true
-    choices: [ absent, absent_from_fstab, mounted, present, unmounted, remounted, ephemeral ]
+    choices: [ absent, absent_from_fstab, absent_mount, mounted, present, unmounted, remounted, ephemeral ]
   fstab:
     description:
       - File to use instead of C(/etc/fstab).
@@ -169,6 +176,11 @@ EXAMPLES = r'''
   ansible.posix.mount:
     path: /tmp/mnt-pnt
     state: unmounted
+
+- name: Unmount a mounted volume and remove its fstab entry
+  ansible.posix.mount:
+    path: /tmp/mnt-pnt
+    state: absent_mount
 
 - name: Remount a mounted volume
   ansible.posix.mount:
@@ -777,7 +789,7 @@ def main():
             passno=dict(type='str', no_log=False, default='0'),
             src=dict(type='path'),
             backup=dict(type='bool', default=False),
-            state=dict(type='str', required=True, choices=['absent', 'absent_from_fstab', 'mounted', 'present', 'unmounted', 'remounted', 'ephemeral']),
+            state=dict(type='str', required=True, choices=['absent', 'absent_from_fstab', 'absent_mount', 'mounted', 'present', 'unmounted', 'remounted', 'ephemeral']),
         ),
         supports_check_mode=True,
         required_if=(
@@ -881,7 +893,7 @@ def main():
 
     if state == 'absent_from_fstab':
         name, changed = unset_mount(module, args)
-    elif state == 'absent':
+    elif state == 'absent' or state == 'absent_mount':
         name, changed = unset_mount(module, args)
 
         if changed and not module.check_mode:
@@ -892,7 +904,7 @@ def main():
                     module.fail_json(
                         msg="Error unmounting %s: %s" % (name, msg))
 
-            if os.path.exists(name):
+            if os.path.exists(name) and state == 'absent':
                 try:
                     os.rmdir(name)
                 except (OSError, IOError) as e:
