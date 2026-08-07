@@ -277,8 +277,8 @@ stages:
               test: rhel/9.8
             - name: FreeBSD 14.4
               test: freebsd/14.4
-            - name: FreeBSD 15.0
-              test: freebsd/15.0
+            - name: FreeBSD 15.1
+              test: freebsd/15.1
 
   - stage: Remote_2_21
     displayName: Remote 2.21
