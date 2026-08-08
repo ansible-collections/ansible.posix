@@ -85,4 +85,4 @@
       - result is not changed
       - >
         result.msg == 'parameters are mutually exclusive:
-        icmp_block|icmp_block_inversion|service|protocol|port|port_forward|rich_rule|interface|forward|masquerade|source|target'
+        icmp_block|icmp_block_inversion|service|protocol|port|source_port|port_forward|rich_rule|interface|forward|masquerade|source|target'
