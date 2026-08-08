@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - synchronize - use _find_needle to find the file in path (https://github.com/ansible-collections/ansible.posix/issues/381).
