@@ -559,8 +559,10 @@ def serialize(keys):
 
             if key_type == 'skipped':
                 key_line = key[0]
-            else:
+            elif comment:
                 key_line = "%s%s %s %s\n" % (option_str, key_type, keyhash, comment)
+            else:
+                key_line = "%s%s %s\n" % (option_str, key_type, keyhash)
         except Exception:
             key_line = key
         lines.append(key_line)

@@ -1,0 +1,47 @@
+---
+# -------------------------------------------------------------
+# keys without comments
+
+- name: Create an authorized keys file with a key without a comment
+  ansible.builtin.copy:
+    content: "ssh-ed25519 DATA_WITHOUT_COMMENT\n"
+    dest: "{{ output_dir | expanduser }}/authorized_keys_without_comment"
+    mode: "0600"
+
+- name: Add a key beside the existing key without a comment
+  ansible.posix.authorized_key:
+    user: root
+    key: ssh-ed25519 DATA_ADDED added@example
+    state: present
+    manage_dir: false
+    path: "{{ output_dir | expanduser }}/authorized_keys_without_comment"
+  register: add_key_result
+
+- name: Read the authorized keys file
+  ansible.builtin.slurp:
+    src: "{{ output_dir | expanduser }}/authorized_keys_without_comment"
+  register: authorized_keys_content
+
+- name: Assert that the existing key did not gain trailing whitespace
+  ansible.builtin.assert:
+    that:
+      - add_key_result.changed
+      - (authorized_keys_content.content | b64decode) == expected_authorized_keys
+  vars:
+    expected_authorized_keys: |
+      ssh-ed25519 DATA_WITHOUT_COMMENT
+      ssh-ed25519 DATA_ADDED added@example
+
+- name: Add the same key again
+  ansible.posix.authorized_key:
+    user: root
+    key: ssh-ed25519 DATA_ADDED added@example
+    state: present
+    manage_dir: false
+    path: "{{ output_dir | expanduser }}/authorized_keys_without_comment"
+  register: repeat_key_result
+
+- name: Assert that the second run is unchanged
+  ansible.builtin.assert:
+    that:
+      - not repeat_key_result.changed
