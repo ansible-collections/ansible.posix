@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - debug callback - align PLAY RECAP host stat columns for long inventory hostnames (https://github.com/ansible-collections/ansible.posix/pull/778).
