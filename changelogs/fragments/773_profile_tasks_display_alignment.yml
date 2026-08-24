@@ -1,0 +1,5 @@
+---
+bugfixes:
+  - profile_tasks callback - align TASKS RECAP output with ``display.banner()`` width instead of a hardcoded 79 columns (https://github.com/ansible-collections/ansible.posix/pull/773).
+minor_changes:
+  - profile_tasks callback - add ``truncate_task_names`` option (default ``false``) to ellipsize long task names in the TASKS RECAP summary (https://github.com/ansible-collections/ansible.posix/pull/773).
