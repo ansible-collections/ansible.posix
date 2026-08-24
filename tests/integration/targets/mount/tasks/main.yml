@@ -339,7 +339,7 @@
       - not dest_stat['stat']['exists']
   when: ansible_system in ('FreeBSD', 'Linux')
 
-# unmount (absent_mount)
+# unmount (absent_keep_mountpoint)
 - name: Bind mount a filesystem (Linux)
   ansible.posix.mount:
     src: '{{ output_dir }}/mount_source'
@@ -362,7 +362,7 @@
 - name: Unmount the bind mount while keeping the mountpoint
   ansible.posix.mount:
     name: '{{ output_dir }}/mount_dest'
-    state: absent_mount
+    state: absent_keep_mountpoint
   when: ansible_system in ('Linux', 'FreeBSD')
   register: unmount_result
 
