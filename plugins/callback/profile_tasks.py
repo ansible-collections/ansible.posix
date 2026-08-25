@@ -63,6 +63,17 @@ DOCUMENTATION = '''
           - section: callback_profile_tasks
             key: datetime_format
         version_added: 3.0.0
+      truncate_task_names:
+        description:
+          - Truncate long task names in the TASKS RECAP summary with an ellipsis so rows stay within the terminal width.
+        type: bool
+        default: false
+        env:
+          - name: PROFILE_TASKS_TRUNCATE_TASK_NAMES
+        ini:
+          - section: callback_profile_tasks
+            key: truncate_task_names
+        version_added: 2.3.0
 '''
 
 EXAMPLES = '''
@@ -88,6 +99,7 @@ from datetime import datetime
 
 from functools import reduce
 from ansible.plugins.callback import CallbackBase
+from ansible.utils.display import get_text_width
 
 
 # define start time
@@ -102,16 +114,64 @@ def secondsToStr(t):
     return "%d:%02d:%02d.%03d" % tuple(reduce(rediv, [[t * 1000, ], 1000, 60, 60]))
 
 
-def filled(msg, fchar="*"):
-    if len(msg) == 0:
-        width = 79
+def filled(msg, columns, fchar="*"):
+    """Fill to the same width as display.banner() (columns + 1)."""
+    if not msg:
+        return fchar * (columns + 1)
+    try:
+        msg_width = get_text_width(msg)
+    except EnvironmentError:
+        msg_width = len(msg)
+    fill_len = columns - msg_width
+    if fill_len < 3:
+        fill_len = 3
+    return "%s %s" % (msg, fchar * fill_len)
+
+
+def _text_width(text):
+    try:
+        return get_text_width(text)
+    except EnvironmentError:
+        return len(text)
+
+
+def truncate_name(name, width):
+    if width <= 0:
+        return name
+    if _text_width(name) <= width:
+        return name
+    if width <= 3:
+        return name[:width]
+    ellipsis = '...'
+    for end in range(len(name), 0, -1):
+        candidate = name[:end] + ellipsis
+        if _text_width(candidate) <= width:
+            return candidate
+    return ellipsis
+
+
+def pad_to_display_width(text, width, fillchar='-'):
+    current = _text_width(text)
+    if current >= width:
+        return text
+    return text + fillchar * (width - current)
+
+
+def format_timing_row(task_name, elapsed, columns, truncate=False):
+    line_width = columns + 1
+    time_field_width = 9
+    name_field_width = line_width - time_field_width
+    if truncate:
+        task_name = truncate_name(task_name, name_field_width - 1)
+    prefix = task_name + u' '
+    gap = name_field_width - _text_width(prefix)
+    if gap == 1:
+        # A lone dash before the timing field looks like misaligned padding.
+        left = prefix + u' '
     else:
-        msg = "%s " % msg
-        width = 79 - len(msg)
-    if width < 3:
-        width = 3
-    filler = fchar * width
-    return "%s%s " % (msg, filler)
+        left = pad_to_display_width(prefix, name_field_width)
+    timing = u' {0:.02f}s'.format(elapsed)
+    return left + timing.rjust(time_field_width, u'-')
 
 
 def timestamp(self):
@@ -127,7 +187,10 @@ def tasktime(self):
     time_elapsed = secondsToStr((cdtn - dtn).total_seconds())
     time_total_elapsed = secondsToStr((cdtn - dt0).total_seconds())
     dtn = cdtn
-    return filled('%s (%s)%s%s' % (datetime_current, time_elapsed, ' ' * 7, time_total_elapsed))
+    return filled(
+        '%s (%s)%s%s' % (datetime_current, time_elapsed, ' ' * 7, time_total_elapsed),
+        self._display.columns,
+    )
 
 
 class CallbackModule(CallbackBase):
@@ -148,6 +211,7 @@ class CallbackModule(CallbackBase):
         self.summary_only = None
         self.task_output_limit = None
         self.datetime_format = None
+        self.truncate_task_names = None
 
         super(CallbackModule, self).__init__()
 
@@ -177,6 +241,8 @@ class CallbackModule(CallbackBase):
         if self.datetime_format is not None:
             if self.datetime_format == 'iso8601':
                 self.datetime_format = '%Y-%m-%dT%H:%M:%S.%f'
+
+        self.truncate_task_names = self.get_option('truncate_task_names')
 
     def _display_tasktime(self):
         if not self.summary_only:
@@ -210,11 +276,12 @@ class CallbackModule(CallbackBase):
         self._record_task(task)
 
     def v2_playbook_on_stats(self, stats):
-        # Align summary report header with other callback plugin summary
-        self._display.banner("TASKS RECAP")
+        columns = self._display.columns
+        line_width = columns + 1
+        self._display.display(filled("TASKS RECAP", columns))
 
         self._display.display(tasktime(self))
-        self._display.display(filled("", fchar="="))
+        self._display.display(filled("", columns, fchar="="))
 
         timestamp(self)
         self.current = None
@@ -234,7 +301,15 @@ class CallbackModule(CallbackBase):
 
         # Print the timings
         for uuid, result in results:
-            msg = u"{0:-<{2}}{1:->9}".format(result['name'] + u' ', u' {0:.02f}s'.format(result['elapsed']), self._display.columns - 9)
+            msg = format_timing_row(
+                result['name'],
+                result['elapsed'],
+                columns,
+                truncate=self.truncate_task_names,
+            )
             if 'path' in result:
-                msg += u"\n{0:-<{1}}".format(result['path'] + u' ', self._display.columns)
+                path_name = result['path']
+                if self.truncate_task_names:
+                    path_name = truncate_name(path_name, line_width - 1)
+                msg += u"\n%s" % pad_to_display_width(path_name + u' ', line_width)
             self._display.display(msg)
