@@ -32,4 +32,4 @@ concurrency:
 # for each affected version of ansible-core (for example, `tests/sanity/ignore-2.18.txt`) and add corresponding entries.
 jobs:
   call:
-    uses: ansible-collections/partner-certification-checker/.github/workflows/certification-reusable.yml@v0.1
+    uses: ansible-collections/partner-certification-checker/.github/workflows/certification-reusable.yml@v4.1.0

@@ -1,0 +1,4 @@
+---
+trivial:
+  - CI - Bump partner-certification-checker to v4.1.0 to fix ansible-lint compatibility.
+...
