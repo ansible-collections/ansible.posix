@@ -62,7 +62,7 @@ DOCUMENTATION = '''
         ini:
           - section: callback_profile_tasks
             key: datetime_format
-        version_added: 3.0.0
+        version_added: 2.2.0
       truncate_task_names:
         description:
           - Truncate long task names in the TASKS RECAP summary with an ellipsis so rows stay within the terminal width.
