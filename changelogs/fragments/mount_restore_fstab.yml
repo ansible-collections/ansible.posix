@@ -1,0 +1,3 @@
+---
+bugfixes:
+    - mount - restore fstab if umount fails (https://github.com/ansible-collections/ansible.posix/issues/605).
