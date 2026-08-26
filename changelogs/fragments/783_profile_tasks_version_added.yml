@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - profile_tasks - fix incorrect ``version_added`` for ``datetime_format`` option(https://github.com/ansible-collections/ansible.posix/issues/783).
+...
