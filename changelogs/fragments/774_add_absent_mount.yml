@@ -1,0 +1,2 @@
+minor_changes:
+  - "Introduce an option to remove only the mount and fstab entry but not the mountpoint  (https://github.com/ansible-collections/ansible.posix/issues/331)."
