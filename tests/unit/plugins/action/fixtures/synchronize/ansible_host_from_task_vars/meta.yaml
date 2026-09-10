@@ -1,4 +1,8 @@
 ---
+# Test that ansible_host set via play-level vars: (present in task_vars but
+# absent from the hostvars snapshot for the target host) is correctly used
+# to build the rsync destination instead of falling back to inventory_hostname.
+# Regression test for https://github.com/ansible-collections/ansible.posix/issues/469
 fixtures:
   taskvars_in: taskvars_in.json
   taskvars_out: taskvars_out.json
