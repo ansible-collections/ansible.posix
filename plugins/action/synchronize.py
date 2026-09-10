@@ -240,7 +240,11 @@ class ActionModule(ActionBase):
         src_host = '127.0.0.1'
         inventory_hostname = task_vars.get('inventory_hostname')
         dest_host_inventory_vars = task_vars['hostvars'].get(inventory_hostname)
-        dest_host = dest_host_inventory_vars.get('ansible_host', inventory_hostname)
+        dest_host = (dest_host_inventory_vars.get('ansible_host')
+                     or task_vars.get('vars', {}).get('ansible_host')
+                     or inventory_hostname)
+        if self._templar is not None:
+            dest_host = self._templar.template(dest_host)
 
         dest_host_ids = [hostid for hostid in (dest_host_inventory_vars.get('inventory_hostname'),
                                                dest_host_inventory_vars.get('ansible_host'))
@@ -371,7 +375,10 @@ class ActionModule(ActionBase):
                 src = self._process_origin(src_host, src, user)
                 dest = self._process_remote(_tmp_args, dest_host, dest, user, inv_port in localhost_ports)
 
-            password = dest_host_inventory_vars.get('ansible_ssh_pass', None) or dest_host_inventory_vars.get('ansible_password', None)
+            password = (dest_host_inventory_vars.get('ansible_ssh_pass', None)
+                        or dest_host_inventory_vars.get('ansible_password', None)
+                        or task_vars.get('ansible_ssh_pass', None)
+                        or task_vars.get('ansible_password', None))
             if self._templar is not None:
                 password = self._templar.template(password)
         else:
