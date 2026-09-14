@@ -462,6 +462,8 @@ def main():
             delay_updates=dict(type='bool', default=True),
             mode=dict(type='str', default='push', choices=['pull', 'push']),
             link_dest=dict(type='list', elements='path'),
+            chdir=dict(type='path'),
+            relative=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
     )
@@ -502,6 +504,8 @@ def main():
     verify_host = module.params['verify_host']
     link_dest = module.params['link_dest']
     delay_updates = module.params['delay_updates']
+    chdir = module.params['chdir']
+    relative = module.params['relative']
 
     if '/' not in rsync:
         rsync = module.get_bin_path(rsync, required=True)
@@ -564,6 +568,9 @@ def main():
     if dirs:
         cmd.append('--dirs')
 
+    if relative:
+        cmd.append('--relative')
+
     if source.startswith('rsync://') and dest.startswith('rsync://'):
         module.fail_json(msg='either src or dest must be a localhost', rc=1)
 
@@ -620,6 +627,23 @@ def main():
             if destination_path.find(link_path) == 0:
                 module.fail_json(msg='Hardlinking into a subdirectory of the source would cause recursion. %s and %s' % (destination_path, dest))
             cmd.append('--link-dest=%s' % link_path)
+
+    if chdir:
+        chdir_path = expanduser(chdir)
+        chdir_path = to_bytes(chdir_path, errors='surrogate_or_strict')
+
+        if not exists(chdir_path):
+            module.fail_json(msg=f"Directory not found: '{chdir}'")
+        if not isdir(chdir_path):
+            module.fail_json(msg=f"Chdir path exists but is not a directory: '{chdir}'")
+        if not access(chdir_path, R_OK | X_OK):
+            module.fail_json(msg=f"Missing read/execute traversal permissions on: '{chdir}'")
+
+        try:
+            chdir(chdir_path)
+        except OSError as exc:
+            r['msg'] = f"Unable to change directory to '{chdir}' before execution: {exc.strerror}"
+            module.fail_json(**r, exception=exc)
 
     changed_marker = '<<CHANGED>>'
     cmd.append('--out-format=%s' % shlex_quote(changed_marker + '%i %n%L'))
