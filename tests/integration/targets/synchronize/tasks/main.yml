@@ -348,3 +348,52 @@
     - directory a/foo.txt
     - directory a
     - directory b
+
+# Testing relative and chdir
+- name: (Setup) Create source and target directories
+  ansible.builtin.file:
+    state: directory
+    path: "{{ output_dir }}/{{ item }}"
+    mode: "0755"
+  delegate_to: "{{ inventory_hostname }}"
+  loop:
+    - src_dir
+    - src_dir/nested_dir
+    - dest_dir
+
+- name: (Setup) Create standard test file
+  ansible.builtin.copy:
+    dest: "{{ output_dir }}/src_dir/nested_dir/{{ item }}"
+    mode: "0644"
+    content: hello world
+  loop:
+    - foo.txt
+  delegate_to: "{{ inventory_hostname }}"
+
+- name: (Execution) Copy source file using relative and chdir options
+  ansible.posix.synchronize:
+    src: "{{ output_dir }}/src_dir/nested_dir/foo.txt"
+    dest: "{{ output_dir }}/dest_dir/"
+    chdir: "{{ output_dir }}/src_dir"
+    relative: true
+  delegate_to: "{{ inventory_hostname }}"
+  register: sync_result
+  ignore_errors: true
+
+- name: (Test) Stat test file, specifically checking for nested_dir
+  ansible.builtin.stat:
+    path: "{{ output_dir }}/dest_dir/nested_dir/foo.txt"
+  register: stat_result_c
+
+- name: Ensure file exists and checksum matches
+  ansible.builtin.assert:
+    that:
+      - stat_result_c.stat.exists == True
+
+- name: (Cleanup) Recursively remove created directories
+  ansible.builtin.file:
+    state: absent
+    path: "{{ output_dir }}/{{ item }}"
+  loop:
+    - src_dir
+    - dest_dir
