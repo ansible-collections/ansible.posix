@@ -629,21 +629,20 @@ def main():
             cmd.append('--link-dest=%s' % link_path)
 
     if chdir:
-        chdir_path = expanduser(chdir)
+        chdir_path = os.path.expanduser(chdir)
         chdir_path = to_bytes(chdir_path, errors='surrogate_or_strict')
 
-        if not exists(chdir_path):
+        if not os.path.exists(chdir_path):
             module.fail_json(msg=f"Directory not found: '{chdir}'")
-        if not isdir(chdir_path):
+        if not os.path.isdir(chdir_path):
             module.fail_json(msg=f"Chdir path exists but is not a directory: '{chdir}'")
-        if not access(chdir_path, R_OK | X_OK):
+        if not os.access(chdir_path, os.R_OK | os.X_OK):
             module.fail_json(msg=f"Missing read/execute traversal permissions on: '{chdir}'")
 
         try:
             chdir(chdir_path)
         except OSError as exc:
-            r['msg'] = f"Unable to change directory to '{chdir}' before execution: {exc.strerror}"
-            module.fail_json(**r, exception=exc)
+            module.fail_json(msg=f"Unable to change directory to '{chdir_path}': {exc}", exception=exc)
 
     changed_marker = '<<CHANGED>>'
     cmd.append('--out-format=%s' % shlex_quote(changed_marker + '%i %n%L'))
