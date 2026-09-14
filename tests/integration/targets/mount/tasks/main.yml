@@ -1165,10 +1165,16 @@
         opts: rw
         opts_no_log: true
       register: mount_info
-    - name: Assert opts_no_log option true
+    - name: Assert opts_no_log option true (ansible-core < 2.22)
       ansible.builtin.assert:
         that:
           - mount_info.opts == 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+      when: ansible_version.full is ansible.builtin.version('2.22', '<')
+    - name: Assert opts_no_log option true (ansible-core >= 2.22)
+      ansible.builtin.assert:
+        that:
+          - mount_info.opts == 'rw'
+      when: ansible_version.full is ansible.builtin.version('2.22', '>=')
     - name: Remount the FS with opts_no_log option false
       ansible.posix.mount:
         path: /tmp/myfs
