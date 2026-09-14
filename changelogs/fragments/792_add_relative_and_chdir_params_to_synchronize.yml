@@ -1,2 +1,2 @@
 minor_changes:
-  - "Add chdir and relative params to synchronize module  (https://github.com/ansible-collections/ansible.posix/issues/634)."
+  - "Add relative param to synchronize module  (https://github.com/ansible-collections/ansible.posixo/issues/634)."

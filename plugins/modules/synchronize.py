@@ -335,7 +335,7 @@ EXAMPLES = r'''
     dest: /some/absolute/path
     rsync_path: su -c rsync
 
-# Chdir into a directory and sync a file over, preserving the file's relative path under that directory
+# Sync a file over while preserving parts of the file's path from the source directory
 - name: Synchronize using the relative option from a specifc directory
   ansible.posix.synchronize:
     src: some/relative/./path/file.txt
