@@ -1,0 +1,3 @@
+---
+trivial:
+  - Fix mount opts_no_log integration test for ansible-core 2.22 (https://github.com/ansible-collections/ansible.posix/issues/793).
