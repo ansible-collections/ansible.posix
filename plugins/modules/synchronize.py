@@ -629,7 +629,6 @@ def main():
             cmd.append('--link-dest=%s' % link_path)
 
     if chdir:
-        chdir_path = os.path.expanduser(chdir)
         chdir_path = to_bytes(chdir_path, errors='surrogate_or_strict')
 
         if not os.path.exists(chdir_path):
