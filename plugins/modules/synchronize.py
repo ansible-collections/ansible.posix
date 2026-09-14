@@ -632,16 +632,16 @@ def main():
         chdir_path = to_bytes(chdir, errors='surrogate_or_strict')
 
         if not os.path.exists(chdir_path):
-            module.fail_json(msg=f"Directory not found: '{chdir}'")
+            module.fail_json(msg='Chdir path not found')
         if not os.path.isdir(chdir_path):
-            module.fail_json(msg=f"Chdir path exists but is not a directory: '{chdir}'")
+            module.fail_json(msg='Chdir path exists but it is not a directory')
         if not os.access(chdir_path, os.R_OK | os.X_OK):
-            module.fail_json(msg=f"Missing read/execute traversal permissions on: '{chdir}'")
+            module.fail_json(msg='Cannot access chdir path due to read/execute permissions')
 
         try:
             chdir(chdir_path)
         except OSError as exc:
-            module.fail_json(msg=f"Unable to change directory to '{chdir_path}': {exc}", exception=exc)
+            module.fail_json(msg='Unable to change directory to specified chdir path', exception=exc)
 
     changed_marker = '<<CHANGED>>'
     cmd.append('--out-format=%s' % shlex_quote(changed_marker + '%i %n%L'))
