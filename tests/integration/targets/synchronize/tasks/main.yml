@@ -354,7 +354,7 @@
   ansible.builtin.file:
     state: directory
     path: "{{ output_dir }}/{{ item }}"
-    mode: "0755"
+    mode: "0750"
   delegate_to: "{{ inventory_hostname }}"
   loop:
     - src_dir
@@ -364,7 +364,7 @@
 - name: (Setup) Create standard test file
   ansible.builtin.copy:
     dest: "{{ output_dir }}/src_dir/nested_dir/{{ item }}"
-    mode: "0644"
+    mode: "0640"
     content: hello world
   loop:
     - foo.txt
