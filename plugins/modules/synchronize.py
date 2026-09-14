@@ -639,7 +639,7 @@ def main():
             module.fail_json(msg='Cannot access chdir path due to read/execute permissions')
 
         try:
-            chdir(chdir)
+            os.chdir(chdir)
         except OSError as exc:
             module.fail_json(msg='Unable to change directory to specified chdir path', exception=exc)
 
