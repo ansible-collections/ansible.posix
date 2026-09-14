@@ -372,7 +372,7 @@
 
 - name: (Execution) Copy source file using relative and chdir options
   ansible.posix.synchronize:
-    src: "{{ output_dir }}/src_dir/nested_dir/foo.txt"
+    src: "nested_dir/foo.txt"
     dest: "{{ output_dir }}/dest_dir/"
     chdir: "{{ output_dir }}/src_dir"
     relative: true

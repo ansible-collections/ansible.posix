@@ -345,7 +345,7 @@ EXAMPLES = r'''
     src: some/relative/path
     dest: /some/absolute/path
     relative: true
-    chdir: /source/absolute/path
+    chdir: /relative/path/parent/directory
 
 # Example .rsync-filter file in the source directory
 # - var       # exclude any path whose last part is 'var'
