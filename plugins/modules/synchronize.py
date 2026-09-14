@@ -340,12 +340,12 @@ EXAMPLES = r'''
     rsync_path: su -c rsync
 
 # Chdir into a directory and sync a file over, preserving the file's relative path
-- name: Synchronize using a relative 
+- name: Synchronize using the relative option from a specifc directory
   ansible.posix.synchronize:
-     src: some/relative/path
-     dest: /some/absolute/path
-     relative: true
-     chdir: /source/absolute/path
+    src: some/relative/path
+    dest: /some/absolute/path
+    relative: true
+    chdir: /source/absolute/path
 
 # Example .rsync-filter file in the source directory
 # - var       # exclude any path whose last part is 'var'
