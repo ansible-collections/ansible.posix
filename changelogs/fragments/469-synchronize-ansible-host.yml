@@ -1,0 +1,7 @@
+bugfixes:
+  - synchronize - fall back to ``ansible_host`` and ``ansible_password``/``ansible_ssh_pass``
+    from the current host's task vars when absent from the cached ``hostvars``
+    snapshot (for example when set via play-level ``vars:``), and correctly
+    template ``ansible_host`` before building the rsync destination, fixing
+    "Host not found" errors when ``ansible_host`` differs from
+    ``inventory_hostname`` (https://github.com/ansible-collections/ansible.posix/issues/469).
