@@ -379,12 +379,12 @@
   register: sync_result
   ignore_errors: true
 
-- name: (Test) Stat test file, specifically checking for nested_dir
+- name: (Test) Stat test file
   ansible.builtin.stat:
     path: "{{ output_dir }}/dest_dir/nested_dir/foo.txt"
   register: stat_result_c
 
-- name: Ensure file exists and checksum matches
+- name: (Test) Ensure file exists under the nested_dir
   ansible.builtin.assert:
     that:
       - stat_result_c.stat.exists == True
