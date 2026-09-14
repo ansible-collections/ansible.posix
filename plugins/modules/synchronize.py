@@ -338,8 +338,8 @@ EXAMPLES = r'''
 # Sync a file over while preserving parts of the file's path from the source directory
 - name: Synchronize using the relative option from a specifc directory
   ansible.posix.synchronize:
-    src: some/relative/./path/file.txt
-    dest: /some/absolute/path
+    src: relative/path/./nested/path/file.txt
+    dest: /absolute/path
     relative: true
 
 # Example .rsync-filter file in the source directory
