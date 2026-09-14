@@ -628,20 +628,14 @@ def main():
                 module.fail_json(msg='Hardlinking into a subdirectory of the source would cause recursion. %s and %s' % (destination_path, dest))
             cmd.append('--link-dest=%s' % link_path)
 
+    # Validate chdir option
     if chdir:
-        chdir = to_bytes(chdir, errors='surrogate_or_strict')
-
         if not os.path.exists(chdir):
             module.fail_json(msg='Chdir path not found')
         if not os.path.isdir(chdir):
             module.fail_json(msg='Chdir path exists but it is not a directory')
         if not os.access(chdir, os.R_OK | os.X_OK):
             module.fail_json(msg='Cannot access chdir path due to read/execute permissions')
-
-        try:
-            os.chdir(chdir)
-        except OSError as exc:
-            module.fail_json(msg='Unable to change directory to specified chdir path', exception=exc)
 
     changed_marker = '<<CHANGED>>'
     cmd.append('--out-format=%s' % shlex_quote(changed_marker + '%i %n%L'))
@@ -663,9 +657,10 @@ def main():
 
         (rc, out, err) = module.run_command(
             cmdstr, pass_fds=_sshpass_pipe,
-            before_communicate_callback=_write_password_to_pipe)
+            before_communicate_callback=_write_password_to_pipe,
+            cwd=chdir or None)
     else:
-        (rc, out, err) = module.run_command(cmdstr)
+        (rc, out, err) = module.run_command(cmdstr, cwd=chdir or None)
 
     if rc:
         return module.fail_json(msg=err, rc=rc, cmd=cmdstr)
