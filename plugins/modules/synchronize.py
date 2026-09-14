@@ -119,6 +119,15 @@ options:
       - Preserve group.
       - This parameter defaults to the value of the archive option.
     type: bool
+  relative:
+    description:
+      - Use relative paths
+    type: bool
+    default: false
+  chdir:
+    description:
+      - Change into this directory before running the rsync command.
+    type: path
   rsync_path:
     description:
       - Specify the rsync command to run on the remote host. See C(--rsync-path) on the rsync man page.
@@ -329,6 +338,14 @@ EXAMPLES = r'''
     src: some/relative/path
     dest: /some/absolute/path
     rsync_path: su -c rsync
+
+# Chdir into a directory and sync a file over, preserving the file's relative path
+- name: Synchronize using a relative 
+  ansible.posix.synchronize:
+     src: some/relative/path
+     dest: /some/absolute/path
+     relative: true
+     chdir: /source/absolute/path
 
 # Example .rsync-filter file in the source directory
 # - var       # exclude any path whose last part is 'var'
