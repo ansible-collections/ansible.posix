@@ -629,17 +629,17 @@ def main():
             cmd.append('--link-dest=%s' % link_path)
 
     if chdir:
-        chdir_path = to_bytes(chdir, errors='surrogate_or_strict')
+        chdir = to_bytes(chdir, errors='surrogate_or_strict')
 
-        if not os.path.exists(chdir_path):
+        if not os.path.exists(chdir):
             module.fail_json(msg='Chdir path not found')
-        if not os.path.isdir(chdir_path):
+        if not os.path.isdir(chdir):
             module.fail_json(msg='Chdir path exists but it is not a directory')
-        if not os.access(chdir_path, os.R_OK | os.X_OK):
+        if not os.access(chdir, os.R_OK | os.X_OK):
             module.fail_json(msg='Cannot access chdir path due to read/execute permissions')
 
         try:
-            chdir(chdir_path)
+            chdir(chdir)
         except OSError as exc:
             module.fail_json(msg='Unable to change directory to specified chdir path', exception=exc)
 
