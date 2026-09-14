@@ -349,7 +349,7 @@
     - directory a
     - directory b
 
-# Testing relative and chdir
+# Testing the relative parameter
 - name: (Setup) Create source and target directories
   ansible.builtin.file:
     state: directory
@@ -370,11 +370,10 @@
     - foo.txt
   delegate_to: "{{ inventory_hostname }}"
 
-- name: (Execution) Copy source file using relative and chdir options
+- name: (Execution) Copy source file using the relative parameter
   ansible.posix.synchronize:
-    src: "nested_dir/foo.txt"
+    src: "{{ output_dir }}/src_dir/./nested_dir/foo.txt"
     dest: "{{ output_dir }}/dest_dir/"
-    chdir: "{{ output_dir }}/src_dir"
     relative: true
   delegate_to: "{{ inventory_hostname }}"
   register: sync_result

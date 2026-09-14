@@ -124,10 +124,6 @@ options:
       - Use relative paths
     type: bool
     default: false
-  chdir:
-    description:
-      - Change into this directory before running the rsync command.
-    type: path
   rsync_path:
     description:
       - Specify the rsync command to run on the remote host. See C(--rsync-path) on the rsync man page.
@@ -339,13 +335,12 @@ EXAMPLES = r'''
     dest: /some/absolute/path
     rsync_path: su -c rsync
 
-# Chdir into a directory and sync a file over, preserving the file's relative path
+# Chdir into a directory and sync a file over, preserving the file's relative path under that directory
 - name: Synchronize using the relative option from a specifc directory
   ansible.posix.synchronize:
-    src: some/relative/path
+    src: some/relative/./path/file.txt
     dest: /some/absolute/path
     relative: true
-    chdir: /relative/path/parent/directory
 
 # Example .rsync-filter file in the source directory
 # - var       # exclude any path whose last part is 'var'
@@ -462,7 +457,6 @@ def main():
             delay_updates=dict(type='bool', default=True),
             mode=dict(type='str', default='push', choices=['pull', 'push']),
             link_dest=dict(type='list', elements='path'),
-            chdir=dict(type='path'),
             relative=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
@@ -504,7 +498,6 @@ def main():
     verify_host = module.params['verify_host']
     link_dest = module.params['link_dest']
     delay_updates = module.params['delay_updates']
-    chdir = module.params['chdir']
     relative = module.params['relative']
 
     if '/' not in rsync:
@@ -628,15 +621,6 @@ def main():
                 module.fail_json(msg='Hardlinking into a subdirectory of the source would cause recursion. %s and %s' % (destination_path, dest))
             cmd.append('--link-dest=%s' % link_path)
 
-    # Validate chdir option
-    if chdir:
-        if not os.path.exists(chdir):
-            module.fail_json(msg='Chdir path not found')
-        if not os.path.isdir(chdir):
-            module.fail_json(msg='Chdir path exists but it is not a directory')
-        if not os.access(chdir, os.R_OK | os.X_OK):
-            module.fail_json(msg='Cannot access chdir path due to read/execute permissions')
-
     changed_marker = '<<CHANGED>>'
     cmd.append('--out-format=%s' % shlex_quote(changed_marker + '%i %n%L'))
 
@@ -657,10 +641,9 @@ def main():
 
         (rc, out, err) = module.run_command(
             cmdstr, pass_fds=_sshpass_pipe,
-            before_communicate_callback=_write_password_to_pipe,
-            cwd=chdir or None)
+            before_communicate_callback=_write_password_to_pipe)
     else:
-        (rc, out, err) = module.run_command(cmdstr, cwd=chdir or None)
+        (rc, out, err) = module.run_command(cmdstr)
 
     if rc:
         return module.fail_json(msg=err, rc=rc, cmd=cmdstr)
