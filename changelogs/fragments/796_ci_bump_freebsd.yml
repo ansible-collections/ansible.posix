@@ -1,0 +1,4 @@
+---
+trivial:
+  - CI - AZP replace FreeBSD version 14.4 with 14.5 for remote tests.
+...

@@ -55,6 +55,9 @@ class TaskMock(object):
     become_user = None
     become_method = None
     check_mode = False
+    delegate_to = None
+    diff = False
+    no_log = None
 
 
 class StdinMock(object):
@@ -64,6 +67,10 @@ class StdinMock(object):
 class ConnectionMock(object):
     ismock = True
     _play_context = None
+    always_pipeline_modules = False
+    become = None
+    has_pipelining = False
+    socket_path = None
     # transport = 'ssh'
     transport = None
     _new_stdin = StdinMock()
@@ -121,6 +128,9 @@ class SynchronizeTester(object):
         return {}
 
     def runtest(self, fixturepath='fixtures/synchronize/basic'):
+        # Reset task and connection to avoid state leaking between tests
+        self.task = TaskMock()
+        self.connection = ConnectionMock()
 
         metapath = os.path.join(fixturepath, 'meta.yaml')
         with open(metapath, 'rb') as f:
@@ -213,6 +223,15 @@ class TestSynchronizeAction(unittest.TestCase):
     def test_basic(self):
         x = SynchronizeTester()
         x.runtest(fixturepath=os.path.join(self.fixturedir, 'basic'))
+
+    @patch('ansible_collections.ansible.posix.plugins.action.synchronize.connection_loader', FakePluginLoader)
+    def test_ansible_host_from_task_vars(self):
+        # ansible_host set only via play-level vars (present in top-level
+        # task_vars, absent from the hostvars snapshot for the target host)
+        # must still be used to build the rsync destination.
+        # Regression test for https://github.com/ansible-collections/ansible.posix/issues/469
+        x = SynchronizeTester()
+        x.runtest(fixturepath=os.path.join(self.fixturedir, 'ansible_host_from_task_vars'))
 
     @patch('ansible_collections.ansible.posix.plugins.action.synchronize.connection_loader', FakePluginLoader)
     def test_basic_become(self):

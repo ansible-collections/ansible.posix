@@ -1,0 +1,11 @@
+{
+  "inventory_hostname": "el6host",
+  "ansible_user": "root",
+  "ansible_host": "el6host.example.org",
+  "hostvars": {
+    "el6host": {}
+  },
+  "vars": {
+    "ansible_host": "el6host.example.org"
+  }
+}
