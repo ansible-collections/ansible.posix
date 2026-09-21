@@ -25,6 +25,8 @@ options:
     description:
       - Path to the mount point (e.g. C(/mnt/files)).
       - Before Ansible 2.3 this option was only usable as O(ignore:dest), O(ignore:destfile), and O(name).
+      - Leading and trailing whitespace is removed. A value such as V(" /test") is
+        therefore treated as V(/test). Spaces inside the path are kept.
     type: path
     required: true
     aliases: [ name ]
@@ -242,6 +244,19 @@ from ansible.module_utils.parsing.convert_bool import boolean
 
 
 PLATFORM = platform.system().lower()
+
+
+def normalize_mount_path(path):
+    """Strip leading and trailing whitespace from a mount path.
+
+    ``os.path.isabs()`` is false for values such as ``" /test"``. Without
+    this, the module creates a relative directory whose first component is
+    a space (for example ``<cwd>/ /test``) and writes ``\\040/test`` into
+    fstab. Spaces inside the path are left unchanged.
+    """
+    if not isinstance(path, str):
+        return path
+    return path.strip()
 
 
 def write_fstab(module, lines, path):
@@ -811,6 +826,19 @@ def main():
 
     if module.params['opts_no_log']:
         module.no_log_values.add(module.params['opts'])
+
+    # " /test" is not absolute, so directory creation would build a relative
+    # path whose first component is a single space. Strip surrounding
+    # whitespace before any fstab or mount operation uses the path.
+    raw_path = module.params['path']
+    module.params['path'] = normalize_mount_path(raw_path)
+    if not module.params['path']:
+        module.fail_json(msg="path must not be empty or only whitespace")
+    if module.params['path'] != raw_path:
+        module.warn(
+            "Stripped leading/trailing whitespace from path %r; using %r."
+            % (raw_path, module.params['path'])
+        )
 
     # solaris args:
     #   name, src, fstype, opts, boot, passno, state, fstab=/etc/vfstab
