@@ -1,0 +1,4 @@
+---
+minor_changes:
+  - firewalld - add support for firewalld policy objects including create/delete
+    and ingress/egress zone management (https://github.com/ansible-collections/ansible.posix/issues/284).
