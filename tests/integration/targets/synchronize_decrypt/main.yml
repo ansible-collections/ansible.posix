@@ -1,0 +1,748 @@
+---
+- name: Test the decrypt option of synchronize
+  hosts: testhost
+  vars:
+    plain_checksum: 05fce045f52915714cdc306395b20dd0297fe119
+    secret_checksum: 9f5421af4c33a92583ceec37efe0e058f04ef334
+    nested_checksum: 551e82ae0b4e9e9ef2fb8038a434dd2952e1c040
+    source: "{{ output_dir }}/vault/source"
+    plain_source: "{{ output_dir }}/plain/source"
+    list_script: |
+      import hashlib, os, stat, sys
+      top = sys.argv[1]
+      for root, dirs, files in sorted(os.walk(top)):
+          for name in sorted(dirs + files):
+              path = os.path.join(root, name)
+              st = os.lstat(path)
+              if stat.S_ISLNK(st.st_mode):
+                  details = os.readlink(path)
+              elif stat.S_ISREG(st.st_mode):
+                  with open(path, 'rb') as f:
+                      details = '%d %s' % (st.st_mtime, hashlib.sha256(f.read()).hexdigest())
+              else:
+                  details = '%d' % st.st_mtime
+              print('%s %s %d %s' % (os.path.relpath(path, top), stat.filemode(st.st_mode), st.st_nlink, details))
+  tasks:
+    - name: Install rsync
+      ansible.builtin.package:
+        name: rsync
+      when: ansible_distribution != "MacOSX"
+
+    - name: Clean up the working directory and files
+      ansible.builtin.file:
+        path: "{{ output_dir }}"
+        state: absent
+
+    - name: Create the working directory
+      ansible.builtin.file:
+        path: "{{ output_dir }}/plain"
+        state: directory
+        mode: "0755"
+
+    - name: Create decrypted test files
+      ansible.builtin.copy:
+        src: source/
+        dest: "{{ plain_source }}/"
+        mode: "0644"
+        directory_mode: "0755"
+
+    - name: Add a file with a dollar sign in its name, a filter file, symlinks and old modification times to the test files
+      ansible.builtin.shell: |
+        set -eu
+        printf 'hello world' > 'a$HOME.txt'
+        printf 'excluded' > nested/excluded.txt
+        printf -- '- excluded.txt\n' > nested/.rsync-filter
+        mkdir ../outside
+        printf 'outside' > ../outside/plain.txt
+        chmod 600 secret.txt
+        chmod 750 nested
+        ln -s secret.txt link.txt
+        ln -s nested linkdir
+        ln -s ../outside/plain.txt outside.txt
+        ln -s '{{ output_dir }}/plain/outside' outsidedir
+        find .. ! -type l -exec touch -t 201701020304.05 {} +
+        touch -t 201601020304.05 secret.txt nested
+      args:
+        chdir: "{{ plain_source }}"
+      changed_when: true
+
+    - name: Create a copy of the test files
+      ansible.builtin.command: cp -RPp plain vault
+      args:
+        chdir: "{{ output_dir }}"
+      changed_when: true
+
+    - name: Encrypt files in the copy of the test files
+      ansible.builtin.copy:
+        src: "source/{{ item.path }}"
+        dest: "{{ source }}/{{ item.path }}"
+        mode: "{{ item.mode }}"
+        decrypt: false
+      loop:
+        - path: secret.txt
+          mode: "0600"
+        - path: nested/secret.txt
+          mode: "0644"
+
+    - name: Restore the modification times of the encrypted files and their directories
+      ansible.builtin.command: touch -r {{ plain_source }}/{{ item }} {{ source }}/{{ item }}
+      changed_when: true
+      loop:
+        - secret.txt
+        - nested/secret.txt
+        - nested
+        - .
+
+    - name: Get stat information for the encrypted test file
+      ansible.builtin.stat:
+        path: "{{ source }}/secret.txt"
+      register: stat_source
+
+    - name: List the test files before they are synchronized
+      ansible.builtin.command:
+        argv:
+          - "{{ ansible_playbook_python }}"
+          - -c
+          - "{{ list_script }}"
+          - "{{ output_dir }}/vault"
+      register: source_before
+      changed_when: false
+
+    - name: Synchronize directory without decrypt
+      ansible.posix.synchronize:
+        src: "{{ source }}/"
+        dest: "{{ output_dir }}/encrypted/"
+      register: sync_result
+      delegate_to: "{{ inventory_hostname }}"
+
+    - name: Get stat information for the synchronized file
+      ansible.builtin.stat:
+        path: "{{ output_dir }}/encrypted/secret.txt"
+      register: stat_result
+
+    - name: Ensure the file is still encrypted
+      ansible.builtin.assert:
+        that:
+          - sync_result.changed == true
+          - stat_result.stat.exists == True
+          - stat_result.stat.checksum == stat_source.stat.checksum
+          - stat_result.stat.checksum != secret_checksum
+
+    - name: Synchronize directory using decrypt
+      ansible.posix.synchronize:
+        src: "{{ source }}/"
+        dest: "{{ output_dir }}/decrypted/"
+        decrypt: true
+      register: sync_result
+      delegate_to: "{{ inventory_hostname }}"
+
+    - name: Get stat information for the synchronized files
+      ansible.builtin.stat:
+        path: "{{ output_dir }}/decrypted/{{ item }}"
+      register: stat_result
+      loop:
+        - plain.txt
+        - secret.txt
+        - nested/secret.txt
+        - link.txt
+        - linkdir
+        - outside.txt
+        - outsidedir
+        - nested/excluded.txt
+        - nested
+
+    - name: Read the synchronized file with a dollar sign in its name
+      ansible.builtin.shell: cat 'a$HOME.txt'
+      args:
+        chdir: "{{ output_dir }}/decrypted"
+      register: cat_result
+      changed_when: false
+
+    - name: Ensure the encrypted files were decrypted and everything else was synchronized as it is
+      ansible.builtin.assert:
+        that:
+          - sync_result.changed == true
+          - stat_result.results[0].stat.checksum == plain_checksum
+          - stat_result.results[1].stat.checksum == secret_checksum
+          - stat_result.results[1].stat.mode == '0600'
+          - stat_result.results[1].stat.mtime | int == stat_source.stat.mtime | int
+          - stat_result.results[2].stat.checksum == nested_checksum
+          - stat_result.results[3].stat.islnk == True
+          - stat_result.results[3].stat.lnk_target == 'secret.txt'
+          - stat_result.results[4].stat.islnk == True
+          - stat_result.results[4].stat.lnk_target == 'nested'
+          - stat_result.results[5].stat.islnk == True
+          - stat_result.results[5].stat.lnk_target == '../outside/plain.txt'
+          - stat_result.results[6].stat.islnk == True
+          - stat_result.results[6].stat.lnk_target == output_dir ~ '/plain/outside'
+          - stat_result.results[7].stat.exists == False
+          - stat_result.results[8].stat.mode == '0750'
+          - cat_result.stdout == 'hello world'
+
+    - name: Synchronize the decrypted test files without decrypt
+      ansible.posix.synchronize:
+        src: "{{ plain_source }}/"
+        dest: "{{ output_dir }}/decrypted_plain/"
+      delegate_to: "{{ inventory_hostname }}"
+
+    - name: Compare the result of decrypt with the result for the decrypted test files
+      ansible.builtin.include_tasks: compare.yml
+      vars:
+        left: "{{ output_dir }}/decrypted"
+        right: "{{ output_dir }}/decrypted_plain"
+
+    - name: Test that the directory is not synchronized a second time
+      ansible.posix.synchronize:
+        src: "{{ source }}/"
+        dest: "{{ output_dir }}/decrypted/"
+        decrypt: true
+      register: sync_result
+      delegate_to: "{{ inventory_hostname }}"
+
+    - name: Ensure no change occurred
+      ansible.builtin.assert:
+        that:
+          - sync_result.changed == False
+
+    - name: Test that the directory is not synchronized again using checksum
+      ansible.posix.synchronize:
+        src: "{{ source }}/"
+        dest: "{{ output_dir }}/decrypted/"
+        decrypt: true
+        checksum: true
+      register: sync_result
+      delegate_to: "{{ inventory_hostname }}"
+
+    - name: Ensure no change occurred
+      ansible.builtin.assert:
+        that:
+          - sync_result.changed == False
+
+    - name: Create a file that only exists in the destination
+      ansible.builtin.copy:
+        dest: "{{ output_dir }}/decrypted/stale.txt"
+        mode: "0644"
+        content: hello world
+
+    - name: Synchronize directory using decrypt and delete
+      ansible.posix.synchronize:
+        src: "{{ source }}/"
+        dest: "{{ output_dir }}/decrypted/"
+        decrypt: true
+        delete: true
+      register: sync_result
+      delegate_to: "{{ inventory_hostname }}"
+
+    - name: Get stat information for the stale file
+      ansible.builtin.stat:
+        path: "{{ output_dir }}/decrypted/stale.txt"
+      register: stat_result
+
+    - name: Ensure the stale file was deleted
+      ansible.builtin.assert:
+        that:
+          - sync_result.changed == true
+          - stat_result.stat.exists == False
+
+    - name: Ensure nothing else was deleted or changed
+      ansible.builtin.include_tasks: compare.yml
+      vars:
+        left: "{{ output_dir }}/decrypted"
+        right: "{{ output_dir }}/decrypted_plain"
+
+    - name: Synchronize directory using decrypt in check mode
+      ansible.posix.synchronize:
+        src: "{{ source }}/"
+        dest: "{{ output_dir }}/check_mode/"
+        decrypt: true
+      register: sync_result
+      check_mode: true
+      delegate_to: "{{ inventory_hostname }}"
+
+    - name: Test that the directory was really not synchronized
+      ansible.builtin.stat:
+        path: "{{ output_dir }}/check_mode"
+      register: stat_result
+
+    - name: Ensure change is reported and nothing was written
+      ansible.builtin.assert:
+        that:
+          - sync_result.changed == true
+          - stat_result.stat.exists == False
+
+    - name: Test that check mode reports no change for a synchronized directory
+      ansible.posix.synchronize:
+        src: "{{ source }}/"
+        dest: "{{ output_dir }}/decrypted/"
+        decrypt: true
+      register: sync_result
+      check_mode: true
+      delegate_to: "{{ inventory_hostname }}"
+
+    - name: Ensure no change is reported
+      ansible.builtin.assert:
+        that:
+          - sync_result.changed == False
+
+    - name: Synchronize directory without trailing slash
+      ansible.posix.synchronize:
+        src: "{{ item.src }}"
+        dest: "{{ output_dir }}/{{ item.dest }}/"
+        decrypt: "{{ item.decrypt }}"
+      register: sync_result
+      delegate_to: "{{ inventory_hostname }}"
+      loop:
+        - src: "{{ source }}"
+          dest: directory
+          decrypt: true
+        - src: "{{ plain_source }}"
+          dest: directory_plain
+          decrypt: false
+
+    - name: Get stat information for the synchronized file
+      ansible.builtin.stat:
+        path: "{{ output_dir }}/directory/source/secret.txt"
+      register: stat_result
+
+    - name: Ensure the directory itself was synchronized and decrypted
+      ansible.builtin.assert:
+        that:
+          - sync_result.results[0].changed == true
+          - stat_result.stat.checksum == secret_checksum
+
+    - name: Compare the result of decrypt with the result for the decrypted test files
+      ansible.builtin.include_tasks: compare.yml
+      vars:
+        left: "{{ output_dir }}/directory"
+        right: "{{ output_dir }}/directory_plain"
+
+    - name: Synchronize the content of the directory in the dot form
+      ansible.posix.synchronize:
+        src: "{{ item.src }}/."
+        dest: "{{ output_dir }}/{{ item.dest }}/"
+        decrypt: "{{ item.decrypt }}"
+      register: sync_result
+      delegate_to: "{{ inventory_hostname }}"
+      loop:
+        - src: "{{ source }}"
+          dest: dot
+          decrypt: true
+        - src: "{{ plain_source }}"
+          dest: dot_plain
+          decrypt: false
+
+    - name: Get stat information for the synchronized files
+      ansible.builtin.stat:
+        path: "{{ output_dir }}/dot/{{ item }}"
+      register: stat_result
+      loop:
+        - secret.txt
+        - source
+
+    - name: Ensure the content was decrypted and nothing else was created
+      ansible.builtin.assert:
+        that:
+          - sync_result.results[0].changed == true
+          - stat_result.results[0].stat.checksum == secret_checksum
+          - stat_result.results[1].stat.exists == False
+
+    - name: Compare the result of decrypt with the result for the decrypted test files
+      ansible.builtin.include_tasks: compare.yml
+      vars:
+        left: "{{ output_dir }}/dot"
+        right: "{{ output_dir }}/dot_plain"
+
+    - name: Synchronize encrypted file to new filename using decrypt
+      ansible.posix.synchronize:
+        src: "{{ source }}/secret.txt"
+        dest: "{{ output_dir }}/secret.result"
+        decrypt: true
+      register: sync_result
+      delegate_to: "{{ inventory_hostname }}"
+
+    - name: Test that the file was really copied over
+      ansible.builtin.stat:
+        path: "{{ output_dir }}/secret.result"
+      register: stat_result
+
+    - name: Ensure file exists and checksum matches the decrypted content
+      ansible.builtin.assert:
+        that:
+          - sync_result.changed == true
+          - stat_result.stat.exists == True
+          - stat_result.stat.checksum == secret_checksum
+          - stat_result.stat.mode == '0600'
+          - stat_result.stat.mtime | int == stat_source.stat.mtime | int
+
+    - name: Test that the file is not copied a second time
+      ansible.posix.synchronize:
+        src: "{{ source }}/secret.txt"
+        dest: "{{ output_dir }}/secret.result"
+        decrypt: true
+      register: sync_result
+      delegate_to: "{{ inventory_hostname }}"
+
+    - name: Ensure no change occurred
+      ansible.builtin.assert:
+        that:
+          - sync_result.changed == False
+
+    - name: Synchronize directory with a parent directory reference in the path
+      ansible.posix.synchronize:
+        src: "{{ item.src }}/nested/../../source/"
+        dest: "{{ output_dir }}/{{ item.dest }}/"
+        decrypt: "{{ item.decrypt }}"
+      register: sync_result
+      delegate_to: "{{ inventory_hostname }}"
+      loop:
+        - src: "{{ source }}"
+          dest: parent
+          decrypt: true
+        - src: "{{ plain_source }}"
+          dest: parent_plain
+          decrypt: false
+
+    - name: Get stat information for the synchronized file
+      ansible.builtin.stat:
+        path: "{{ output_dir }}/parent/nested/secret.txt"
+      register: stat_result
+
+    - name: Ensure the encrypted files were decrypted
+      ansible.builtin.assert:
+        that:
+          - sync_result.results[0].changed == true
+          - stat_result.stat.checksum == nested_checksum
+
+    - name: Compare the result of decrypt with the result for the decrypted test files
+      ansible.builtin.include_tasks: compare.yml
+      vars:
+        left: "{{ output_dir }}/parent"
+        right: "{{ output_dir }}/parent_plain"
+
+    - name: Synchronize using decrypt and a src that ends with a parent directory reference
+      ansible.posix.synchronize:
+        src: "{{ source }}/nested/.."
+        dest: "{{ output_dir }}/parent_last/"
+        decrypt: true
+      register: sync_result
+      ignore_errors: true
+      delegate_to: "{{ inventory_hostname }}"
+
+    - name: Ensure no change occurred and failed
+      ansible.builtin.assert:
+        that:
+          - sync_result is not changed
+          - sync_result is failed
+          - "'decrypt cannot be used with a src that is the root directory or ends with' in sync_result.msg"
+
+    - name: Synchronize using decrypt and the mode=pull param
+      ansible.posix.synchronize:
+        src: "{{ source }}/"
+        dest: "{{ output_dir }}/pull/"
+        mode: pull
+        decrypt: true
+      register: sync_result
+      ignore_errors: true
+      delegate_to: "{{ inventory_hostname }}"
+
+    - name: Ensure no change occurred and failed
+      ansible.builtin.assert:
+        that:
+          - sync_result is not changed
+          - sync_result is failed
+          - "'decrypt can only be used when the source is on the Ansible controller' in sync_result.msg"
+
+    - name: Ensure the refused tasks did not create a destination
+      ansible.builtin.stat:
+        path: "{{ output_dir }}/{{ item }}"
+      register: stat_result
+      loop:
+        - parent_last
+        - pull
+      failed_when: stat_result.stat.exists
+
+    - name: Synchronize using the --relative rsync option
+      ansible.posix.synchronize:
+        src: "{{ item.src }}"
+        dest: "{{ output_dir }}/{{ item.dest }}/"
+        decrypt: "{{ item.decrypt }}"
+        rsync_opts:
+          - "--relative"
+      register: sync_result
+      delegate_to: "{{ inventory_hostname }}"
+      loop:
+        - src: "{{ source }}/"
+          dest: relative
+          decrypt: true
+        - src: "{{ plain_source }}/"
+          dest: relative_plain
+          decrypt: false
+        - src: "{{ source }}"
+          dest: relative_directory
+          decrypt: true
+        - src: "{{ plain_source }}"
+          dest: relative_directory_plain
+          decrypt: false
+        - src: "{{ source }}/nested/secret.txt"
+          dest: relative_file
+          decrypt: true
+        - src: "{{ plain_source }}/nested/secret.txt"
+          dest: relative_file_plain
+          decrypt: false
+
+    - name: Get stat information for the synchronized files
+      ansible.builtin.stat:
+        path: "{{ output_dir }}/{{ item }}"
+      register: stat_result
+      loop:
+        - "relative{{ source }}/secret.txt"
+        - "relative_directory{{ source }}/nested/secret.txt"
+        - "relative_file{{ source }}/nested/secret.txt"
+
+    - name: Ensure the path of the source was created in the destination and the encrypted files were decrypted
+      ansible.builtin.assert:
+        that:
+          - sync_result.results[0].changed == true
+          - stat_result.results[0].stat.checksum == secret_checksum
+          - stat_result.results[1].stat.checksum == nested_checksum
+          - stat_result.results[2].stat.checksum == nested_checksum
+
+    - name: Compare the results of decrypt with the results for the decrypted test files
+      ansible.builtin.include_tasks: compare.yml
+      vars:
+        left: "{{ output_dir }}/{{ item }}{{ output_dir }}/vault"
+        right: "{{ output_dir }}/{{ item }}_plain{{ output_dir }}/plain"
+      loop:
+        - relative
+        - relative_directory
+        - relative_file
+
+    - name: Create the destination for the next test
+      ansible.builtin.file:
+        path: "{{ output_dir }}/{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - relative_marker
+        - relative_marker_plain
+
+    - name: Synchronize using the --relative rsync option and a src that marks the start of the relative path
+      ansible.posix.synchronize:
+        src: "{{ item.src }}"
+        dest: "{{ output_dir }}/{{ item.dest }}/"
+        decrypt: "{{ item.decrypt }}"
+        rsync_opts:
+          - "--relative"
+      register: sync_result
+      delegate_to: "{{ inventory_hostname }}"
+      loop:
+        - src: "{{ output_dir }}/vault/./source/nested"
+          dest: relative_marker
+          decrypt: true
+        - src: "{{ output_dir }}/plain/./source/nested"
+          dest: relative_marker_plain
+          decrypt: false
+        - src: "{{ output_dir }}/vault/./source/nested"
+          dest: relative_marker
+          decrypt: true
+
+    - name: Get stat information for the synchronized file
+      ansible.builtin.stat:
+        path: "{{ output_dir }}/relative_marker/source/nested/secret.txt"
+      register: stat_result
+
+    - name: Ensure only the marked part of the path was created, the file was decrypted and the second run changed nothing
+      ansible.builtin.assert:
+        that:
+          - sync_result.results[0].changed == true
+          - sync_result.results[2].changed == false
+          - stat_result.stat.checksum == nested_checksum
+
+    - name: Compare the result of decrypt with the result for the decrypted test files
+      ansible.builtin.include_tasks: compare.yml
+      vars:
+        left: "{{ output_dir }}/relative_marker"
+        right: "{{ output_dir }}/relative_marker_plain"
+
+    - name: Create a list of files to synchronize
+      ansible.builtin.copy:
+        dest: "{{ output_dir }}/files_from.txt"
+        mode: "0644"
+        content: |
+          secret.txt
+          nested/secret.txt
+          link.txt
+
+    - name: Synchronize using the --files-from rsync option
+      ansible.posix.synchronize:
+        src: "{{ item.src }}/"
+        dest: "{{ output_dir }}/{{ item.dest }}/"
+        decrypt: "{{ item.decrypt }}"
+        rsync_opts:
+          - "--files-from={{ output_dir }}/files_from.txt"
+      register: sync_result
+      delegate_to: "{{ inventory_hostname }}"
+      loop:
+        - src: "{{ source }}"
+          dest: files_from
+          decrypt: true
+        - src: "{{ plain_source }}"
+          dest: files_from_plain
+          decrypt: false
+
+    - name: Get stat information for the synchronized files
+      ansible.builtin.stat:
+        path: "{{ output_dir }}/files_from/{{ item }}"
+      register: stat_result
+      loop:
+        - secret.txt
+        - nested/secret.txt
+        - plain.txt
+
+    - name: Ensure only the listed files were synchronized and decrypted
+      ansible.builtin.assert:
+        that:
+          - sync_result.results[0].changed == true
+          - stat_result.results[0].stat.checksum == secret_checksum
+          - stat_result.results[1].stat.checksum == nested_checksum
+          - stat_result.results[2].stat.exists == False
+
+    - name: Compare the result of decrypt with the result for the decrypted test files
+      ansible.builtin.include_tasks: compare.yml
+      vars:
+        left: "{{ output_dir }}/files_from"
+        right: "{{ output_dir }}/files_from_plain"
+
+    - name: Synchronize using the copy_links param without the symlink that leaves the source with a relative path
+      ansible.posix.synchronize:
+        src: "{{ item.src }}/"
+        dest: "{{ output_dir }}/{{ item.dest }}/"
+        decrypt: "{{ item.decrypt }}"
+        copy_links: true
+        rsync_opts:
+          - "--exclude=/outside.txt"
+      register: sync_result
+      delegate_to: "{{ inventory_hostname }}"
+      loop:
+        - src: "{{ source }}"
+          dest: copy_links
+          decrypt: true
+        - src: "{{ plain_source }}"
+          dest: copy_links_plain
+          decrypt: false
+
+    - name: Get stat information for the synchronized files
+      ansible.builtin.stat:
+        path: "{{ output_dir }}/copy_links/{{ item }}"
+      register: stat_result
+      loop:
+        - link.txt
+        - linkdir/secret.txt
+        - outside.txt
+        - outsidedir/plain.txt
+
+    - name: Ensure the symlinks were replaced with the decrypted files they point to
+      ansible.builtin.assert:
+        that:
+          - sync_result.results[0].changed == true
+          - stat_result.results[0].stat.islnk == False
+          - stat_result.results[0].stat.checksum == secret_checksum
+          - stat_result.results[1].stat.checksum == nested_checksum
+          - stat_result.results[2].stat.exists == False
+          - stat_result.results[3].stat.exists == True
+
+    - name: Compare the result of decrypt with the result for the decrypted test files
+      ansible.builtin.include_tasks: compare.yml
+      vars:
+        left: "{{ output_dir }}/copy_links"
+        right: "{{ output_dir }}/copy_links_plain"
+
+    - name: Synchronize using decrypt, the copy_links param and a symlink that leaves the source with a relative path
+      ansible.posix.synchronize:
+        src: "{{ source }}/"
+        dest: "{{ output_dir }}/copy_links_outside/"
+        decrypt: true
+        copy_links: true
+      register: sync_result
+      ignore_errors: true
+      delegate_to: "{{ inventory_hostname }}"
+
+    - name: Ensure rsync reported the symlink that has no target in the mirror of the source
+      ansible.builtin.assert:
+        that:
+          - sync_result is failed
+          - sync_result.rc == 23
+          - "'outside.txt' in sync_result.msg"
+
+    - name: Synchronize using decrypt and a src that is a symlink
+      ansible.posix.synchronize:
+        src: "{{ source }}/{{ item }}"
+        dest: "{{ output_dir }}/symlink_src/"
+        decrypt: true
+        copy_links: true
+      register: sync_result
+      ignore_errors: true
+      delegate_to: "{{ inventory_hostname }}"
+      loop:
+        - link.txt
+        - linkdir
+
+    - name: Ensure no change occurred and failed
+      ansible.builtin.assert:
+        that:
+          - sync_result is failed
+          - sync_result.results | map(attribute='changed') | unique | list == [false]
+          - "'decrypt cannot be used with a src that is a symbolic link' in sync_result.results[0].msg"
+          - "'decrypt cannot be used with a src that is a symbolic link' in sync_result.results[1].msg"
+
+    - name: Synchronize the content of a directory that src points to with a symlink using decrypt
+      ansible.posix.synchronize:
+        src: "{{ source }}/linkdir/"
+        dest: "{{ output_dir }}/symlink_content/"
+        decrypt: true
+      register: sync_result
+      delegate_to: "{{ inventory_hostname }}"
+
+    - name: Get stat information for the synchronized files
+      ansible.builtin.stat:
+        path: "{{ output_dir }}/{{ item }}"
+      register: stat_result
+      loop:
+        - symlink_content/secret.txt
+        - symlink_src
+
+    - name: Ensure the content was decrypted and the refused tasks did not create a destination
+      ansible.builtin.assert:
+        that:
+          - sync_result.changed == true
+          - stat_result.results[0].stat.checksum == nested_checksum
+          - stat_result.results[1].stat.exists == False
+
+    - name: List the test files after they were synchronized
+      ansible.builtin.command:
+        argv:
+          - "{{ ansible_playbook_python }}"
+          - -c
+          - "{{ list_script }}"
+          - "{{ output_dir }}/vault"
+      register: source_after
+      changed_when: false
+
+    - name: Ensure the test files, their permissions, modification times and link counts did not change
+      ansible.builtin.assert:
+        that:
+          - source_before.stdout_lines | length > 0
+          - source_before.stdout == source_after.stdout
+
+    - name: Find decrypted content in the local temporary directory
+      ansible.builtin.find:
+        paths: "{{ lookup('ansible.builtin.config', 'DEFAULT_LOCAL_TMP') }}"
+        contains: "(top|nested) secret"
+        recurse: true
+        hidden: true
+      register: find_result
+
+    - name: Ensure no decrypted content was left behind
+      ansible.builtin.assert:
+        that:
+          - find_result.matched == 0
