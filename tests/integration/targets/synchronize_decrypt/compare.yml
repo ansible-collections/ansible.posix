@@ -1,19 +1,16 @@
 ---
 - name: List the files in {{ left }} and {{ right }}
-  ansible.builtin.command:
-    argv:
-      - "{{ ansible_playbook_python }}"
-      - -c
-      - "{{ list_script }}"
-      - "{{ item }}"
-  register: list_result
-  changed_when: false
+  ansible.builtin.include_tasks: list.yml
+  loop_control:
+    loop_var: list
   loop:
-    - "{{ left }}"
-    - "{{ right }}"
+    - name: list_left
+      path: "{{ left }}"
+    - name: list_right
+      path: "{{ right }}"
 
 - name: Ensure both directories have the same content, permissions and modification times
   ansible.builtin.assert:
     that:
-      - list_result.results[0].stdout_lines | length > 0
-      - list_result.results[0].stdout == list_result.results[1].stdout
+      - list_left | length > 0
+      - list_left == list_right

@@ -1,0 +1,14 @@
+---
+- name: List the files in {{ list.path }}
+  ansible.builtin.command:
+    argv:
+      - "{{ ansible_playbook_python }}"
+      - -c
+      - "{{ list_script }}"
+      - "{{ list.path }}"
+  register: list_result
+  changed_when: false
+
+- name: Remember the list as {{ list.name }}
+  ansible.builtin.set_fact:
+    "{{ list.name }}": "{{ list_result.stdout_lines }}"

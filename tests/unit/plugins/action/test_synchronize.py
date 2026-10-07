@@ -317,12 +317,13 @@ class DecryptTester(SynchronizeTester):
 
     ''' Runs the action plugin on the basic fixture with the given loader and records the staged source '''
 
-    def __init__(self, loader, execute_side_effect=None):
+    def __init__(self, loader, execute_side_effect=None, inspect=None):
         self.task = TaskMock()
         self.connection = ConnectionMock()
         self._play_context = PlayContextMock()
         self.loader = loader
         self.execute_side_effect = execute_side_effect
+        self.inspect = inspect
         self.final_module_args = None
         self.staging_dir = None
         self.staging_dir_mode = None
@@ -333,6 +334,8 @@ class DecryptTester(SynchronizeTester):
     def _execute_module(self, module_name, module_args=None, task_vars=None):
         self.execute_called = True
         self.final_module_args = module_args
+        if self.inspect is not None:
+            self.inspect(module_args)
         src = module_args['src']
         if src.startswith(C.DEFAULT_LOCAL_TMP + '/'):
             self.staging_dir = os.path.join(C.DEFAULT_LOCAL_TMP, src[len(C.DEFAULT_LOCAL_TMP) + 1:].split('/')[0])
@@ -351,7 +354,7 @@ class DecryptTester(SynchronizeTester):
             raise self.execute_side_effect
         return {}
 
-    def run(self, task_args, transport='ssh', delegate_to=None, check_mode=False, task_vars=None):
+    def run(self, task_args, transport='ssh', delegate_to=None, task_vars=None):
         fixturepath = os.path.join(os.path.dirname(__file__), 'fixtures', 'synchronize', 'basic')
         with open(os.path.join(fixturepath, 'taskvars_in.json'), 'rb') as f:
             in_task_vars = json.loads(f.read().decode('utf-8'))
@@ -361,8 +364,6 @@ class DecryptTester(SynchronizeTester):
 
         self.task.args = task_args
         self.task.delegate_to = delegate_to
-        self.task.check_mode = check_mode
-        self._play_context.check_mode = check_mode
         self.connection.transport = transport
 
         SAM = ActionModule(self.task, self.connection, self._play_context,
@@ -372,6 +373,10 @@ class DecryptTester(SynchronizeTester):
 
 
 Entry = namedtuple('Entry', ['data', 'target_data', 'mode', 'mtime', 'ino', 'nlink'])
+
+
+def os_error(code):
+    return OSError(code, os.strerror(code))
 
 
 def strip_content_form(path):
@@ -463,10 +468,33 @@ class TestSynchronizeDecrypt(unittest.TestCase):
         self._write('secret.yml', self.top_secret, 0o600, 1400000000)
         self._write('sub/deep/key.pem', self.deep_secret, 0o640, 1400000001)
 
+    def _create_outside(self, name, data):
+        ''' Creates a directory next to the parent directory of self.src with one file in it '''
+        outside = os.path.join(self.tmpdir, 'outside')
+        os.mkdir(outside)
+        with open(os.path.join(outside, name), 'wb') as f:
+            f.write(data)
+        return outside
+
+    def _create_marker(self):
+        with open(os.path.join(self.tmpdir, 'marker'), 'wb') as f:
+            f.write(b'marker\n')
+        return self.tmpdir[1:] + '/marker'
+
     def _args(self, **kwargs):
         args = {'src': self.src, 'dest': '/tmp/deleteme'}
         args.update(kwargs)
         return args
+
+    def _run(self, loader=None, execute_side_effect=None, inspect=None, transport='ssh', delegate_to=None, task_vars=None, **kwargs):
+        ''' Runs the action plugin with decrypt, returns the tester and the result '''
+        x = DecryptTester(loader or self.loader, execute_side_effect=execute_side_effect, inspect=inspect)
+        kwargs.setdefault('decrypt', True)
+        return x, x.run(self._args(**kwargs), transport=transport, delegate_to=delegate_to, task_vars=task_vars)
+
+    def _run_without_decrypt(self, **kwargs):
+        x = DecryptTester(None)
+        return x, x.run(self._args(**kwargs))
 
     def _decrypted_paths(self):
         return [call[0][0] for call in self.loader.get_real_file.call_args_list]
@@ -481,6 +509,26 @@ class TestSynchronizeDecrypt(unittest.TestCase):
 
     def _assert_clean(self):
         self.assertEqual(os.listdir(self.local_tmp), [])
+
+    def _assert_succeeded(self, x, result):
+        self.assertFalse(result.get('failed'), result.get('msg'))
+        self.assertTrue(x.execute_called)
+        self._assert_clean()
+
+    def _assert_failed(self, x, result, msg):
+        self.assertTrue(result.get('failed'))
+        self.assertIn(msg, result['msg'])
+        self.assertFalse(x.execute_called)
+        self._assert_clean()
+
+    def _assert_refused(self, x, result, msg='decrypt'):
+        self._assert_failed(x, result, msg)
+        self.assertEqual(self._decrypted_paths(), [])
+
+    def _assert_not_staged(self, x, result, src):
+        self._assert_succeeded(x, result)
+        self.assertEqual(x.final_module_args['src'], src)
+        self.assertEqual(self._decrypted_paths(), [])
 
     def _assert_staged_src(self, x, src):
         self.assertEqual(os.path.dirname(x.staging_dir), self.local_tmp)
@@ -513,51 +561,42 @@ class TestSynchronizeDecrypt(unittest.TestCase):
                 self.assertEqual(mirrored.ino, real.ino, key)
                 self.assertEqual(mirrored.nlink, 2, key)
 
-    def _assert_refused(self, x, result, msg='decrypt'):
-        self.assertTrue(result.get('failed'))
-        self.assertIn(msg, result['msg'])
-        self.assertFalse(x.execute_called)
-        self.assertEqual(self._decrypted_paths(), [])
-        self._assert_clean()
+    def _assert_staged(self, x, result, src=None, **kwargs):
+        self._assert_succeeded(x, result)
+        self._assert_staged_src(x, src or self.src)
+        self._assert_staged_tree(x.staged, **kwargs)
 
     def test_decrypt_unset_or_false_changes_nothing(self):
         self._encrypt()
         final_args = []
-        for args in (self._args(), self._args(decrypt=False), self._args(decrypt='no')):
-            loader = MagicMock()
-            x = DecryptTester(loader)
-            with patch.object(tempfile, 'mkdtemp', side_effect=AssertionError('staging')):
-                result = x.run(args)
-            self.assertFalse(result.get('failed'))
-            self.assertEqual(loader.mock_calls, [])
-            self._assert_clean()
-            x.final_module_args.pop('decrypt', None)
-            final_args.append(x.final_module_args)
+        for args in ({}, {'decrypt': False}, {'decrypt': 'no'}):
+            with self.subTest(args=args):
+                loader = MagicMock()
+                x = DecryptTester(loader)
+                with patch.object(tempfile, 'mkdtemp', side_effect=AssertionError('staging')):
+                    result = x.run(self._args(**args))
+                self._assert_succeeded(x, result)
+                self.assertEqual(loader.mock_calls, [])
+                x.final_module_args.pop('decrypt', None)
+                final_args.append(x.final_module_args)
         self.assertEqual(final_args[0], final_args[1])
         self.assertEqual(final_args[0], final_args[2])
         self.assertEqual(final_args[0]['src'], self.src)
 
     def test_decrypt_unset_works_without_loader(self):
-        x = DecryptTester(None)
-        result = x.run(self._args())
-        self.assertFalse(result.get('failed'))
-        self.assertTrue(x.execute_called)
+        x, result = self._run_without_decrypt()
+        self._assert_succeeded(x, result)
 
     def test_decrypt_without_encrypted_files_does_not_stage(self):
         for src in (self.src, self.src + '/', os.path.join(self.src, 'plain.txt'), os.path.join(self.src, 'missing')):
-            expected = DecryptTester(None)
-            expected.run(self._args(src=src))
-            x = DecryptTester(self.loader)
-            with patch.object(tempfile, 'mkdtemp', side_effect=AssertionError('staging')), \
-                    patch.object(os, 'link', side_effect=AssertionError('staging')):
-                result = x.run(self._args(src=src, decrypt=True))
-            self.assertFalse(result.get('failed'))
-            self.assertTrue(x.execute_called)
-            self.assertIs(x.final_module_args.pop('decrypt'), True)
-            self.assertEqual(x.final_module_args, expected.final_module_args)
-            self.assertEqual(x.final_module_args['src'], src)
-            self.assertEqual(self._decrypted_paths(), [])
-            self._assert_clean()
+            with self.subTest(src=src):
+                expected, dummy = self._run_without_decrypt(src=src)
+                with patch.object(tempfile, 'mkdtemp', side_effect=AssertionError('staging')), \
+                        patch.object(os, 'link', side_effect=AssertionError('staging')):
+                    x, result = self._run(src=src)
+                self._assert_not_staged(x, result, src)
+                self.assertIs(x.final_module_args.pop('decrypt'), True)
+                self.assertEqual(x.final_module_args, expected.final_module_args)
 
     def test_decrypt_directory(self):
         self._encrypt()
@@ -565,13 +604,10 @@ class TestSynchronizeDecrypt(unittest.TestCase):
         os.utime(os.path.join(self.src, 'sub'), (1500000011, 1500000011))
         before = self._outside_local_tmp()
 
-        x = DecryptTester(self.loader)
-        result = x.run(self._args(decrypt=True))
-        self.assertFalse(result.get('failed'), result.get('msg'))
-        self._assert_staged_src(x, self.src)
+        x, result = self._run()
+        self._assert_staged(x, result)
         self.assertEqual(sorted(self._decrypted_paths()),
                          [os.path.join(self.src, 'secret.yml'), os.path.join(self.src, 'sub', 'deep', 'key.pem')])
-        self._assert_staged_tree(x.staged)
         self.assertEqual(x.staged['conf.d/plain.txt'].data, b'plain\n')
         self.assertEqual(x.staged['conf.d/plain_only/plain.txt'].data, b'plain only\n')
         self.assertTrue(stat.S_ISDIR(x.staged['conf.d/empty'].mode))
@@ -580,51 +616,42 @@ class TestSynchronizeDecrypt(unittest.TestCase):
         self.assertEqual(x.staged['conf.d/secret.yml'].mtime, 1400000000 * 10 ** 9)
         self.assertEqual(stat.S_IMODE(x.staged['conf.d/sub'].mode), 0o750)
         self.assertEqual(x.staged['conf.d/sub'].mtime, 1500000011 * 10 ** 9)
-        self._assert_clean()
         self.assertEqual(self._outside_local_tmp(), before)
 
     def test_decrypt_source_path_mapping(self):
         self._encrypt()
         os.symlink(self.parent, os.path.join(self.tmpdir, 'link'))
-        srcs = [(self.src + suffix, self.src + suffix) for suffix in ('', '/', '/.', '/./', '//', '/.//.')]
-        srcs += [
-            (self.parent + '/./conf.d', self.parent + '/./conf.d'),
-            (self.tmpdir + '/./etc/./conf.d/', self.tmpdir + '/./etc/./conf.d/'),
-            (self.parent + '//conf.d/', self.src + '/'),
-            (self.src + '/../conf.d/', self.src + '/../conf.d/'),
-            (self.src + '/sub/deep/../../../conf.d', self.src + '/sub/deep/../../../conf.d'),
-            (self.tmpdir + '/link/../etc/conf.d', self.tmpdir + '/link/../etc/conf.d'),
-            ('/..' + self.src, self.src),
-            ('/../..' + self.src + '/', self.src + '/'),
+        os.symlink(self.src, os.path.join(self.tmpdir, 'srclink'))
+        cases = [(self.src + suffix, self.src + suffix, 'conf.d') for suffix in ('', '/', '/.', '/./', '//', '/.//.')]
+        cases += [
+            (self.parent + '/./conf.d', self.parent + '/./conf.d', 'conf.d'),
+            (self.tmpdir + '/./etc/./conf.d/', self.tmpdir + '/./etc/./conf.d/', 'conf.d'),
+            (self.parent + '//conf.d/', self.src + '/', 'conf.d'),
+            (self.src + '/../conf.d/', self.src + '/../conf.d/', 'conf.d'),
+            (self.src + '/sub/deep/../../../conf.d', self.src + '/sub/deep/../../../conf.d', 'conf.d'),
+            (self.tmpdir + '/link/../etc/conf.d', self.tmpdir + '/link/../etc/conf.d', 'conf.d'),
+            ('/..' + self.src, self.src, 'conf.d'),
+            ('/../..' + self.src + '/', self.src + '/', 'conf.d'),
+            (self.tmpdir + '/srclink/', self.tmpdir + '/srclink/', 'srclink'),
+            (self.tmpdir + '/srclink/.', self.tmpdir + '/srclink/.', 'srclink'),
         ]
-        for src, mapped_src in srcs:
-            x = DecryptTester(self.loader)
-            result = x.run(self._args(src=src, decrypt=True))
-            self.assertFalse(result.get('failed'), (src, result.get('msg')))
-            self._assert_staged_src(x, mapped_src)
-            self._assert_staged_tree(x.staged)
-            self._assert_clean()
+        for src, mapped_src, name in cases:
+            with self.subTest(src=src):
+                x, result = self._run(src=src)
+                self._assert_staged(x, result, src=mapped_src, name=name)
 
     def test_decrypt_only_creates_directories_in_the_staging_dir(self):
         self._encrypt()
         before = self._outside_local_tmp()
-        created = []
-        real_mkdir = os.mkdir
-
-        def mkdir(path, *args, **kwargs):
-            created.append(os.path.join(os.path.realpath(os.path.dirname(path)), os.path.basename(path)))
-            return real_mkdir(path, *args, **kwargs)
-
         for src in ('/..' + self.src, '/../..' + self.src + '/', self.src + '/sub/../sub/', self.tmpdir + '/./etc/conf.d'):
-            x = DecryptTester(self.loader)
-            with patch.object(os, 'mkdir', side_effect=mkdir):
-                result = x.run(self._args(src=src, decrypt=True))
-            self.assertFalse(result.get('failed'), (src, result.get('msg')))
-            self.assertEqual(created[0], x.staging_dir)
-            for path in created[1:]:
-                self.assertTrue(path.startswith(x.staging_dir + '/'), path)
-            del created[:]
-            self._assert_clean()
+            with self.subTest(src=src):
+                with patch.object(os, 'mkdir', wraps=os.mkdir) as mkdir:
+                    x, result = self._run(src=src)
+                self._assert_succeeded(x, result)
+                created = [os.path.normpath(call[0][0]) for call in mkdir.call_args_list]
+                self.assertEqual(created[0], x.staging_dir)
+                for path in created[1:]:
+                    self.assertTrue(path.startswith(x.staging_dir + '/'), path)
         self.assertEqual(self._outside_local_tmp(), before)
 
     def test_decrypt_parent_directories(self):
@@ -637,58 +664,74 @@ class TestSynchronizeDecrypt(unittest.TestCase):
             parent = os.path.dirname(parent)
 
         for src in (self.src, self.parent + '/./conf.d/', os.path.join(self.src, 'secret.yml')):
-            x = DecryptTester(self.loader)
-            result = x.run(self._args(src=src, decrypt=True))
-            self.assertFalse(result.get('failed'))
-            if src.endswith('secret.yml'):
-                self.assertEqual(sorted(x.staged_parents), sorted(parents + ['/', self.src]))
-            else:
-                self.assertEqual(sorted(x.staged_parents), sorted(parents + ['/']))
-            for parent in parents:
-                self.assertEqual(x.staged_parents[parent].mode, os.stat(parent).st_mode, parent)
-                self.assertNotEqual(x.staged_parents[parent].ino, os.stat(parent).st_ino, parent)
-            for parent in (self.parent, self.tmpdir):
-                self.assertEqual(x.staged_parents[parent].mtime, os.stat(parent).st_mtime_ns, parent)
-            self.assertEqual(stat.S_IMODE(x.staged_parents[self.parent].mode), 0o751)
-            self.assertEqual(x.staged_parents[self.parent].mtime, 1500000015 * 10 ** 9)
-            self.assertEqual(stat.S_IMODE(x.staged_parents['/'].mode), 0o700)
-            for parent in parents + ['/']:
-                self.assertEqual(len(x.staged_parent_names[parent]), 1, parent)
-            self._assert_clean()
+            with self.subTest(src=src):
+                x, result = self._run(src=src)
+                self._assert_succeeded(x, result)
+                if src.endswith('secret.yml'):
+                    self.assertEqual(sorted(x.staged_parents), sorted(parents + ['/', self.src]))
+                else:
+                    self.assertEqual(sorted(x.staged_parents), sorted(parents + ['/']))
+                for parent in parents:
+                    self.assertEqual(x.staged_parents[parent].mode, os.stat(parent).st_mode, parent)
+                    self.assertNotEqual(x.staged_parents[parent].ino, os.stat(parent).st_ino, parent)
+                for parent in (self.parent, self.tmpdir):
+                    self.assertEqual(x.staged_parents[parent].mtime, os.stat(parent).st_mtime_ns, parent)
+                self.assertEqual(stat.S_IMODE(x.staged_parents[self.parent].mode), 0o751)
+                self.assertEqual(x.staged_parents[self.parent].mtime, 1500000015 * 10 ** 9)
+                self.assertEqual(stat.S_IMODE(x.staged_parents['/'].mode), 0o700)
+                for parent in parents + ['/']:
+                    self.assertEqual(len(x.staged_parent_names[parent]), 1, parent)
+
+    def test_decrypt_parent_directory_reference_behind_symlink(self):
+        self._encrypt()
+        real_parent = os.path.join(self.tmpdir, 'far', 'b')
+        os.makedirs(os.path.join(self.tmpdir, 'far', 'deep'))
+        os.mkdir(real_parent)
+        shutil.move(self.src, os.path.join(real_parent, 'conf.d'))
+        os.symlink(os.path.join(self.tmpdir, 'far', 'deep'), os.path.join(self.tmpdir, 'a'))
+        os.makedirs(os.path.join(self.tmpdir, 'b', 'conf.d'))
+        with open(os.path.join(self.tmpdir, 'b', 'conf.d', 'secret.yml'), 'wb') as f:
+            f.write(self.other_secret)
+        self.src = os.path.join(real_parent, 'conf.d')
+
+        for suffix in ('', '/'):
+            with self.subTest(suffix=suffix):
+                src = os.path.join(self.tmpdir, 'a', '..', 'b', 'conf.d') + suffix
+                x, result = self._run(src=src)
+                self._assert_staged(x, result, src=src)
 
     def test_decrypt_single_encrypted_file(self):
         self._encrypt()
         secret = os.path.join(self.src, 'secret.yml')
         before = self._outside_local_tmp()
         for src in (secret, self.src + '/./secret.yml', self.src + '/sub/../secret.yml'):
-            x = DecryptTester(self.loader)
-            result = x.run(self._args(src=src, decrypt=True))
-            self.assertFalse(result.get('failed'))
-            self._assert_staged_src(x, src)
-            self.assertEqual(list(x.staged), ['secret.yml'])
-            self.assertEqual(x.staged['secret.yml'].data, b'top secret\n')
-            self.assertEqual(x.staged['secret.yml'].mode, os.stat(secret).st_mode)
-            self.assertEqual(x.staged['secret.yml'].mtime, os.stat(secret).st_mtime_ns)
-            self.assertNotEqual(x.staged['secret.yml'].ino, os.stat(secret).st_ino)
-            self._assert_clean()
+            with self.subTest(src=src):
+                x, result = self._run(src=src)
+                self._assert_succeeded(x, result)
+                self._assert_staged_src(x, src)
+                self.assertEqual(list(x.staged), ['secret.yml'])
+                self.assertEqual(x.staged['secret.yml'].data, b'top secret\n')
+                self.assertEqual(x.staged['secret.yml'].mode, os.stat(secret).st_mode)
+                self.assertEqual(x.staged['secret.yml'].mtime, os.stat(secret).st_mtime_ns)
+                self.assertNotEqual(x.staged['secret.yml'].ino, os.stat(secret).st_ino)
         self.assertEqual(self._outside_local_tmp(), before)
 
     def test_decrypt_single_plain_file(self):
         self._encrypt()
         plain = os.path.join(self.src, 'plain.txt')
-        x = DecryptTester(self.loader)
-        result = x.run(self._args(src=plain, decrypt=True))
-        self.assertFalse(result.get('failed'))
-        self.assertEqual(x.final_module_args['src'], plain)
-        self.assertEqual(self._decrypted_paths(), [])
-        self._assert_clean()
+        x, result = self._run(src=plain)
+        self._assert_not_staged(x, result, plain)
+
+    def test_decrypt_local_connection(self):
+        self._encrypt()
+        for delegate_to in (None, 'localhost'):
+            with self.subTest(delegate_to=delegate_to):
+                x, result = self._run(transport='local', delegate_to=delegate_to)
+                self._assert_staged(x, result)
 
     def test_decrypt_leaves_the_source_untouched(self):
         self._encrypt()
-        outside = os.path.join(self.tmpdir, 'outside')
-        os.mkdir(outside)
-        with open(os.path.join(outside, 'plain.txt'), 'wb') as f:
-            f.write(b'outside\n')
+        outside = self._create_outside('plain.txt', b'outside\n')
         self._write('sub/deep/read_only.txt', b'read only\n', 0o400, 1500000003)
         self._symlink(outside, 'absolute_dir')
         self._symlink('../../outside', 'relative_dir')
@@ -699,40 +742,34 @@ class TestSynchronizeDecrypt(unittest.TestCase):
             self.addCleanup(os.chmod, path, 0o755)
         before = self._outside_local_tmp()
 
-        def assert_unchanged_except_link_count():
+        def assert_unchanged_except_link_count(module_args):
             during = self._outside_local_tmp()
             self.assertEqual(sorted(during), sorted(before))
             for key in before:
                 self.assertEqual(during[key][:5], before[key][:5], key)
 
-        for link_error in (None, OSError(errno.EXDEV, os.strerror(errno.EXDEV))):
+        for link_error in (None, os_error(errno.EXDEV)):
             for execute_side_effect in (None, BreakPoint()):
-                x = DecryptTester(self.loader, execute_side_effect=execute_side_effect)
-                execute_module = x._execute_module
-
-                def execute(module_name, module_args=None, task_vars=None):
-                    assert_unchanged_except_link_count()
-                    return execute_module(module_name, module_args, task_vars)
-
-                x._execute_module = execute
-                with patch.object(os, 'link', wraps=os.link) as link:
-                    link.side_effect = link_error
-                    if execute_side_effect is None:
-                        result = x.run(self._args(decrypt=True))
-                        self.assertFalse(result.get('failed'), result.get('msg'))
-                    else:
-                        self.assertRaises(BreakPoint, x.run, self._args(decrypt=True))
-                self.assertTrue(x.execute_called)
-                self.assertEqual(stat.S_IMODE(x.staged['conf.d/sub/deep'].mode), 0o555)
-                self.assertEqual(x.staged['conf.d/sub/deep/key.pem'].data, b'deep secret\n')
-                self.assertEqual(x.staged['conf.d/sub/deep/read_only.txt'].nlink, 2 if link_error is None else 1)
-                self._assert_clean()
-                self.assertEqual(self._outside_local_tmp(), before)
+                with self.subTest(link_error=link_error, execute_side_effect=execute_side_effect):
+                    with patch.object(os, 'link', wraps=os.link) as link:
+                        link.side_effect = link_error
+                        if execute_side_effect is None:
+                            x, result = self._run(inspect=assert_unchanged_except_link_count)
+                            self._assert_succeeded(x, result)
+                        else:
+                            x = DecryptTester(self.loader, execute_side_effect=execute_side_effect, inspect=assert_unchanged_except_link_count)
+                            self.assertRaises(BreakPoint, x.run, self._args(decrypt=True))
+                    self.assertTrue(x.execute_called)
+                    self.assertEqual(stat.S_IMODE(x.staged['conf.d/sub/deep'].mode), 0o555)
+                    self.assertEqual(x.staged['conf.d/sub/deep/key.pem'].data, b'deep secret\n')
+                    self.assertEqual(x.staged['conf.d/sub/deep/read_only.txt'].nlink, 2 if link_error is None else 1)
+                    self._assert_clean()
+                    self.assertEqual(self._outside_local_tmp(), before)
 
     def test_decrypt_cleanup_only_changes_modes_in_the_staging_dir(self):
         self._encrypt()
-        outside = os.path.join(self.tmpdir, 'outside')
-        os.makedirs(os.path.join(outside, 'dir'))
+        outside = self._create_outside('plain.txt', b'outside\n')
+        os.mkdir(os.path.join(outside, 'dir'))
         self._symlink(outside, 'absolute_dir')
         self._symlink('../../outside', 'relative_dir')
         for path in (os.path.join(outside, 'dir'), outside, os.path.join(self.src, 'sub', 'deep'), os.path.join(self.src, 'sub')):
@@ -748,40 +785,31 @@ class TestSynchronizeDecrypt(unittest.TestCase):
             self.assertFalse(os.path.islink(path), path)
             return real_chmod(path, *args, **kwargs)
 
-        x = DecryptTester(self.loader)
-        execute_module = x._execute_module
-
-        def execute(module_name, module_args=None, task_vars=None):
-            result = execute_module(module_name, module_args, task_vars)
+        def record_chmod(module_args):
             patcher = patch.object(os, 'chmod', side_effect=chmod)
             patcher.start()
             self.addCleanup(patcher.stop)
-            return result
 
-        x._execute_module = execute
-        result = x.run(self._args(decrypt=True))
-        self.assertFalse(result.get('failed'), result.get('msg'))
+        x, result = self._run(inspect=record_chmod)
+        self._assert_succeeded(x, result)
         self.assertIn(os.path.join(x.staging_dir + self.src, 'sub', 'deep'), [os.path.normpath(path) for path in changed])
         for path in changed:
             self.assertTrue(os.path.normpath(path).startswith(x.staging_dir + '/'), path)
-        self._assert_clean()
         self.assertEqual(self._outside_local_tmp(), before)
 
     def test_decrypt_hard_link_fallback(self):
         self._encrypt()
         before = self._outside_local_tmp()
         plain = ('plain.txt', 'plain_only/plain.txt', 'sub/plain.txt')
-        for code in (errno.EXDEV, errno.EPERM, errno.EACCES, errno.EMLINK):
-            x = DecryptTester(self.loader)
-            with patch.object(os, 'link', side_effect=OSError(code, os.strerror(code))) as link:
-                result = x.run(self._args(decrypt=True))
-            self.assertFalse(result.get('failed'), result.get('msg'))
-            self.assertEqual(link.call_count, 3)
-            self._assert_staged_tree(x.staged, copied=plain)
-            for name in plain:
-                self.assertEqual(x.staged['conf.d/' + name].nlink, 1)
-            self._assert_clean()
-            self.assertEqual(self._outside_local_tmp(), before)
+        for code in (errno.EXDEV, errno.EPERM):
+            with self.subTest(code=code):
+                with patch.object(os, 'link', side_effect=os_error(code)) as link:
+                    x, result = self._run()
+                self._assert_staged(x, result, copied=plain)
+                self.assertEqual(link.call_count, 3)
+                for name in plain:
+                    self.assertEqual(x.staged['conf.d/' + name].nlink, 1)
+                self.assertEqual(self._outside_local_tmp(), before)
 
     def test_decrypt_hard_link_fallback_for_some_files(self):
         self._encrypt()
@@ -789,15 +817,12 @@ class TestSynchronizeDecrypt(unittest.TestCase):
 
         def link(src, dst, *args, **kwargs):
             if src.endswith('/sub/plain.txt'):
-                raise OSError(errno.EPERM, os.strerror(errno.EPERM))
+                raise os_error(errno.EPERM)
             return real_link(src, dst, *args, **kwargs)
 
-        x = DecryptTester(self.loader)
         with patch.object(os, 'link', side_effect=link):
-            result = x.run(self._args(decrypt=True))
-        self.assertFalse(result.get('failed'), result.get('msg'))
-        self._assert_staged_tree(x.staged, copied=('sub/plain.txt',))
-        self._assert_clean()
+            x, result = self._run()
+        self._assert_staged(x, result, copied=('sub/plain.txt',))
 
     def test_decrypt_copy_never_writes_to_an_existing_file(self):
         self._encrypt()
@@ -809,7 +834,7 @@ class TestSynchronizeDecrypt(unittest.TestCase):
         staged = os.path.join(self.local_tmp, 'plain.txt')
         os.link(plain, staged)
         self.assertRaises(OSError, SAM._copy_file, other, staged, other)
-        with patch.object(os, 'link', side_effect=OSError(errno.EEXIST, os.strerror(errno.EEXIST))):
+        with patch.object(os, 'link', side_effect=os_error(errno.EEXIST)):
             self.assertRaises(OSError, SAM._stage_file, other, staged)
         os.unlink(staged)
         self.assertEqual(snapshot(plain), before)
@@ -818,21 +843,14 @@ class TestSynchronizeDecrypt(unittest.TestCase):
         self._encrypt()
         fifo = os.path.join(self.src, 'sub', 'fifo')
         os.mkfifo(fifo)
-        x = DecryptTester(self.loader)
-        with patch.object(os, 'link', side_effect=OSError(errno.EXDEV, os.strerror(errno.EXDEV))):
-            result = x.run(self._args(decrypt=True))
-        self.assertTrue(result.get('failed'))
-        self.assertIn('Failed to decrypt %s' % fifo, result['msg'])
+        with patch.object(os, 'link', side_effect=os_error(errno.EXDEV)):
+            x, result = self._run()
+        self._assert_failed(x, result, 'Failed to decrypt %s' % fifo)
         self.assertIn('special file', result['msg'])
-        self.assertFalse(x.execute_called)
-        self._assert_clean()
 
     def test_decrypt_symlinks(self):
         self._encrypt()
-        outside = os.path.join(self.tmpdir, 'outside')
-        os.mkdir(outside)
-        with open(os.path.join(outside, 'secret.yml'), 'wb') as f:
-            f.write(self.top_secret)
+        outside = self._create_outside('secret.yml', self.top_secret)
         os.symlink(self.src, os.path.join(self.tmpdir, 'alias'))
         links = {
             'inside': ('secret.yml', b'top secret\n'),
@@ -852,24 +870,19 @@ class TestSynchronizeDecrypt(unittest.TestCase):
             self._symlink(links[name][0], name, 1400000010 + number)
             self.assertEqual(os.path.exists(os.path.join(self.src, name)), name != 'dangling', name)
         before = self._outside_local_tmp()
-
-        x = DecryptTester(self.loader)
         found = {}
-        execute_module = x._execute_module
 
-        def execute(module_name, module_args=None, task_vars=None):
+        def resolve(module_args):
             for name in links:
                 found[name] = os.path.realpath(os.path.join(module_args['src'], name))
-            return execute_module(module_name, module_args, task_vars)
 
-        x._execute_module = execute
-        result = x.run(self._args(decrypt=True))
-        self.assertFalse(result.get('failed'), result.get('msg'))
-        self._assert_staged_tree(x.staged)
+        x, result = self._run(inspect=resolve)
+        self._assert_staged(x, result)
         for name in links:
-            self.assertEqual(x.staged['conf.d/' + name].data, links[name][0], name)
-            self.assertEqual(x.staged['conf.d/' + name].target_data, links[name][1], name)
-            self.assertEqual(x.staged['conf.d/' + name].mtime, os.lstat(os.path.join(self.src, name)).st_mtime_ns, name)
+            with self.subTest(name=name):
+                self.assertEqual(x.staged['conf.d/' + name].data, links[name][0])
+                self.assertEqual(x.staged['conf.d/' + name].target_data, links[name][1])
+                self.assertEqual(x.staged['conf.d/' + name].mtime, os.lstat(os.path.join(self.src, name)).st_mtime_ns)
         staged_src = x.staging_dir + self.src
         self.assertEqual(found['inside_dir'], os.path.join(staged_src, 'sub', 'deep'))
         self.assertEqual(found['absolute_dir'], outside)
@@ -881,15 +894,12 @@ class TestSynchronizeDecrypt(unittest.TestCase):
         self.assertEqual(x.staged_parent_names[self.parent], ['conf.d'])
         self.assertEqual(sorted(self._decrypted_paths()),
                          [os.path.join(self.src, 'secret.yml'), os.path.join(self.src, 'sub', 'deep', 'key.pem')])
-        self._assert_clean()
         self.assertEqual(self._outside_local_tmp(), before)
 
     def test_decrypt_symlinks_that_point_above_the_root_directory(self):
         self._encrypt()
-        with open(os.path.join(self.tmpdir, 'marker'), 'wb') as f:
-            f.write(b'marker\n')
+        marker = self._create_marker()
         depth = self.src.count('/')
-        marker = self.tmpdir[1:] + '/marker'
         accepted = (
             ('exact', '../' * depth + marker),
             ('sub/exact', '../' * (depth + 1) + marker),
@@ -912,79 +922,81 @@ class TestSynchronizeDecrypt(unittest.TestCase):
             path = self._symlink(target, name)
             with open(path, 'rb') as f:
                 self.assertEqual(f.read(), b'marker\n', name)
-        x = DecryptTester(self.loader)
-        result = x.run(self._args(decrypt=True))
-        self.assertFalse(result.get('failed'), result.get('msg'))
-        self._assert_staged_tree(x.staged)
+        x, result = self._run()
+        self._assert_staged(x, result)
         for name, target in accepted:
-            self.assertEqual(x.staged['conf.d/' + name].data, target, name)
-            self.assertIsNone(x.staged['conf.d/' + name].target_data, name)
-        self._assert_clean()
+            with self.subTest(name=name):
+                self.assertEqual(x.staged['conf.d/' + name].data, target)
+                self.assertIsNone(x.staged['conf.d/' + name].target_data)
 
         for name, target in refused:
             path = self._symlink(target, name)
             before = self._outside_local_tmp()
             for src in (self.src, self.src + '/'):
-                x = DecryptTester(self.loader)
-                result = x.run(self._args(src=src, decrypt=True))
-                self.assertTrue(result.get('failed'), name)
-                self.assertIn('Failed to decrypt %s: the symbolic link points above the root directory' % path, result['msg'])
-                self.assertFalse(x.execute_called)
-                self._assert_clean()
-            self.assertEqual(self._outside_local_tmp(), before)
-            x = DecryptTester(self.loader)
-            result = x.run(self._args())
-            self.assertFalse(result.get('failed'))
+                with self.subTest(name=name, src=src):
+                    x, result = self._run(src=src)
+                    self._assert_failed(x, result, 'Failed to decrypt %s: the symbolic link points above the root directory' % path)
+            with self.subTest(name=name, decrypt=False):
+                self.assertEqual(self._outside_local_tmp(), before)
+                x, result = self._run_without_decrypt()
+                self._assert_succeeded(x, result)
             os.unlink(path)
 
     def test_decrypt_symlinks_that_point_outside_of_the_mirror(self):
         self._encrypt()
-        with open(os.path.join(self.tmpdir, 'marker'), 'wb') as f:
-            f.write(b'marker\n')
+        marker = self._create_marker()
         os.symlink(self.src, os.path.join(self.tmpdir, 'alias'))
         self._symlink('/', 'sub/absolute_root')
-        depth = self.src.count('/')
         links = (
-            ('shallow', '../' * depth + self.tmpdir[1:] + '/marker'),
-            ('sub/through_absolute', 'absolute_root/../' + self.tmpdir[1:] + '/marker'),
+            ('shallow', '../' * self.src.count('/') + marker),
+            ('sub/through_absolute', 'absolute_root/../' + marker),
         )
+        src = os.path.join(self.tmpdir, 'alias') + '/'
         for name, target in links:
-            path = self._symlink(target, name)
-            with open(path, 'rb') as f:
-                self.assertEqual(f.read(), b'marker\n', name)
-            before = self._outside_local_tmp()
-            src = os.path.join(self.tmpdir, 'alias') + '/'
-            x = DecryptTester(self.loader)
-            result = x.run(self._args(src=src, decrypt=True))
-            self.assertTrue(result.get('failed'), name)
-            self.assertIn('Failed to decrypt %s: the symbolic link points outside of the mirror' % os.path.join(self.tmpdir, 'alias', name), result['msg'])
-            self.assertFalse(x.execute_called)
-            self._assert_clean()
-            self.assertEqual(self._outside_local_tmp(), before)
-            os.unlink(path)
+            with self.subTest(name=name):
+                path = self._symlink(target, name)
+                with open(path, 'rb') as f:
+                    self.assertEqual(f.read(), b'marker\n')
+                before = self._outside_local_tmp()
+                x, result = self._run(src=src)
+                link = os.path.join(self.tmpdir, 'alias', name)
+                self._assert_failed(x, result, 'Failed to decrypt %s: the symbolic link points outside of the mirror' % link)
+                self.assertEqual(self._outside_local_tmp(), before)
+                os.unlink(path)
 
         self._symlink(links[0][1], links[0][0])
-        x = DecryptTester(self.loader)
-        result = x.run(self._args(decrypt=True))
-        self.assertFalse(result.get('failed'), result.get('msg'))
+        x, result = self._run()
+        self._assert_succeeded(x, result)
         self.assertIsNone(x.staged['conf.d/shallow'].target_data)
-        self._assert_clean()
 
     def test_decrypt_does_not_follow_symlinks(self):
-        outside = os.path.join(self.tmpdir, 'outside')
-        os.mkdir(outside)
-        with open(os.path.join(outside, 'secret.yml'), 'wb') as f:
-            f.write(self.top_secret)
+        outside = self._create_outside('secret.yml', self.top_secret)
         os.symlink(os.path.join(outside, 'secret.yml'), os.path.join(self.src, 'link.yml'))
         os.symlink(outside, os.path.join(self.src, 'linkdir'))
 
         for src in (self.src, self.src + '/'):
-            x = DecryptTester(self.loader)
-            result = x.run(self._args(src=src, decrypt=True))
-            self.assertFalse(result.get('failed'))
-            self.assertEqual(x.final_module_args['src'], src)
-            self.assertEqual(self._decrypted_paths(), [])
-            self._assert_clean()
+            with self.subTest(src=src):
+                x, result = self._run(src=src)
+                self._assert_not_staged(x, result, src)
+
+    def test_decrypt_refuses_src(self):
+        self._encrypt()
+        controller = 'decrypt can only be used when the source is on the Ansible controller'
+        cases = [
+            ({'mode': 'pull'}, None, controller),
+            ({}, 'u1404', controller),
+            ({}, 'el6host', controller),
+            ({'src': 'otherhost:/etc/conf.d'}, None, controller),
+            ({'src': 'user@otherhost:/etc/conf.d'}, None, controller),
+            ({'src': 'rsync://otherhost/module/conf.d'}, None, controller),
+        ]
+        cases += [({'src': src}, None, 'root directory') for src in ('/', '//', '/.', '/./')]
+        cases += [({'src': self.src + suffix}, None, "'..'") for suffix in ('/..', '/../', '/sub/../.', '/sub/..//./')]
+        for args, delegate_to, msg in cases:
+            with self.subTest(args=args, delegate_to=delegate_to):
+                with patch.object(tempfile, 'mkdtemp', side_effect=AssertionError('staging')):
+                    x, result = self._run(delegate_to=delegate_to, **args)
+                self._assert_refused(x, result, msg)
 
     def test_decrypt_refuses_symlink_src(self):
         self._encrypt()
@@ -995,13 +1007,14 @@ class TestSynchronizeDecrypt(unittest.TestCase):
         srcs = [os.path.join(self.tmpdir, 'alias'), os.path.join(self.tmpdir, 'relative_alias'),
                 os.path.join(self.src, 'link.yml'), os.path.join(self.src, 'dangling'), os.path.join(self.tmpdir, 'alias', 'sub', '..', 'link.yml')]
         for src in srcs:
-            for kwargs in ({}, {'copy_links': True}, {'rsync_opts': ['-L']}):
-                x = DecryptTester(self.loader)
-                self._assert_refused(x, x.run(self._args(src=src, decrypt=True, **kwargs)), 'symbolic link')
-            x = DecryptTester(self.loader)
-            result = x.run(self._args(src=src))
-            self.assertFalse(result.get('failed'))
-            self.assertEqual(x.final_module_args['src'], src)
+            for kwargs in ({}, {'copy_links': True}):
+                with self.subTest(src=src, kwargs=kwargs):
+                    x, result = self._run(src=src, **kwargs)
+                    self._assert_refused(x, result, 'symbolic link')
+            with self.subTest(src=src, decrypt=False):
+                x, result = self._run_without_decrypt(src=src)
+                self._assert_succeeded(x, result)
+                self.assertEqual(x.final_module_args['src'], src)
 
     def test_decrypt_refuses_src_that_contains_the_local_tmp(self):
         self._encrypt()
@@ -1019,16 +1032,27 @@ class TestSynchronizeDecrypt(unittest.TestCase):
             (os.path.join(self.tmpdir, 'tmplink'), self.src + '/'),
         )
         for local_tmp, src in cases:
-            x = DecryptTester(self.loader)
-            with patch.object(C, 'DEFAULT_LOCAL_TMP', local_tmp), patch.object(tempfile, 'mkdtemp', side_effect=AssertionError('staging')):
-                result = x.run(self._args(src=src, decrypt=True))
-            self._assert_refused(x, result, 'local temporary directory')
-            self.assertEqual(os.listdir(inner_tmp), [])
+            with self.subTest(local_tmp=local_tmp, src=src):
+                with patch.object(C, 'DEFAULT_LOCAL_TMP', local_tmp), patch.object(tempfile, 'mkdtemp', side_effect=AssertionError('staging')):
+                    x, result = self._run(src=src)
+                self._assert_refused(x, result, 'local temporary directory')
+                self.assertEqual(os.listdir(inner_tmp), [])
 
-        x = DecryptTester(self.loader)
         with patch.object(C, 'DEFAULT_LOCAL_TMP', inner_tmp):
-            result = x.run(self._args(src=self.src + '/plain_only/', decrypt=True))
-        self.assertFalse(result.get('failed'))
+            x, result = self._run(src=self.src + '/plain_only/')
+        self._assert_succeeded(x, result)
+
+    def test_decrypt_refuses_src_with_environment_variable(self):
+        self._encrypt()
+        os.mkdir(os.path.join(self.tmpdir, '$SYNCHRONIZE_X'))
+        with patch.dict(os.environ, {'SYNCHRONIZE_X': 'etc'}):
+            for src in (os.path.join(self.tmpdir, '$SYNCHRONIZE_X', 'conf.d'), os.path.join(self.tmpdir, '${SYNCHRONIZE_X}', 'conf.d') + '/'):
+                with self.subTest(src=src):
+                    x, result = self._run(src=src)
+                    self._assert_refused(x, result, 'environment variable')
+                    x, result = self._run_without_decrypt(src=src)
+                    self._assert_succeeded(x, result)
+                    self.assertEqual(x.final_module_args['src'], src)
 
     def test_decrypt_preserves_group_when_owner_cannot_be_set(self):
         self._encrypt()
@@ -1037,90 +1061,38 @@ class TestSynchronizeDecrypt(unittest.TestCase):
 
         def lchown(path, uid, gid):
             if uid != -1:
-                raise OSError(errno.EPERM, os.strerror(errno.EPERM))
+                raise os_error(errno.EPERM)
             groups[os.path.normpath(path)] = gid
 
-        x = DecryptTester(self.loader)
-        with patch.object(os, 'lchown', side_effect=lchown), patch.object(os, 'link', side_effect=OSError(errno.EXDEV, os.strerror(errno.EXDEV))):
-            result = x.run(self._args(decrypt=True))
-        self.assertFalse(result.get('failed'), result.get('msg'))
+        with patch.object(os, 'lchown', side_effect=lchown), patch.object(os, 'link', side_effect=os_error(errno.EXDEV)):
+            x, result = self._run()
+        self._assert_succeeded(x, result)
         staged_src = x.staging_dir + self.src
         for name in ('secret.yml', 'sub/deep/key.pem', 'plain.txt', 'link', 'sub', ''):
-            self.assertEqual(groups[os.path.normpath(os.path.join(staged_src, name))], os.lstat(os.path.join(self.src, name)).st_gid, name)
+            with self.subTest(name=name):
+                self.assertEqual(groups[os.path.normpath(os.path.join(staged_src, name))], os.lstat(os.path.join(self.src, name)).st_gid)
         self.assertEqual(groups[x.staging_dir + self.parent], os.stat(self.parent).st_gid)
-        self._assert_clean()
-
-    @unittest.skipIf(os.geteuid() == 0, 'root can read every directory')
-    def test_decrypt_unreadable_directory(self):
-        self._encrypt()
-        unreadable = os.path.join(self.src, 'plain_only')
-        os.chmod(unreadable, 0o000)
-        self.addCleanup(os.chmod, unreadable, 0o700)
-        for src in (self.src, self.src + '/', unreadable + '/'):
-            x = DecryptTester(self.loader)
-            result = x.run(self._args(src=src, decrypt=True))
-            self.assertTrue(result.get('failed'))
-            self.assertIn('Failed to decrypt %s: the directory cannot be read' % unreadable, result['msg'])
-            self.assertFalse(x.execute_called)
-            self._assert_clean()
-
-        x = DecryptTester(self.loader)
-        SAM = ActionModule(x.task, x.connection, x._play_context, self.loader, x.templar, x.shared_loader_obj)
-        staging_dir = tempfile.mkdtemp(dir=self.local_tmp)
-        encrypted = set([os.path.join(self.src, 'secret.yml')])
-        try:
-            self.assertRaises(AnsibleError, SAM._stage_src, self.src, staging_dir, encrypted)
-        finally:
-            SAM._remove_staging_dir(staging_dir)
-        self._assert_clean()
-
-    def test_decrypt_symlinked_directory_content(self):
-        self._encrypt()
-        os.symlink(self.src, os.path.join(self.tmpdir, 'srclink'))
-        for suffix in ('/', '/.'):
-            src = os.path.join(self.tmpdir, 'srclink') + suffix
-            x = DecryptTester(self.loader)
-            result = x.run(self._args(src=src, decrypt=True))
-            self.assertFalse(result.get('failed'))
-            self._assert_staged_src(x, src)
-            self._assert_staged_tree(x.staged, name='srclink')
-            self._assert_clean()
-
-    def test_decrypt_staging_modes(self):
-        self._encrypt()
-        self.addCleanup(os.umask, os.umask(0))
-        x = DecryptTester(self.loader)
-        modes = []
-        real_mkdir, real_open = os.mkdir, os.open
-
-        def mkdir(path, mode=0o777, **kwargs):
-            modes.append(mode)
-            return real_mkdir(path, mode, **kwargs)
-
-        def os_open(path, flags, mode=0o777, **kwargs):
-            if flags & os.O_CREAT:
-                modes.append(mode)
-                self.assertTrue(flags & os.O_EXCL, path)
-            return real_open(path, flags, mode, **kwargs)
-
-        with patch.object(os, 'mkdir', side_effect=mkdir), patch.object(os, 'open', side_effect=os_open):
-            result = x.run(self._args(decrypt=True))
-        self.assertFalse(result.get('failed'))
-        self.assertEqual(x.staging_dir_mode, 0o700)
-        self.assertEqual(sorted(set(modes)), [0o600, 0o700])
-        self._assert_staged_tree(x.staged)
-        self._assert_clean()
 
     def test_decrypt_tolerates_chown_failure(self):
         self._encrypt()
         self._symlink('secret.yml', 'link')
-        x = DecryptTester(self.loader)
-        with patch.object(os, 'lchown', side_effect=OSError(1, 'Operation not permitted')) as lchown:
-            result = x.run(self._args(decrypt=True))
+        with patch.object(os, 'lchown', side_effect=os_error(errno.EPERM)) as lchown:
+            x, result = self._run()
         self.assertTrue(lchown.called)
-        self.assertFalse(result.get('failed'))
-        self._assert_staged_tree(x.staged)
-        self._assert_clean()
+        self._assert_staged(x, result)
+
+    def test_decrypt_staging_modes(self):
+        self._encrypt()
+        self.addCleanup(os.umask, os.umask(0))
+        with patch.object(os, 'mkdir', wraps=os.mkdir) as mkdir, patch.object(os, 'open', wraps=os.open) as os_open:
+            x, result = self._run()
+        self._assert_staged(x, result)
+        self.assertEqual(set(call[0][1] for call in mkdir.call_args_list), set([0o700]))
+        created = [call[0] for call in os_open.call_args_list if call[0][1] & os.O_CREAT]
+        self.assertTrue(created)
+        for path, flags, mode in created:
+            self.assertTrue(flags & os.O_EXCL, path)
+            self.assertEqual(mode, 0o600, path)
 
     def test_decrypt_only_changes_attributes_of_what_it_created(self):
         self._encrypt()
@@ -1153,50 +1125,42 @@ class TestSynchronizeDecrypt(unittest.TestCase):
                     changed.append((path, os.lstat(path).st_ino))
             return change
 
-        x = DecryptTester(self.loader)
         with patch.object(os, 'mkdir', side_effect=mkdir), patch.object(os, 'open', side_effect=os_open), \
                 patch.object(os, 'symlink', side_effect=symlink), \
                 patch.object(os, 'chown', side_effect=record(True)), patch.object(os, 'lchown', side_effect=record(False)) as lchown, \
                 patch.object(os, 'chmod', side_effect=record(True)) as chmod, patch.object(os, 'utime', side_effect=record(True)) as utime:
-            result = x.run(self._args(decrypt=True))
-        self.assertFalse(result.get('failed'), result.get('msg'))
+            x, result = self._run()
+        self._assert_succeeded(x, result)
         for mock in (lchown, chmod, utime):
             self.assertTrue(mock.called)
         for path, ino in changed:
             self.assertIn(ino, created, path)
-        self._assert_clean()
 
     def test_decrypt_removes_staging_dir_when_module_raises(self):
         self._encrypt()
         for side_effect in (BreakPoint(), KeyboardInterrupt()):
-            x = DecryptTester(self.loader, execute_side_effect=side_effect)
-            self.assertRaises(type(side_effect), x.run, self._args(decrypt=True))
-            self.assertTrue(x.execute_called)
-            self._assert_staged_tree(x.staged)
-            self._assert_clean()
+            with self.subTest(side_effect=side_effect):
+                x = DecryptTester(self.loader, execute_side_effect=side_effect)
+                self.assertRaises(type(side_effect), x.run, self._args(decrypt=True))
+                self.assertTrue(x.execute_called)
+                self._assert_staged_tree(x.staged)
+                self._assert_clean()
 
-    def test_decrypt_removes_staging_dir_when_staging_raises(self):
+    def test_decrypt_staging_errors(self):
         self._encrypt()
         before = self._outside_local_tmp()
         for name in ('copystat', 'copyfileobj'):
-            for side_effect in (BreakPoint(), KeyboardInterrupt()):
-                x = DecryptTester(self.loader)
-                with patch.object(shutil, name, side_effect=side_effect):
-                    self.assertRaises(type(side_effect), x.run, self._args(decrypt=True))
-                self.assertFalse(x.execute_called)
-                self._assert_clean()
+            for side_effect in (BreakPoint(), KeyboardInterrupt(), os_error(errno.EACCES)):
+                with self.subTest(name=name, side_effect=side_effect):
+                    x = DecryptTester(self.loader)
+                    with patch.object(shutil, name, side_effect=side_effect):
+                        if isinstance(side_effect, OSError):
+                            self._assert_failed(x, x.run(self._args(decrypt=True)), 'Failed to decrypt %s: ' % self.src)
+                        else:
+                            self.assertRaises(type(side_effect), x.run, self._args(decrypt=True))
+                    self.assertFalse(x.execute_called)
+                    self._assert_clean()
         self.assertEqual(self._outside_local_tmp(), before)
-
-    def test_decrypt_staging_os_error(self):
-        self._encrypt()
-        for name in ('copystat', 'copyfileobj'):
-            x = DecryptTester(self.loader)
-            with patch.object(shutil, name, side_effect=OSError(13, 'Permission denied')):
-                result = x.run(self._args(decrypt=True))
-            self.assertTrue(result.get('failed'))
-            self.assertIn('Failed to decrypt %s: ' % self.src, result['msg'])
-            self.assertFalse(x.execute_called)
-            self._assert_clean()
 
     def test_decrypt_file_names_with_special_characters(self):
         self._encrypt()
@@ -1204,219 +1168,126 @@ class TestSynchronizeDecrypt(unittest.TestCase):
             self._write(name, b'plain\n', 0o644, 1500000005)
         self._write('$SYNCHRONIZE_UNDEFINED.yml', self.top_secret, 0o600, 1400000002)
 
-        x = DecryptTester(self.loader)
-        result = x.run(self._args(decrypt=True))
-        self.assertFalse(result.get('failed'), result.get('msg'))
-        self._assert_staged_tree(x.staged, decrypted={
+        x, result = self._run()
+        self._assert_staged(x, result, decrypted={
             'secret.yml': b'top secret\n', 'sub/deep/key.pem': b'deep secret\n', '$SYNCHRONIZE_UNDEFINED.yml': b'top secret\n'})
-        self._assert_clean()
 
         src = os.path.join(self.src, '$SYNCHRONIZE_UNDEFINED.yml')
-        x = DecryptTester(self.loader)
-        result = x.run(self._args(src=src, decrypt=True))
-        self.assertFalse(result.get('failed'), result.get('msg'))
+        x, result = self._run(src=src)
+        self._assert_succeeded(x, result)
         self._assert_staged_src(x, src)
         self.assertEqual(x.staged['$SYNCHRONIZE_UNDEFINED.yml'].data, b'top secret\n')
-        self._assert_clean()
 
-    def test_decrypt_encrypted_file_name_with_variable_fails_cleanly(self):
-        self._write('a$HOME.yml', self.top_secret, 0o600, 1400000002)
-        x = DecryptTester(self.loader)
-        result = x.run(self._args(decrypt=True))
-        self.assertTrue(result.get('failed'))
-        self.assertIn('Failed to decrypt %s' % os.path.join(self.src, 'a$HOME.yml'), result['msg'])
-        self.assertFalse(x.execute_called)
-        self.assertEqual(self._decrypted_paths(), [])
-        self._assert_clean()
-
-    def test_decrypt_encrypted_file_name_does_not_substitute_another_file(self):
-        for other in (b'OTHER PLAIN\n', self.deep_secret):
-            self._write('$SYNCHRONIZE_X.yml', self.top_secret, 0o600, 1400000002)
-            self._write('other.yml', other, 0o644, 1400000003)
-            self.loader.get_real_file.reset_mock()
-            x = DecryptTester(self.loader)
-            with patch.dict(os.environ, {'SYNCHRONIZE_X': 'other'}):
-                result = x.run(self._args(decrypt=True))
-            self.assertTrue(result.get('failed'))
-            self.assertIn('Failed to decrypt %s' % os.path.join(self.src, '$SYNCHRONIZE_X.yml'), result['msg'])
-            self.assertFalse(x.execute_called)
-            self.assertNotIn(os.path.join(self.src, '$SYNCHRONIZE_X.yml'), self._decrypted_paths())
-            self._assert_clean()
-
-    def test_decrypt_refuses_src_with_environment_variable(self):
-        self._encrypt()
-        os.mkdir(os.path.join(self.tmpdir, '$SYNCHRONIZE_X'))
-        with patch.dict(os.environ, {'SYNCHRONIZE_X': 'etc'}):
-            for src in (os.path.join(self.tmpdir, '$SYNCHRONIZE_X', 'conf.d'), os.path.join(self.tmpdir, '${SYNCHRONIZE_X}', 'conf.d') + '/'):
-                x = DecryptTester(self.loader)
-                self._assert_refused(x, x.run(self._args(src=src, decrypt=True)), 'environment variable')
-                x = DecryptTester(self.loader)
-                result = x.run(self._args(src=src))
-                self.assertFalse(result.get('failed'))
-                self.assertEqual(x.final_module_args['src'], src)
+    def test_decrypt_encrypted_file_name_with_variable(self):
+        cases = (
+            ('a$HOME.yml', {}, None),
+            ('$SYNCHRONIZE_X.yml', {'SYNCHRONIZE_X': 'other'}, b'OTHER PLAIN\n'),
+            ('$SYNCHRONIZE_X.yml', {'SYNCHRONIZE_X': 'other'}, self.deep_secret),
+        )
+        for name, environ, other in cases:
+            with self.subTest(name=name, other=other):
+                path = self._write(name, self.top_secret, 0o600, 1400000002)
+                if other is not None:
+                    self._write('other.yml', other, 0o644, 1400000003)
+                self.loader.get_real_file.reset_mock()
+                with patch.dict(os.environ, environ):
+                    x, result = self._run()
+                self._assert_failed(x, result, 'Failed to decrypt %s' % path)
+                self.assertNotIn(path, self._decrypted_paths())
+                if other != self.deep_secret:
+                    self.assertEqual(self._decrypted_paths(), [])
+                os.unlink(path)
 
     def test_decrypt_refuses_loader_result_outside_local_tmp(self):
         self._encrypt()
         other = self._write('other.yml', b'OTHER PLAIN\n', 0o644, 1400000003)
-        outside = os.path.join(self.tmpdir, 'outside.yml')
-        with open(outside, 'wb') as f:
-            f.write(b'OUTSIDE\n')
+        outside = os.path.join(self._create_outside('outside.yml', b'OUTSIDE\n'), 'outside.yml')
         secret = os.path.join(self.src, 'secret.yml')
         for returned in (other, outside, secret):
-            loader = MagicMock()
-            loader.path_dwim.side_effect = lambda path: path
-            loader.get_real_file.return_value = returned
-            x = DecryptTester(loader)
-            result = x.run(self._args(src=secret, decrypt=True))
-            self.assertTrue(result.get('failed'))
-            self.assertIn('Failed to decrypt %s' % secret, result['msg'])
-            self.assertFalse(x.execute_called)
-            self.assertFalse(loader.cleanup_tmp_file.called)
-            self.assertTrue(os.path.exists(returned))
-            self._assert_clean()
+            with self.subTest(returned=returned):
+                loader = MagicMock()
+                loader.path_dwim.side_effect = lambda path: path
+                loader.get_real_file.return_value = returned
+                x, result = self._run(loader=loader, src=secret)
+                self._assert_failed(x, result, 'Failed to decrypt %s' % secret)
+                self.assertFalse(loader.cleanup_tmp_file.called)
+                self.assertTrue(os.path.exists(returned))
 
     def test_decrypt_removes_the_decrypted_file_of_the_loader(self):
         self._encrypt()
         self.loader.cleanup_tmp_file = MagicMock(wraps=self.loader.cleanup_tmp_file)
-        x = DecryptTester(self.loader)
-        result = x.run(self._args(decrypt=True))
-        self.assertFalse(result.get('failed'))
+        x, result = self._run()
+        self._assert_succeeded(x, result)
         self.assertEqual(self.loader.cleanup_tmp_file.call_count, 2)
         for call in self.loader.cleanup_tmp_file.call_args_list:
             self.assertEqual(os.path.dirname(call[0][0]), self.local_tmp)
-        self._assert_clean()
+
+    def test_decrypt_loader_error(self):
+        self._encrypt()
+        self._write('sub/broken.yml', self.other_secret, 0o600, 1400000002)
+        x, result = self._run()
+        self._assert_failed(x, result, 'Failed to decrypt %s: ' % os.path.join(self.src, 'sub', 'broken.yml'))
+
+    def test_decrypt_without_vault_secret(self):
+        self._encrypt()
+        x, result = self._run(loader=DataLoader())
+        self._assert_failed(x, result, 'Failed to decrypt')
 
     @unittest.skipIf(os.geteuid() == 0, 'root can read every file')
     def test_decrypt_unreadable_file(self):
         self._encrypt()
         self._write('unreadable.txt', self.top_secret, 0o000, 1500000006)
-        x = DecryptTester(self.loader)
-        result = x.run(self._args(decrypt=True))
-        self.assertFalse(result.get('failed'), result.get('msg'))
-        self.assertTrue(x.execute_called)
-        self._assert_staged_tree(x.staged)
-        self._assert_clean()
+        x, result = self._run()
+        self._assert_staged(x, result)
 
-        x = DecryptTester(self.loader)
-        with patch.object(os, 'link', side_effect=OSError(errno.EXDEV, os.strerror(errno.EXDEV))):
-            result = x.run(self._args(decrypt=True))
-        self.assertTrue(result.get('failed'))
-        self.assertIn('Failed to decrypt', result['msg'])
+        with patch.object(os, 'link', side_effect=os_error(errno.EXDEV)):
+            x, result = self._run()
+        self._assert_failed(x, result, 'Failed to decrypt')
         self.assertIn('unreadable.txt', result['msg'])
-        self.assertFalse(x.execute_called)
-        self._assert_clean()
 
         unreadable = os.path.join(self.src, 'unreadable.txt')
-        x = DecryptTester(self.loader)
-        result = x.run(self._args(src=unreadable, decrypt=True))
-        self.assertFalse(result.get('failed'), result.get('msg'))
+        x, result = self._run(src=unreadable)
+        self._assert_succeeded(x, result)
         self.assertEqual(x.final_module_args['src'], unreadable)
+
+    @unittest.skipIf(os.geteuid() == 0, 'root can read every directory')
+    def test_decrypt_unreadable_directory(self):
+        self._encrypt()
+        unreadable = os.path.join(self.src, 'plain_only')
+        os.chmod(unreadable, 0o000)
+        self.addCleanup(os.chmod, unreadable, 0o700)
+        for src in (self.src, self.src + '/', unreadable + '/'):
+            with self.subTest(src=src):
+                x, result = self._run(src=src)
+                self._assert_failed(x, result, 'Failed to decrypt %s: the directory cannot be read' % unreadable)
+
+        x = DecryptTester(self.loader)
+        SAM = ActionModule(x.task, x.connection, x._play_context, self.loader, x.templar, x.shared_loader_obj)
+        staging_dir = tempfile.mkdtemp(dir=self.local_tmp)
+        encrypted = set([os.path.join(self.src, 'secret.yml')])
+        try:
+            self.assertRaises(AnsibleError, SAM._stage_src, self.src, staging_dir, encrypted)
+        finally:
+            SAM._remove_staging_dir(staging_dir)
         self._assert_clean()
 
     def test_decrypt_passes_rsync_options_through(self):
         self._encrypt()
-        cases = [dict(rsync_opts=rsync_opts) for rsync_opts in (
-            None, [], 42, '--no-motd', '--no-motd,--relative', '-R', ['--relative'], ['-avR'], ['--no-implied-dirs', '-R'],
-            ['--files-from=x'], ['--files-from', '/tmp/list'], ['-L'], ['--copy-links'], ['--copy-unsafe-links'], ['-k'], ['--safe-links'],
-            ['--compress --relative'], ["--exclude='unbalanced -R"], ['-e', 'ssh -R 8080:localhost:80'], ['--', '-R'], ['-H', '--anything'],
-        )]
-        cases += [dict(copy_links=True), dict(copy_links='yes', links=False), dict(link_dest=['/tmp/a --relative', '/tmp/b -L']),
-                  dict(delete=True, recursive=True, checksum=True, archive=False)]
-        for case in cases:
-            expected = DecryptTester(None)
-            expected.run(self._args(**case))
-            x = DecryptTester(self.loader)
-            result = x.run(self._args(decrypt=True, **case))
-            self.assertFalse(result.get('failed'), case)
-            self._assert_staged_src(x, self.src)
-            self._assert_staged_tree(x.staged)
-            self.assertIs(x.final_module_args.pop('decrypt'), True)
-            x.final_module_args['src'] = self.src
-            self.assertEqual(x.final_module_args, expected.final_module_args, case)
-            self._assert_clean()
-
-        for rsync_path in ('/usr/bin/rsync --relative', 'rsync -zL', "'/opt/my rsync/rsync' --files-from=/tmp/list"):
-            x = DecryptTester(self.loader)
-            result = x.run(self._args(decrypt=True), task_vars={'ansible_rsync_path': rsync_path})
-            self.assertFalse(result.get('failed'), rsync_path)
-            self.assertEqual(x.final_module_args['_local_rsync_path'], rsync_path)
-            self._assert_staged_src(x, self.src)
-            self._assert_clean()
-
-    def test_decrypt_refuses_parent_directory_as_last_component(self):
-        self._encrypt()
-        for src in (self.src + '/..', self.src + '/../', self.src + '/sub/../.', self.src + '/sub/..//./'):
-            x = DecryptTester(self.loader)
-            self._assert_refused(x, x.run(self._args(src=src, decrypt=True)), "'..'")
-
-    def test_decrypt_refuses_root_directory(self):
-        for src in ('/', '//', '/.', '/./'):
-            x = DecryptTester(self.loader)
-            self._assert_refused(x, x.run(self._args(src=src, decrypt=True)), 'root directory')
-
-    def test_decrypt_parent_directory_reference_behind_symlink(self):
-        self._encrypt()
-        real_parent = os.path.join(self.tmpdir, 'far', 'b')
-        os.makedirs(os.path.join(self.tmpdir, 'far', 'deep'))
-        os.mkdir(real_parent)
-        shutil.move(self.src, os.path.join(real_parent, 'conf.d'))
-        os.symlink(os.path.join(self.tmpdir, 'far', 'deep'), os.path.join(self.tmpdir, 'a'))
-        os.makedirs(os.path.join(self.tmpdir, 'b', 'conf.d'))
-        with open(os.path.join(self.tmpdir, 'b', 'conf.d', 'secret.yml'), 'wb') as f:
-            f.write(self.other_secret)
-        self.src = os.path.join(real_parent, 'conf.d')
-
-        for suffix in ('', '/'):
-            src = os.path.join(self.tmpdir, 'a', '..', 'b', 'conf.d') + suffix
-            x = DecryptTester(self.loader)
-            result = x.run(self._args(src=src, decrypt=True))
-            self.assertFalse(result.get('failed'), result.get('msg'))
-            self._assert_staged_src(x, src)
-            self._assert_staged_tree(x.staged)
-            self._assert_clean()
-
-    def test_decrypt_refuses_mode_pull(self):
-        x = DecryptTester(self.loader)
-        self._assert_refused(x, x.run(self._args(decrypt=True, mode='pull')))
-
-    def test_decrypt_refuses_remote_delegate(self):
-        x = DecryptTester(self.loader)
-        self._assert_refused(x, x.run(self._args(decrypt=True), delegate_to='u1404'))
-
-    def test_decrypt_refuses_delegate_to_target(self):
-        x = DecryptTester(self.loader)
-        self._assert_refused(x, x.run(self._args(decrypt=True), delegate_to='el6host'))
-
-    def test_decrypt_refuses_remote_src(self):
-        for src in ('otherhost:/etc/conf.d', 'user@otherhost:/etc/conf.d', 'rsync://otherhost/module/conf.d'):
-            x = DecryptTester(self.loader)
-            self._assert_refused(x, x.run(self._args(src=src, decrypt=True)))
-
-    def test_decrypt_local_connection(self):
-        self._encrypt()
-        for delegate_to in (None, 'localhost'):
-            x = DecryptTester(self.loader)
-            result = x.run(self._args(decrypt=True), transport='local', delegate_to=delegate_to)
-            self.assertFalse(result.get('failed'))
-            self._assert_staged_src(x, self.src)
-            self._assert_staged_tree(x.staged)
-            self._assert_clean()
-
-    def test_decrypt_loader_error(self):
-        self._encrypt()
-        self._write('sub/broken.yml', self.other_secret, 0o600, 1400000002)
-        x = DecryptTester(self.loader)
-        result = x.run(self._args(decrypt=True))
-        self.assertTrue(result.get('failed'))
-        self.assertIn('Failed to decrypt %s: ' % os.path.join(self.src, 'sub', 'broken.yml'), result['msg'])
-        self.assertFalse(x.execute_called)
-        self._assert_clean()
-
-    def test_decrypt_without_vault_secret(self):
-        self._encrypt()
-        x = DecryptTester(DataLoader())
-        result = x.run(self._args(decrypt=True))
-        self.assertTrue(result.get('failed'))
-        self.assertIn('Failed to decrypt', result['msg'])
-        self.assertFalse(x.execute_called)
-        self._assert_clean()
+        cases = (
+            ({'rsync_opts': ['-R']}, None),
+            ({'rsync_opts': ['--files-from=x']}, None),
+            ({'rsync_opts': ['-L']}, None),
+            ({'copy_links': True}, None),
+            ({}, {'ansible_rsync_path': '/usr/bin/rsync --relative'}),
+        )
+        for args, task_vars in cases:
+            with self.subTest(args=args, task_vars=task_vars):
+                expected = DecryptTester(None)
+                expected.run(self._args(**args), task_vars=task_vars)
+                x, result = self._run(task_vars=task_vars, **args)
+                self._assert_staged(x, result)
+                self.assertIs(x.final_module_args.pop('decrypt'), True)
+                x.final_module_args['src'] = self.src
+                self.assertEqual(x.final_module_args, expected.final_module_args)
+                if task_vars:
+                    self.assertEqual(x.final_module_args['_local_rsync_path'], task_vars['ansible_rsync_path'])

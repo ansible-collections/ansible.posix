@@ -28,6 +28,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.parsing.vault import b_HEADER, is_encrypted_file
 from ansible.plugins.action import ActionBase
 from ansible.plugins.loader import connection_loader
 
@@ -35,8 +36,6 @@ from ansible.plugins.loader import connection_loader
 DOCKER = ['docker', 'community.general.docker', 'community.docker.docker']
 PODMAN = ['podman', 'ansible.builtin.podman', 'containers.podman.podman']
 BUILDAH = ['buildah', 'containers.podman.buildah']
-
-VAULT_HEADER = b'$ANSIBLE_VAULT'
 
 
 class ActionModule(ActionBase):
@@ -131,9 +130,33 @@ class ActionModule(ActionBase):
     def _get_src_path(self, src):
         ''' returns src without the trailing slash or dot that makes rsync transfer the content of a directory '''
         path = src
-        while path.endswith('/') or path.endswith('/.'):
+        while path.endswith(('/', '/.')):
             path = path[:-1]
         return path or '/'
+
+    def _is_below(self, path, directory):
+        return os.path.realpath(path).startswith(os.path.join(os.path.realpath(directory), ''))
+
+    def _check_decrypt_src(self, src, src_path, mode, use_delegate, remote_transport):
+        ''' raises an error if src cannot be used with decrypt '''
+        if mode == 'pull' or (use_delegate and remote_transport) or not src.startswith('/'):
+            raise AnsibleError(
+                "decrypt can only be used when the source is on the Ansible controller. "
+                "It does not support mode=pull, delegation to a remote host or a remote src.")
+
+        if os.path.basename(src_path) in ('', '..'):
+            raise AnsibleError("decrypt cannot be used with a src that is the root directory or ends with '..': %s" % src)
+
+        if src == src_path and os.path.islink(src_path):
+            raise AnsibleError(
+                "decrypt cannot be used with a src that is a symbolic link: %s. "
+                "Add a trailing slash to synchronize the content of the directory it points to or use its target as src." % src)
+
+        if os.path.realpath(C.DEFAULT_LOCAL_TMP) == os.path.realpath(src_path) or self._is_below(C.DEFAULT_LOCAL_TMP, src_path):
+            raise AnsibleError("decrypt cannot be used with a src that contains the local temporary directory %s: %s" % (C.DEFAULT_LOCAL_TMP, src))
+
+        if os.path.expandvars(src) != src:
+            raise AnsibleError("decrypt cannot be used with a src that contains a reference to an environment variable: %s" % src)
 
     def _copy_owner(self, st, staged_path):
         for uid, gid in ((st.st_uid, -1), (-1, st.st_gid)):
@@ -149,7 +172,7 @@ class ActionModule(ActionBase):
     def _is_encrypted_file(self, path):
         try:
             with open(path, 'rb') as f:
-                return f.read(len(VAULT_HEADER)) == VAULT_HEADER
+                return is_encrypted_file(f, count=len(b_HEADER))
         except OSError:
             return False
 
@@ -186,12 +209,17 @@ class ActionModule(ActionBase):
                     path, C.DEFAULT_LOCAL_TMP, to_text(e)))
             self._copy_file(path, staged_path, path)
 
-    def _stage_symlink(self, path, staged_path):
+    def _stage_dir(self, path, staged_path, staged_dirs):
+        if not os.path.isdir(staged_path):
+            os.mkdir(staged_path, 0o700)
+            staged_dirs[staged_path] = path
+
+    def _stage_symlink(self, path, staged_path, real_dir):
         st = os.lstat(path)
         target = os.readlink(path)
         if not target.startswith('/'):
             level = 0
-            for name in os.path.realpath(os.path.dirname(path)).split('/') + target.split('/'):
+            for name in real_dir.split('/') + target.split('/'):
                 if name == '..':
                     level -= 1
                 elif name not in ('', '.'):
@@ -210,20 +238,15 @@ class ActionModule(ActionBase):
             decrypted_path = self._loader.get_real_file(real_path, decrypt=True)
         except AnsibleError as e:
             raise AnsibleError("Failed to decrypt %s: %s" % (path, to_text(e)))
-        local_tmp = os.path.join(os.path.realpath(C.DEFAULT_LOCAL_TMP), '')
-        if not os.path.realpath(decrypted_path).startswith(local_tmp):
+        if not self._is_below(decrypted_path, C.DEFAULT_LOCAL_TMP):
             raise AnsibleError("Failed to decrypt %s: no decrypted copy was created" % path)
         try:
             self._copy_file(decrypted_path, staged_path, path)
         finally:
             self._loader.cleanup_tmp_file(decrypted_path)
 
-    def _stage_src(self, src, staging_dir, encrypted):
-        ''' mirrors src below staging_dir with the encrypted files decrypted, returns the mirror of src to use as the rsync source '''
-        src_path = self._get_src_path(src)
-        staged_dirs = {}
-        staged_links = []
-
+    def _stage_parent_dirs(self, src, src_path, staging_dir, staged_dirs):
+        ''' mirrors the parent directories of src_path below staging_dir, returns the mirror of the directory that contains src_path '''
         real_dir = '/'
         staged_dir = staging_dir if '/./' in src else os.path.join(staging_dir, '.')
         for name in os.path.dirname(src_path).split('/'):
@@ -231,42 +254,43 @@ class ActionModule(ActionBase):
                 continue
             real_dir = os.path.join(real_dir, name)
             staged_dir = os.path.join(staged_dir, name)
-            if name not in ('.', '..') and not os.path.isdir(staged_dir):
-                os.mkdir(staged_dir, 0o700)
-                staged_dirs[staged_dir] = real_dir
+            if name not in ('.', '..'):
+                self._stage_dir(real_dir, staged_dir, staged_dirs)
+        return staged_dir
 
+    def _stage_tree(self, src_path, staged_path, encrypted, staged_dirs, staged_links):
+        self._stage_dir(src_path, staged_path, staged_dirs)
+        for root, dirs, files in os.walk(src_path, onerror=self._fail_walk):
+            real_root = os.path.realpath(root)
+            staged_root = staged_path + root[len(src_path):]
+            for number, name in enumerate(dirs + files):
+                path = os.path.join(root, name)
+                staged = os.path.join(staged_root, name)
+                if os.path.islink(path):
+                    self._stage_symlink(path, staged, real_root)
+                    staged_links.append((path, staged))
+                elif number < len(dirs):
+                    self._stage_dir(path, staged, staged_dirs)
+                elif path in encrypted:
+                    self._stage_decrypted_file(path, staged)
+                else:
+                    self._stage_file(path, staged)
+
+    def _stage_src(self, src, staging_dir, encrypted):
+        ''' mirrors src below staging_dir with the encrypted files decrypted, returns the mirror of src to use as the rsync source '''
+        src_path = self._get_src_path(src)
+        staged_dirs = {}
+        staged_links = []
+
+        staged_dir = self._stage_parent_dirs(src, src_path, staging_dir, staged_dirs)
         staged_path = os.path.join(staged_dir, os.path.basename(src_path))
         if src_path in encrypted:
             self._stage_decrypted_file(src_path, staged_path)
         else:
-            if not os.path.isdir(staged_path):
-                os.mkdir(staged_path, 0o700)
-                staged_dirs[staged_path] = src_path
-            for root, dirs, files in os.walk(src_path, onerror=self._fail_walk):
-                staged_root = staged_path + root[len(src_path):]
-                for name in dirs:
-                    path = os.path.join(root, name)
-                    staged = os.path.join(staged_root, name)
-                    if os.path.islink(path):
-                        self._stage_symlink(path, staged)
-                        staged_links.append((path, staged))
-                    elif not os.path.isdir(staged):
-                        os.mkdir(staged, 0o700)
-                        staged_dirs[staged] = path
-                for name in files:
-                    path = os.path.join(root, name)
-                    staged = os.path.join(staged_root, name)
-                    if os.path.islink(path):
-                        self._stage_symlink(path, staged)
-                        staged_links.append((path, staged))
-                    elif path in encrypted:
-                        self._stage_decrypted_file(path, staged)
-                    else:
-                        self._stage_file(path, staged)
+            self._stage_tree(src_path, staged_path, encrypted, staged_dirs, staged_links)
 
-        real_staging_dir = os.path.join(os.path.realpath(staging_dir), '')
         for path, staged in staged_links:
-            if not os.readlink(staged).startswith('/') and not os.path.realpath(staged).startswith(real_staging_dir):
+            if not os.readlink(staged).startswith('/') and not self._is_below(staged, staging_dir):
                 raise AnsibleError("Failed to decrypt %s: the symbolic link points outside of the mirror of src and cannot be mirrored" % path)
 
         for staged_dir in sorted(staged_dirs, reverse=True):
@@ -606,42 +630,11 @@ class ActionModule(ActionBase):
                 _tmp_args['rsync_opts'].append('--rsh=' + shlex_quote('buildah run --'))
 
         decrypt = boolean(_tmp_args.get('decrypt', False), strict=False)
-        if decrypt:
-            if _tmp_args.get('mode', 'push') == 'pull' or (use_delegate and remote_transport) or not src.startswith('/'):
-                result['failed'] = True
-                result['msg'] = (
-                    "decrypt can only be used when the source is on the Ansible controller. "
-                    "It does not support mode=pull, delegation to a remote host or a remote src.")
-                return result
-
-            src_path = self._get_src_path(src)
-            if os.path.basename(src_path) in ('', '..'):
-                result['failed'] = True
-                result['msg'] = "decrypt cannot be used with a src that is the root directory or ends with '..': %s" % src
-                return result
-
-            if src == src_path and os.path.islink(src_path):
-                result['failed'] = True
-                result['msg'] = (
-                    "decrypt cannot be used with a src that is a symbolic link: %s. "
-                    "Add a trailing slash to synchronize the content of the directory it points to or use its target as src." % src)
-                return result
-
-            local_tmp = os.path.join(os.path.realpath(C.DEFAULT_LOCAL_TMP), '')
-            if local_tmp.startswith(os.path.join(os.path.realpath(src_path), '')):
-                result['failed'] = True
-                result['msg'] = "decrypt cannot be used with a src that contains the local temporary directory %s: %s" % (C.DEFAULT_LOCAL_TMP, src)
-                return result
-
-            if os.path.expandvars(src) != src:
-                result['failed'] = True
-                result['msg'] = "decrypt cannot be used with a src that contains a reference to an environment variable: %s" % src
-                return result
-
         staging_dir = None
         try:
             if decrypt:
                 try:
+                    self._check_decrypt_src(src, self._get_src_path(src), _tmp_args.get('mode', 'push'), use_delegate, remote_transport)
                     encrypted = self._get_encrypted_files(src)
                     if encrypted:
                         staging_dir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)

@@ -1,0 +1,37 @@
+---
+- name: Create the destinations {{ pair.name }} and {{ pair.name }}_plain
+  ansible.builtin.file:
+    path: "{{ output_dir }}/{{ item }}"
+    state: directory
+    mode: "0750"
+  loop:
+    - "{{ pair.name }}"
+    - "{{ pair.name }}_plain"
+
+- name: Synchronize {{ pair.src }} of the test files using decrypt and of the decrypted test files without decrypt
+  ansible.posix.synchronize:
+    src: "{{ output_dir }}/{{ item.root }}{{ pair.src }}"
+    dest: "{{ output_dir }}/{{ item.dest }}/"
+    decrypt: "{{ item.decrypt }}"
+    copy_links: "{{ pair.copy_links | default(false) }}"
+    rsync_opts: "{{ pair.rsync_opts | default(omit) }}"
+  register: sync_result
+  delegate_to: "{{ inventory_hostname }}"
+  loop:
+    - root: vault
+      dest: "{{ pair.name }}"
+      decrypt: true
+    - root: plain
+      dest: "{{ pair.name }}_plain"
+      decrypt: false
+
+- name: Ensure both were synchronized
+  ansible.builtin.assert:
+    that:
+      - sync_result.results | map(attribute='changed') | list == [true, true]
+
+- name: Compare the result of decrypt with the result for the decrypted test files
+  ansible.builtin.include_tasks: compare.yml
+  vars:
+    left: "{{ output_dir }}/{{ pair.name }}{{ (pair.compare ~ '/vault') if pair.compare is defined else '' }}"
+    right: "{{ output_dir }}/{{ pair.name }}_plain{{ (pair.compare ~ '/plain') if pair.compare is defined else '' }}"
