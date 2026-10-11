@@ -404,10 +404,13 @@ def parseoptions(module, options):
         regex = re.compile(r'''((?:[^,"']|"[^"]*"|'[^']*')+)''')
         parts = regex.split(options)[1:-1]
         for part in parts:
+            part = part.strip()
+            if not part or part == ",":
+                continue
             if "=" in part:
                 (key, value) = part.split("=", 1)
-                options_dict[key] = value
-            elif part != ",":
+                options_dict[key.strip()] = value.strip()
+            else:
                 options_dict[part] = None
 
     return options_dict
