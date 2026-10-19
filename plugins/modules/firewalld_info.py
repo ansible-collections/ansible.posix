@@ -224,9 +224,11 @@ except ImportError:
 try:
     import firewall.client as fw_client
     import firewall.config as fw_config
+    import firewall.errors as fw_errors
     HAS_FIREWALLD = True
 except ImportError:
     HAS_FIREWALLD = False
+    fw_errors = None
 
 
 def get_version():
@@ -387,6 +389,8 @@ def main():
         module.fail_json(msg=('Unable to gather firewalld settings.'
                               ' You may need to run as the root user or'
                               ' use become. (Error: %s)' % to_native(e)))
+    except fw_errors.FirewallError as e:
+        module.fail_json(msg='Unable to gather firewalld settings. (Error: %s)' % to_native(e))
 
     result['collected_zones'] = collect_zones
     result['undefined_zones'] = ignore_zones

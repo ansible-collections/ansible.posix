@@ -1,0 +1,4 @@
+bugfixes:
+  - firewalld_info - return a module failure instead of a traceback when python-firewall raises
+    ``FirewallError``, for example when D-Bus is unavailable
+    (https://github.com/ansible-collections/ansible.posix/issues/678).
