@@ -1,0 +1,5 @@
+---
+trivial:
+  - CI - remove FreeBSD version 13.5 from AZP remote tests.
+  - CI - use Python 3.9 on RHEL 9.8 in AZP remote devel to keep compatibility with Python firewall library.
+...
