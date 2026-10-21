@@ -83,6 +83,27 @@ options:
       - Available choices can be extended based on per-system configs, listed here are "out of the box" defaults.
       - Possible values include V(block), V(dmz), V(drop), V(external), V(home), V(internal), V(public), V(trusted), V(work).
     type: str
+  policy:
+    description:
+      - Name of a firewalld policy to create, delete, or modify.
+      - Policies require firewalld >= 0.9.0.
+      - Policy create/delete operations (O(state=present)/O(state=absent) with only O(policy) set) must be permanent.
+    type: str
+    version_added: 3.1.0
+  ingress_zone:
+    description:
+      - The ingress zone to add/remove to/from a policy.
+      - Requires O(policy).
+      - Symbolic zones V(HOST) and V(ANY) may be used where supported by firewalld.
+    type: str
+    version_added: 3.1.0
+  egress_zone:
+    description:
+      - The egress zone to add/remove to/from a policy.
+      - Requires O(policy).
+      - Symbolic zones V(HOST) and V(ANY) may be used where supported by firewalld.
+    type: str
+    version_added: 3.1.0
   permanent:
     description:
       - Whether to apply this change to the permanent firewalld configuration.
@@ -100,7 +121,8 @@ options:
     description:
       - Enable or disable a setting.
       - 'For ports: Should this port accept (V(enabled)) or reject (V(disabled)) connections.'
-      - The states V(present) and V(absent) can only be used in zone level operations (i.e. when no other parameters but zone and state are set).
+      - The states V(present) and V(absent) can only be used in zone or policy level operations
+        (i.e. when no other parameters but zone/policy and state are set).
     type: str
     required: true
     choices: [ absent, disabled, enabled, present ]
@@ -143,6 +165,10 @@ notes:
     The module will not take care of this for you implicitly because that would undo any previously performed immediate actions which were not
     permanent. Therefore, if you require immediate access to a newly created zone it is recommended you reload firewalld immediately after the zone
     creation returns with a changed state and before you perform any other immediate, non-permanent actions on that zone.
+  - Policy transactions (creating, deleting) can be performed by using only the policy and state parameters V(present) or V(absent).
+    Like zones, policy create/delete must be permanent. Reload firewalld (or use O(immediate) on subsequent tasks) before runtime use of a new policy.
+  - Currently only O(ingress_zone) and O(egress_zone) can be managed on policies; attaching services, ports, rich rules, and other elements to
+    policies is not yet supported by this module.
   - This module needs C(python-firewall) or C(python3-firewall) on managed nodes.
     It is usually provided as a subset with C(firewalld) from the OS distributor for the OS default Python interpreter.
 requirements:
@@ -259,10 +285,44 @@ EXAMPLES = r'''
     permanent: true
     immediate: true
     state: enabled
+
+- name: Create a firewalld policy
+  ansible.posix.firewalld:
+    policy: mypolicy
+    permanent: true
+    state: present
+
+- name: Set ingress zone for a policy
+  ansible.posix.firewalld:
+    policy: mypolicy
+    ingress_zone: public
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: Set egress zone for a policy
+  ansible.posix.firewalld:
+    policy: mypolicy
+    egress_zone: internal
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: Remove a firewalld policy
+  ansible.posix.firewalld:
+    policy: mypolicy
+    permanent: true
+    state: absent
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.ansible.posix.plugins.module_utils.firewalld import FirewallTransaction, fw_offline
+from ansible_collections.ansible.posix.plugins.module_utils.firewalld import (
+    FirewallTransaction,
+    FirewallClientPolicySettings as UtilsFirewallClientPolicySettings,
+    FW_VERSION,
+    fw_offline,
+)
+from ansible_collections.ansible.posix.plugins.module_utils.version import LooseVersion
 
 try:
     from firewall.client import Rich_Rule
@@ -271,6 +331,12 @@ except ImportError:
     # The import errors are handled via FirewallTransaction, don't need to
     # duplicate that here
     pass
+
+try:
+    from firewall.client import FirewallClientPolicySettings
+except ImportError:
+    # Policies require firewalld >= 0.9.0
+    FirewallClientPolicySettings = None
 
 
 class IcmpBlockTransaction(FirewallTransaction):
@@ -833,6 +899,159 @@ class ZoneTransaction(FirewallTransaction):
             zone_obj.remove()
 
 
+class PolicyTransaction(FirewallTransaction):
+    """
+    PolicyTransaction - create/remove firewalld policy objects
+    """
+
+    def __init__(self, module, action_args=None, policy=None, desired_state=None,
+                 permanent=True, immediate=False, enabled_values=None, disabled_values=None):
+        super(PolicyTransaction, self).__init__(
+            module, action_args=action_args, desired_state=desired_state, policy=policy,
+            permanent=permanent, immediate=immediate,
+            enabled_values=enabled_values or ["present"],
+            disabled_values=disabled_values or ["absent"])
+
+        self.enabled_msg = "Added policy %s" % (self.policy)
+
+        self.disabled_msg = "Removed policy %s" % (self.policy)
+
+        self.tx_not_permanent_error_msg = "Policy operations must be permanent. " \
+            "Make sure you didn't set the 'permanent' flag to 'false' or the 'immediate' flag to 'true'."
+
+    def get_enabled_immediate(self):
+        self.module.fail_json(msg=self.tx_not_permanent_error_msg)
+
+    def get_enabled_permanent(self):
+        if self.fw_offline:
+            policy_names = self.fw.config.get_policy_objects()
+        else:
+            policy_names = self.fw.config().getPolicyNames()
+        return self.policy in policy_names
+
+    def set_enabled_immediate(self):
+        self.module.fail_json(msg=self.tx_not_permanent_error_msg)
+
+    def set_enabled_permanent(self):
+        if self.fw_offline:
+            self.fw.config.new_policy_object_dict(
+                self.policy, FirewallClientPolicySettings().getSettingsDict()
+            )
+        else:
+            self.fw.config().addPolicy(self.policy, FirewallClientPolicySettings())
+
+    def set_disabled_immediate(self):
+        self.module.fail_json(msg=self.tx_not_permanent_error_msg)
+
+    def set_disabled_permanent(self):
+        if self.fw_offline:
+            policy_obj = self.fw.config.get_policy_object(self.policy)
+            self.fw.config.remove_policy_object(policy_obj)
+        else:
+            policy_obj = self.fw.config().getPolicyByName(self.policy)
+            policy_obj.remove()
+
+
+class PolicyIngressZoneTransaction(FirewallTransaction):
+    """
+    PolicyIngressZoneTransaction - add/remove ingress zones on a policy
+    """
+
+    def __init__(self, module, action_args=None, policy=None, desired_state=None,
+                 permanent=False, immediate=False):
+        super(PolicyIngressZoneTransaction, self).__init__(
+            module, action_args=action_args, desired_state=desired_state, policy=policy,
+            permanent=permanent, immediate=immediate
+        )
+
+        self.enabled_msg = "Added ingress zone %s to policy %s" % \
+            (self.action_args[0], self.policy)
+
+        self.disabled_msg = "Removed ingress zone %s from policy %s" % \
+            (self.action_args[0], self.policy)
+
+    def get_enabled_immediate(self, ingress_zone):
+        if self.fw_offline:
+            dummy, fw_settings = self.get_fw_policy_settings()
+            return fw_settings.queryIngressZone(ingress_zone)
+        fw_settings = self.fw.getPolicySettings(self.policy)
+        return fw_settings.queryIngressZone(ingress_zone)
+
+    def get_enabled_permanent(self, ingress_zone):
+        dummy, fw_settings = self.get_fw_policy_settings()
+        return fw_settings.queryIngressZone(ingress_zone)
+
+    def set_enabled_immediate(self, ingress_zone):
+        fw_settings = self.fw.getPolicySettings(self.policy)
+        fw_settings.addIngressZone(ingress_zone)
+        self.fw.setPolicySettings(self.policy, fw_settings)
+
+    def set_enabled_permanent(self, ingress_zone):
+        fw_policy, fw_settings = self.get_fw_policy_settings()
+        fw_settings.addIngressZone(ingress_zone)
+        self.update_fw_policy_settings(fw_policy, fw_settings)
+
+    def set_disabled_immediate(self, ingress_zone):
+        fw_settings = self.fw.getPolicySettings(self.policy)
+        fw_settings.removeIngressZone(ingress_zone)
+        self.fw.setPolicySettings(self.policy, fw_settings)
+
+    def set_disabled_permanent(self, ingress_zone):
+        fw_policy, fw_settings = self.get_fw_policy_settings()
+        fw_settings.removeIngressZone(ingress_zone)
+        self.update_fw_policy_settings(fw_policy, fw_settings)
+
+
+class PolicyEgressZoneTransaction(FirewallTransaction):
+    """
+    PolicyEgressZoneTransaction - add/remove egress zones on a policy
+    """
+
+    def __init__(self, module, action_args=None, policy=None, desired_state=None,
+                 permanent=False, immediate=False):
+        super(PolicyEgressZoneTransaction, self).__init__(
+            module, action_args=action_args, desired_state=desired_state, policy=policy,
+            permanent=permanent, immediate=immediate
+        )
+
+        self.enabled_msg = "Added egress zone %s to policy %s" % \
+            (self.action_args[0], self.policy)
+
+        self.disabled_msg = "Removed egress zone %s from policy %s" % \
+            (self.action_args[0], self.policy)
+
+    def get_enabled_immediate(self, egress_zone):
+        if self.fw_offline:
+            dummy, fw_settings = self.get_fw_policy_settings()
+            return fw_settings.queryEgressZone(egress_zone)
+        fw_settings = self.fw.getPolicySettings(self.policy)
+        return fw_settings.queryEgressZone(egress_zone)
+
+    def get_enabled_permanent(self, egress_zone):
+        dummy, fw_settings = self.get_fw_policy_settings()
+        return fw_settings.queryEgressZone(egress_zone)
+
+    def set_enabled_immediate(self, egress_zone):
+        fw_settings = self.fw.getPolicySettings(self.policy)
+        fw_settings.addEgressZone(egress_zone)
+        self.fw.setPolicySettings(self.policy, fw_settings)
+
+    def set_enabled_permanent(self, egress_zone):
+        fw_policy, fw_settings = self.get_fw_policy_settings()
+        fw_settings.addEgressZone(egress_zone)
+        self.update_fw_policy_settings(fw_policy, fw_settings)
+
+    def set_disabled_immediate(self, egress_zone):
+        fw_settings = self.fw.getPolicySettings(self.policy)
+        fw_settings.removeEgressZone(egress_zone)
+        self.fw.setPolicySettings(self.policy, fw_settings)
+
+    def set_disabled_permanent(self, egress_zone):
+        fw_policy, fw_settings = self.get_fw_policy_settings()
+        fw_settings.removeEgressZone(egress_zone)
+        self.update_fw_policy_settings(fw_policy, fw_settings)
+
+
 class ForwardPortTransaction(FirewallTransaction):
     """
     ForwardPortTransaction
@@ -882,6 +1101,9 @@ def main():
             port_forward=dict(type='list', elements='dict'),
             rich_rule=dict(type='str'),
             zone=dict(type='str'),
+            policy=dict(type='str'),
+            ingress_zone=dict(type='str'),
+            egress_zone=dict(type='str'),
             immediate=dict(type='bool', default=False),
             source=dict(type='str'),
             permanent=dict(type='bool', default=False),
@@ -898,10 +1120,13 @@ def main():
             interface=('zone',),
             target=('zone',),
             source=('permanent',),
+            ingress_zone=('policy',),
+            egress_zone=('policy',),
         ),
         mutually_exclusive=[
             ['icmp_block', 'icmp_block_inversion', 'service', 'protocol', 'port', 'port_forward', 'rich_rule',
-             'interface', 'forward', 'masquerade', 'source', 'target']
+             'interface', 'forward', 'masquerade', 'source', 'target', 'ingress_zone', 'egress_zone'],
+            ['zone', 'policy'],
         ],
     )
 
@@ -944,6 +1169,9 @@ def main():
     rich_rule = module.params['rich_rule']
     source = module.params['source']
     zone = module.params['zone']
+    policy = module.params['policy']
+    ingress_zone = module.params['ingress_zone']
+    egress_zone = module.params['egress_zone']
     target = module.params['target']
 
     port = None
@@ -974,12 +1202,25 @@ def main():
 
     modification = False
     if any([icmp_block, icmp_block_inversion, service, protocol, port, port_forward, rich_rule,
-            interface, forward, masquerade, source, target]):
+            interface, forward, masquerade, source, target, ingress_zone, egress_zone]):
         modification = True
     if modification and desired_state in ['absent', 'present'] and target is None:
         module.fail_json(
-            msg='absent and present state can only be used in zone level operations'
+            msg='absent and present state can only be used in zone or policy level operations'
         )
+
+    if policy is not None:
+        if (UtilsFirewallClientPolicySettings is None or
+                (FW_VERSION and LooseVersion(FW_VERSION) < LooseVersion("0.9.0"))):
+            module.fail_json(msg='Policy objects require firewalld >= 0.9.0')
+        unsupported_with_policy = any([
+            icmp_block, icmp_block_inversion, service, protocol, port, port_forward,
+            rich_rule, interface, forward, masquerade, source, target,
+        ])
+        if unsupported_with_policy:
+            module.fail_json(
+                msg='Only ingress_zone and egress_zone are currently supported with policy'
+            )
 
     if icmp_block is not None:
 
@@ -1174,13 +1415,12 @@ def main():
         changed, transaction_msgs = transaction.run()
         msgs = msgs + transaction_msgs
 
-    ''' If there are no changes within the zone we are operating on the zone itself '''
-    if not modification and desired_state in ['absent', 'present']:
+    if ingress_zone is not None:
 
-        transaction = ZoneTransaction(
+        transaction = PolicyIngressZoneTransaction(
             module,
-            action_args=(),
-            zone=zone,
+            action_args=(ingress_zone,),
+            policy=policy,
             desired_state=desired_state,
             permanent=permanent,
             immediate=immediate,
@@ -1189,7 +1429,54 @@ def main():
         changed, transaction_msgs = transaction.run()
         msgs = msgs + transaction_msgs
         if changed is True:
-            msgs.append("Changed zone %s to %s" % (zone, desired_state))
+            msgs.append("Changed ingress zone %s on policy %s to %s" % (ingress_zone, policy, desired_state))
+
+    if egress_zone is not None:
+
+        transaction = PolicyEgressZoneTransaction(
+            module,
+            action_args=(egress_zone,),
+            policy=policy,
+            desired_state=desired_state,
+            permanent=permanent,
+            immediate=immediate,
+        )
+
+        changed, transaction_msgs = transaction.run()
+        msgs = msgs + transaction_msgs
+        if changed is True:
+            msgs.append("Changed egress zone %s on policy %s to %s" % (egress_zone, policy, desired_state))
+
+    ''' If there are no changes within the zone/policy we are operating on the zone/policy itself '''
+    if not modification and desired_state in ['absent', 'present']:
+        if policy is not None:
+            transaction = PolicyTransaction(
+                module,
+                action_args=(),
+                policy=policy,
+                desired_state=desired_state,
+                permanent=permanent,
+                immediate=immediate,
+            )
+
+            changed, transaction_msgs = transaction.run()
+            msgs = msgs + transaction_msgs
+            if changed is True:
+                msgs.append("Changed policy %s to %s" % (policy, desired_state))
+        else:
+            transaction = ZoneTransaction(
+                module,
+                action_args=(),
+                zone=zone,
+                desired_state=desired_state,
+                permanent=permanent,
+                immediate=immediate,
+            )
+
+            changed, transaction_msgs = transaction.run()
+            msgs = msgs + transaction_msgs
+            if changed is True:
+                msgs.append("Changed zone %s to %s" % (zone, desired_state))
 
     if fw_offline:
         msgs.append("(offline operation: only on-disk configs were altered)")

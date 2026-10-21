@@ -15,12 +15,18 @@ FW_VERSION = None
 fw = None
 fw_offline = False
 import_failure = True
+FirewallClientPolicySettings = None
 try:
     import firewall.config
     FW_VERSION = firewall.config.VERSION
 
     from firewall.client import FirewallClient
     from firewall.client import FirewallClientZoneSettings
+    try:
+        from firewall.client import FirewallClientPolicySettings
+    except ImportError:
+        # Policies require firewalld >= 0.9.0
+        FirewallClientPolicySettings = None
     from firewall.errors import FirewallError
     import_failure = False
 
@@ -57,7 +63,8 @@ class FirewallTransaction(object):
     """
 
     def __init__(self, module, action_args=(), zone=None, desired_state=None,
-                 permanent=False, immediate=False, enabled_values=None, disabled_values=None):
+                 permanent=False, immediate=False, enabled_values=None, disabled_values=None,
+                 policy=None):
         # type: (firewall.client, tuple, str, bool, bool, bool)
         """
         initializer the transaction
@@ -70,6 +77,7 @@ class FirewallTransaction(object):
         :immediate:       bool, action should take place immediately
         :enabled_values:  str[], acceptable values for enabling something (default: enabled)
         :disabled_values: str[], acceptable values for disabling something (default: disabled)
+        :policy:          str,  firewall policy
         """
 
         self.module = module
@@ -83,6 +91,8 @@ class FirewallTransaction(object):
                 self.zone = fw.get_default_zone()
             else:
                 self.zone = fw.getDefaultZone()
+
+        self.policy = policy
 
         self.desired_state = desired_state
         self.permanent = permanent
@@ -142,6 +152,28 @@ class FirewallTransaction(object):
             self.fw.config.set_zone_config(fw_zone, fw_settings.settings)
         else:
             fw_zone.update(fw_settings)
+
+    def get_fw_policy_settings(self):
+        if FirewallClientPolicySettings is None:
+            self.module.fail_json(msg='Policy objects require firewalld >= 0.9.0')
+        if self.fw_offline:
+            fw_policy = self.fw.config.get_policy_object(self.policy)
+            fw_settings = FirewallClientPolicySettings(
+                self.fw.config.get_policy_object_config_dict(fw_policy)
+            )
+        else:
+            fw_policy = self.fw.config().getPolicyByName(self.policy)
+            fw_settings = fw_policy.getSettings()
+
+        return (fw_policy, fw_settings)
+
+    def update_fw_policy_settings(self, fw_policy, fw_settings):
+        if self.fw_offline:
+            self.fw.config.set_policy_object_config_dict(
+                fw_policy, fw_settings.getSettingsDict()
+            )
+        else:
+            fw_policy.update(fw_settings)
 
     def get_enabled_immediate(self):
         raise NotImplementedError
