@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - mount - fixed incorrect comment handling introduced in commit 8e34860 that broke device specifications containing ``#`` characters (e.g., SSHFS ``sshfs#user@host:path``) by incorrectly stripping everything after the first ``#``. The module now matches libmount behavior by only treating ``#`` at the start of a line as a comment (https://github.com/ansible-collections/ansible.posix/issues/743).
