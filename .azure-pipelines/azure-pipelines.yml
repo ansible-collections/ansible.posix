@@ -273,8 +273,8 @@ stages:
           targets:
             - name: RHEL 10.2
               test: rhel/10.2
-            - name: RHEL 9.8
-              test: rhel/9.8
+            - name: RHEL 9.8 py39
+              test: rhel/9.8@3.9
             - name: FreeBSD 14.5
               test: freebsd/14.5
             - name: FreeBSD 15.1
@@ -311,8 +311,6 @@ stages:
               test: rhel/9.7
             - name: FreeBSD 14.3
               test: freebsd/14.3
-            - name: FreeBSD 13.5
-              test: freebsd/13.5
 
   - stage: Remote_2_19
     displayName: Remote 2.19
@@ -328,8 +326,6 @@ stages:
               test: rhel/9.7
             - name: FreeBSD 14.3
               test: freebsd/14.3
-            - name: FreeBSD 13.5
-              test: freebsd/13.5
 
   - stage: Remote_2_18
     displayName: Remote 2.18
@@ -343,8 +339,6 @@ stages:
               test: rhel/10.1
             - name: RHEL 9.7
               test: rhel/9.7
-            - name: FreeBSD 13.5
-              test: freebsd/13.5
 
   - stage: Remote_2_17
     displayName: Remote 2.17
@@ -357,9 +351,6 @@ stages:
           targets:
             - name: RHEL 10.0
               test: rhel/10.0
-            - name: FreeBSD 13.5
-              test: freebsd/13.5
-
   - stage: Remote_2_16
     displayName: Remote 2.16
     dependsOn: []
