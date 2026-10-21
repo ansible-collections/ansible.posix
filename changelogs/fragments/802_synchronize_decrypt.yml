@@ -1,0 +1,2 @@
+minor_changes:
+  - synchronize - add ``decrypt`` option to transfer ansible-vault encrypted source files decrypted (https://github.com/ansible-collections/ansible.posix/issues/802).

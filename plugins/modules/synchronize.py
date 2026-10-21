@@ -187,6 +187,23 @@ options:
         C(ansible_ssh_args), C(ansible_ssh_common_args), and C(ansible_ssh_extra_args).
     type: bool
     default: false
+  decrypt:
+    description:
+      - Decrypt source files that are encrypted with Ansible Vault and transfer the decrypted content.
+        A file is treated as encrypted when it starts with the C($ANSIBLE_VAULT) header. The task fails if such a file cannot be decrypted.
+      - This only works when the source is on the Ansible controller, that is with O(mode=push) and without delegation to a remote host.
+        The task fails in every other case.
+      - If O(src) contains encrypted files, a mirror of O(src) is created in the local temporary directory of the Ansible controller and
+        C(rsync) transfers that mirror. It consists of decrypted copies of the encrypted files and of hard links to all other files.
+        Files that cannot be hard linked are copied instead, which takes time and disk space for large directories.
+      - The mirror is removed when the task ends. It can be left behind if Ansible is interrupted or killed while C(rsync) is running
+        and O(src) contains directories that are not writable by their owner.
+      - O(src) cannot be the root directory, a symbolic link without a trailing slash or a directory that contains the local temporary
+        directory. It cannot end with C(..) or contain a reference to an environment variable that is set.
+      - See the notes for the limitations of the mirror.
+    type: bool
+    default: false
+    version_added: '2.3.0'
   _local_rsync_path:
     description: Internal use only.
     type: path
@@ -227,6 +244,14 @@ notes:
    - rsync daemon must be up and running with correct permission when using rsync protocol in source or destination path.
    - The C(synchronize) module enables C(--delay-updates) by default to avoid leaving a destination in a broken in-between state if the underlying rsync process
      encounters an error. Those synchronizing large numbers of files that are willing to trade safety for performance should disable this option.
+   - Source files that are encrypted with Ansible Vault are transferred encrypted unless O(decrypt=true) is set.
+   - "When O(decrypt=true) creates a mirror of O(src): The user running C(rsync) must be able to read the local temporary directory, so C(become)
+     to another unprivileged user is not supported. Symbolic links are recreated as they are. A relative link that leaves O(src) does not point
+     to its target in the mirror, so it cannot be followed, for example with O(copy_links=true), and the task fails if it points above the root
+     directory or outside of the mirror. The target of an absolute link is not decrypted, even if it points into O(src).
+     C(--remove-source-files) does not remove the files in O(src). C(.rsync-filter) files in the parent directories of O(src) are not applied,
+     those in the parent directories of the local temporary directory are. The task fails if a directory below O(src) cannot be read, if a special
+     file like a named pipe cannot be hard linked or if the name of an encrypted file contains a reference to an environment variable that is set."
    - link_destination is subject to the same limitations as the underlying rsync daemon. Hard links are only preserved if the relative subtrees
      of the source and destination are the same. Attempts to hardlink into a directory that is a subdirectory of the source will be prevented.
 seealso:
@@ -343,6 +368,12 @@ EXAMPLES = r'''
       - "--no-motd"
       - "--exclude=.git"
 
+- name: Synchronize a directory and decrypt the files in it that are encrypted with Ansible Vault
+  ansible.posix.synchronize:
+    src: some/relative/path
+    dest: /some/absolute/path
+    decrypt: true
+
 # Hardlink files if they didn't change
 - name: Use hardlinks when synchronizing filesystems
   ansible.posix.synchronize:
@@ -445,6 +476,7 @@ def main():
             delay_updates=dict(type='bool', default=True),
             mode=dict(type='str', default='push', choices=['pull', 'push']),
             link_dest=dict(type='list', elements='path'),
+            decrypt=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
     )
