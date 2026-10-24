@@ -30,5 +30,5 @@ asserts:
   - self._play_context.become_method == 'su'
   - self.execute_called
   - self.final_module_args['_local_rsync_path'] == 'rsync'
-  - self.final_module_args['src'] == '/tmp/deleteme'
+  - self.final_module_args['src'] == ['/tmp/deleteme']
   - self.final_module_args['dest'] == 'root@el6host:/tmp/deleteme'
