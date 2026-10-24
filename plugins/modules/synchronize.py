@@ -119,6 +119,11 @@ options:
       - Preserve group.
       - This parameter defaults to the value of the archive option.
     type: bool
+  relative:
+    description:
+      - Use relative paths
+    type: bool
+    default: false
   rsync_path:
     description:
       - Specify the rsync command to run on the remote host. See C(--rsync-path) on the rsync man page.
@@ -330,6 +335,13 @@ EXAMPLES = r'''
     dest: /some/absolute/path
     rsync_path: su -c rsync
 
+# Sync a file over while preserving parts of the file's path from the source directory
+- name: Synchronize using the relative option from a specifc directory
+  ansible.posix.synchronize:
+    src: relative/path/./nested/path/file.txt
+    dest: /absolute/path
+    relative: true
+
 # Example .rsync-filter file in the source directory
 # - var       # exclude any path whose last part is 'var'
 # - /var      # exclude any path starting with 'var' starting at the source directory
@@ -445,6 +457,7 @@ def main():
             delay_updates=dict(type='bool', default=True),
             mode=dict(type='str', default='push', choices=['pull', 'push']),
             link_dest=dict(type='list', elements='path'),
+            relative=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
     )
@@ -485,6 +498,7 @@ def main():
     verify_host = module.params['verify_host']
     link_dest = module.params['link_dest']
     delay_updates = module.params['delay_updates']
+    relative = module.params['relative']
 
     if '/' not in rsync:
         rsync = module.get_bin_path(rsync, required=True)
@@ -546,6 +560,9 @@ def main():
             cmd.append('--group')
     if dirs:
         cmd.append('--dirs')
+
+    if relative:
+        cmd.append('--relative')
 
     if source.startswith('rsync://') and dest.startswith('rsync://'):
         module.fail_json(msg='either src or dest must be a localhost', rc=1)
