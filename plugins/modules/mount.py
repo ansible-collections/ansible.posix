@@ -449,7 +449,7 @@ def unset_mount(module, args, backup=False):
         changed = True
 
     if changed and not module.check_mode:
-        write_fstab(module, to_write, args['fstab'])
+        args['backup_file'] = write_fstab(module, to_write, args['fstab'])
 
     if backup:
         return (args['name'], changed, lines)
