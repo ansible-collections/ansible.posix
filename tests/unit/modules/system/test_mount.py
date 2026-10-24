@@ -11,6 +11,7 @@ from ansible.module_utils.common.text.converters import to_bytes
 
 from ansible_collections.ansible.posix.plugins.modules.mount import (
     get_linux_mounts,
+    normalize_mount_path,
     _set_mount_save_old,
     set_mount,
 )
@@ -61,3 +62,26 @@ class LinuxMountsTestCase(unittest.TestCase):
         self.assertEqual(backup_lines, fstab_data)
         self.assertEqual(name, '/data')
         self.assertTrue(changed)
+
+
+class NormalizeMountPathTestCase(unittest.TestCase):
+
+    def test_strips_leading_whitespace(self):
+        # " /test" must become absolute /test, not a relative path
+        # whose first directory component is a single space.
+        normalized = normalize_mount_path(' /test')
+        self.assertEqual(normalized, '/test')
+        self.assertTrue(os.path.isabs(normalized))
+
+    def test_strips_trailing_whitespace(self):
+        self.assertEqual(normalize_mount_path('/test '), '/test')
+        self.assertEqual(normalize_mount_path(' /test\t'), '/test')
+
+    def test_preserves_internal_spaces(self):
+        self.assertEqual(normalize_mount_path(' /mnt/my files '), '/mnt/my files')
+
+    def test_whitespace_only_becomes_empty(self):
+        self.assertEqual(normalize_mount_path('   '), '')
+
+    def test_unchanged_absolute_path(self):
+        self.assertEqual(normalize_mount_path('/mnt/data'), '/mnt/data')
