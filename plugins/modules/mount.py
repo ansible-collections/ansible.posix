@@ -234,6 +234,7 @@ EXAMPLES = r'''
 import errno
 import os
 import platform
+import re
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.ansible.posix.plugins.module_utils.mount import ismount
@@ -739,7 +740,8 @@ def _is_same_mount_src(module, src, mountpoint, linux_mounts):
             not ismount(mountpoint) and
             not is_bind_mounted(module, linux_mounts, mountpoint)):
         return False
-
+    # sanitize src
+    src = re.sub(r'(//[^:]+):([^@]+)@', r'\1@', src)
     # Treat Linux bind mounts
     if PLATFORM == 'linux' and linux_mounts is not None:
         # For Linux bind mounts only: the mount command does not return
