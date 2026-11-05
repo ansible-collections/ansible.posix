@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - at - schedule the job from the user's home directory instead of the module temporary directory, which is removed before the job runs when ``become_user`` is used (https://github.com/ansible-collections/ansible.posix/issues/34, https://github.com/ansible-collections/ansible.posix/pull/816).
