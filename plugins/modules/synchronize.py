@@ -634,7 +634,7 @@ def main():
     if link_dest:
         # -vv also itemizes unchanged items: a period, the file type, then
         # spaces (e.g. '.f          foo'). Every other itemized line is a change.
-        items = out.split(changed_marker)[1:]
+        items = [line[len(changed_marker):] for line in out.splitlines() if line.startswith(changed_marker)]
         changed = any(not (item.startswith('.') and item[2:3] == ' ') for item in items)
     else:
         changed = changed_marker in out

@@ -317,6 +317,8 @@
   loop:
     - foo.txt
     - bar.txt
+    # the module's output marker in a file name must not count as a change
+    - "<<CHANGED>>baz.txt"
 
 - name: Synchronize a directory using link_dest
   ansible.posix.synchronize:
