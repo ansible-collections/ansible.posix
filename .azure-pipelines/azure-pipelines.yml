@@ -59,6 +59,22 @@ stages:
             - name: Lint
               test: lint
 
+  - stage: Sanity_2_22
+    displayName: Ansible 2.22 Sanity & Units & Lint
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          nameFormat: "{0}"
+          testFormat: 2.22/{0}
+          targets:
+            - name: Sanity
+              test: sanity
+            - name: Units
+              test: units
+            - name: Lint
+              test: lint
+
   - stage: Sanity_2_21
     displayName: Ansible 2.21 Sanity & Units & Lint
     dependsOn: []
@@ -159,6 +175,8 @@ stages:
               test: lint
 
   ## Docker
+  # Valid docker targets are located at the following path:
+  #   https://github.com/ansible/ansible/blob/<branch>/test/lib/ansible_test/_data/completion/docker.txt
   - stage: Docker_devel
     displayName: Docker devel
     dependsOn: []
@@ -166,6 +184,21 @@ stages:
       - template: templates/matrix.yml
         parameters:
           testFormat: devel/linux/{0}/1
+          targets:
+            - name: Fedora 44
+              test: fedora44
+            - name: Ubuntu 24.04
+              test: ubuntu2404
+            - name: Ubuntu 26.04
+              test: ubuntu2604
+
+  - stage: Docker_2_22
+    displayName: Docker 2.22
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          testFormat: 2.22/linux/{0}/1
           targets:
             - name: Fedora 44
               test: fedora44
@@ -263,6 +296,8 @@ stages:
               test: ubuntu2204
 
   ## Remote
+  # Valid remote targets are located at the following path:
+  #   https://github.com/ansible/ansible/blob/<branch>/test/lib/ansible_test/_data/completion/remote.txt
   - stage: Remote_devel
     displayName: Remote devel
     dependsOn: []
@@ -273,8 +308,23 @@ stages:
           targets:
             - name: RHEL 10.2
               test: rhel/10.2
-            - name: RHEL 9.8 py39
-              test: rhel/9.8@3.9
+            - name: FreeBSD 14.5
+              test: freebsd/14.5
+            - name: FreeBSD 15.1
+              test: freebsd/15.1
+
+  - stage: Remote_2_22
+    displayName: Remote 2.22
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          testFormat: 2.22/{0}/1
+          targets:
+            - name: RHEL 10.2
+              test: rhel/10.2
+            - name: RHEL 9.8
+              test: rhel/9.8
             - name: FreeBSD 14.5
               test: freebsd/14.5
             - name: FreeBSD 15.1
@@ -288,14 +338,14 @@ stages:
         parameters:
           testFormat: 2.21/{0}/1
           targets:
-            - name: RHEL 10.1
-              test: rhel/10.1
-            - name: RHEL 9.7
-              test: rhel/9.7
-            - name: FreeBSD 14.4
-              test: freebsd/14.4
-            - name: FreeBSD 15.0
-              test: freebsd/15.0
+            - name: RHEL 10.2
+              test: rhel/10.2
+            - name: RHEL 9.8
+              test: rhel/9.8
+            - name: FreeBSD 14.5
+              test: freebsd/14.5
+            - name: FreeBSD 15.1
+              test: freebsd/15.1
 
   - stage: Remote_2_20
     displayName: Remote 2.20
@@ -305,12 +355,12 @@ stages:
         parameters:
           testFormat: 2.20/{0}/1
           targets:
-            - name: RHEL 10.1
-              test: rhel/10.1
-            - name: RHEL 9.7
-              test: rhel/9.7
-            - name: FreeBSD 14.3
-              test: freebsd/14.3
+            - name: RHEL 10.2
+              test: rhel/10.2
+            - name: RHEL 9.8
+              test: rhel/9.8
+            - name: FreeBSD 14.5
+              test: freebsd/14.5
 
   - stage: Remote_2_19
     displayName: Remote 2.19
@@ -335,22 +385,11 @@ stages:
         parameters:
           testFormat: 2.18/{0}/1
           targets:
-            - name: RHEL 10.1
-              test: rhel/10.1
-            - name: RHEL 9.7
-              test: rhel/9.7
+            - name: RHEL 10.2
+              test: rhel/10.2
+            - name: RHEL 9.8
+              test: rhel/9.8
 
-  - stage: Remote_2_17
-    displayName: Remote 2.17
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          container: legacy
-          testFormat: 2.17/{0}/1
-          targets:
-            - name: RHEL 10.0
-              test: rhel/10.0
   - stage: Remote_2_16
     displayName: Remote 2.16
     dependsOn: []
@@ -360,8 +399,10 @@ stages:
           container: legacy
           testFormat: 2.16/{0}/1
           targets:
-            - name: RHEL 10.1
-              test: rhel/10.1
+            - name: RHEL 10.2
+              test: rhel/10.2
+            - name: RHEL 9.8
+              test: rhel/9.8
 
   ## Finally
 
@@ -372,7 +413,6 @@ stages:
       - Remote_2_16
       - Docker_2_16
       - Sanity_2_17
-      - Remote_2_17
       - Docker_2_17
       - Sanity_2_18
       - Remote_2_18
@@ -386,6 +426,9 @@ stages:
       - Sanity_2_21
       - Remote_2_21
       - Docker_2_21
+      - Sanity_2_22
+      - Remote_2_22
+      - Docker_2_22
       - Sanity_devel
       - Remote_devel
       - Docker_devel
