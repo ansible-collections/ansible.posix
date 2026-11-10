@@ -632,8 +632,10 @@ def main():
         return module.fail_json(msg=err, rc=rc, cmd=cmdstr)
 
     if link_dest:
-        # a leading period indicates no change
-        changed = (changed_marker + '.') not in out
+        # -vv also itemizes unchanged items: a period, the file type, then
+        # spaces (e.g. '.f          foo'). Every other itemized line is a change.
+        items = [line[len(changed_marker):] for line in out.splitlines() if line.startswith(changed_marker)]
+        changed = any(not (item.startswith('.') and item[2:3] == ' ') for item in items)
     else:
         changed = changed_marker in out
 

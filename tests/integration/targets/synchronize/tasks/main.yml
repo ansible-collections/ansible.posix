@@ -299,6 +299,102 @@
     - directory_a
     - directory_b
 
+- name: Setup - directories for link_dest change detection
+  ansible.builtin.file:
+    state: directory
+    path: "{{ output_dir }}/{{ item }}"
+    mode: "0750"
+  loop:
+    - link_dest_src
+    - link_dest_dst
+    - link_dest_base
+
+- name: Setup - create source files for link_dest change detection
+  ansible.builtin.copy:
+    dest: "{{ output_dir }}/link_dest_src/{{ item }}"
+    mode: "0640"
+    content: hello world
+  loop:
+    - foo.txt
+    - bar.txt
+    # the module's output marker in a file name must not count as a change
+    - "<<CHANGED>>baz.txt"
+
+- name: Synchronize a directory using link_dest
+  ansible.posix.synchronize:
+    src: "{{ output_dir }}/link_dest_src/"
+    dest: "{{ output_dir }}/link_dest_dst/"
+    link_dest:
+      - "{{ output_dir }}/link_dest_base"
+  register: sync_initial
+  delegate_to: "{{ inventory_hostname }}"
+
+- name: Synchronize the same directory again using link_dest
+  ansible.posix.synchronize:
+    src: "{{ output_dir }}/link_dest_src/"
+    dest: "{{ output_dir }}/link_dest_dst/"
+    link_dest:
+      - "{{ output_dir }}/link_dest_base"
+  register: sync_unchanged
+  delegate_to: "{{ inventory_hostname }}"
+
+- name: Change the content of one source file only
+  ansible.builtin.copy:
+    dest: "{{ output_dir }}/link_dest_src/bar.txt"
+    mode: "0640"
+    content: goodbye world
+
+# rsync -vv still lists the unchanged foo.txt, which used to hide the change
+- name: Synchronize using link_dest after a content change
+  ansible.posix.synchronize:
+    src: "{{ output_dir }}/link_dest_src/"
+    dest: "{{ output_dir }}/link_dest_dst/"
+    link_dest:
+      - "{{ output_dir }}/link_dest_base"
+  register: sync_content
+  delegate_to: "{{ inventory_hostname }}"
+
+- name: Change the permissions of one source file only
+  ansible.builtin.file:
+    path: "{{ output_dir }}/link_dest_src/foo.txt"
+    mode: "0600"
+
+- name: Synchronize using link_dest after a permission change
+  ansible.posix.synchronize:
+    src: "{{ output_dir }}/link_dest_src/"
+    dest: "{{ output_dir }}/link_dest_dst/"
+    link_dest:
+      - "{{ output_dir }}/link_dest_base"
+  register: sync_mode
+  delegate_to: "{{ inventory_hostname }}"
+
+- name: Synchronize again using link_dest after the changes
+  ansible.posix.synchronize:
+    src: "{{ output_dir }}/link_dest_src/"
+    dest: "{{ output_dir }}/link_dest_dst/"
+    link_dest:
+      - "{{ output_dir }}/link_dest_base"
+  register: sync_unchanged_again
+  delegate_to: "{{ inventory_hostname }}"
+
+- name: Ensure link_dest reports a change only when something changed
+  ansible.builtin.assert:
+    that:
+      - sync_initial is changed
+      - sync_unchanged is not changed
+      - sync_content is changed
+      - sync_mode is changed
+      - sync_unchanged_again is not changed
+
+- name: Cleanup
+  ansible.builtin.file:
+    state: absent
+    path: "{{ output_dir }}/{{ item }}"
+  loop:
+    - link_dest_src
+    - link_dest_dst
+    - link_dest_base
+
 - name: Setup - test for source with working dir with spaces in path
   ansible.builtin.file:
     state: directory
