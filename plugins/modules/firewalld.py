@@ -31,6 +31,8 @@ options:
   port_forward:
     description:
       - Port and protocol to forward using firewalld.
+      - When O(state=enabled), an existing forward for the same O(port_forward[].port) and O(port_forward[].proto)
+        with a different O(port_forward[].toport) or O(port_forward[].toaddr) is replaced, so the port is not forwarded twice.
     type: list
     elements: dict
     suboptions:
@@ -853,11 +855,28 @@ class ForwardPortTransaction(FirewallTransaction):
         dummy, fw_settings = self.get_fw_zone_settings()
         return fw_settings.queryForwardPort(port=port, protocol=proto, to_port=toport, to_addr=toaddr)
 
+    @staticmethod
+    def _conflicting(forward_ports, port, proto, toport, toaddr):
+        """Return the existing forwards for the same port and protocol that point elsewhere."""
+        conflicts = []
+        for fwd in forward_ports:
+            f_port, f_proto, f_toport, f_toaddr = (str(x or '') for x in fwd)
+            if f_port == str(port) and f_proto == proto and (f_toport != str(toport) or f_toaddr != (toaddr or '')):
+                conflicts.append((f_port, f_proto, f_toport, f_toaddr))
+        return conflicts
+
     def set_enabled_immediate(self, port, proto, toport, toaddr, timeout):
+        if not self.fw_offline:
+            for f_port, f_proto, f_toport, f_toaddr in self._conflicting(
+                    self.fw.getForwardPorts(self.zone), port, proto, toport, toaddr):
+                self.fw.removeForwardPort(self.zone, f_port, f_proto, f_toport, f_toaddr)
         self.fw.addForwardPort(self.zone, port, proto, toport, toaddr, timeout)
 
     def set_enabled_permanent(self, port, proto, toport, toaddr, timeout):
         fw_zone, fw_settings = self.get_fw_zone_settings()
+        for f_port, f_proto, f_toport, f_toaddr in self._conflicting(
+                fw_settings.getForwardPorts(), port, proto, toport, toaddr):
+            fw_settings.removeForwardPort(f_port, f_proto, f_toport, f_toaddr)
         fw_settings.addForwardPort(port, proto, toport, toaddr)
         self.update_fw_settings(fw_zone, fw_settings)
 

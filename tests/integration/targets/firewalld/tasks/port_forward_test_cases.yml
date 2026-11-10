@@ -62,3 +62,90 @@
   ansible.builtin.assert:
     that:
       - result is not changed
+
+- name: Firewalld port forward test to a first address (permanent and immediate)
+  ansible.posix.firewalld:
+    port_forward:
+      - port: 514
+        proto: udp
+        toport: 514
+        toaddr: 192.0.2.10
+    permanent: true
+    immediate: true
+    offline: true
+    state: enabled
+
+- name: Firewalld port forward test with a new address for the same port and protocol
+  ansible.posix.firewalld:
+    port_forward:
+      - port: 514
+        proto: udp
+        toport: 514
+        toaddr: 192.0.2.20
+    permanent: true
+    immediate: true
+    offline: true
+    state: enabled
+  register: result
+
+- name: Assert the forward was changed
+  ansible.builtin.assert:
+    that:
+      - result is changed
+
+- name: Firewalld port forward test with the new address rerun (verify not changed)
+  ansible.posix.firewalld:
+    port_forward:
+      - port: 514
+        proto: udp
+        toport: 514
+        toaddr: 192.0.2.20
+    permanent: true
+    immediate: true
+    offline: true
+    state: enabled
+  register: result
+
+- name: Assert the rerun was not changed
+  ansible.builtin.assert:
+    that:
+      - result is not changed
+
+- name: Check whether firewalld is running
+  ansible.builtin.command: firewall-cmd --state
+  register: firewalld_state
+  changed_when: false
+  failed_when: false
+
+- name: Read the permanent and runtime forwards (firewall-offline-cmd when firewalld is stopped)
+  ansible.builtin.command: "{{ item }}"
+  loop: "{{ online_commands if firewalld_state.rc == 0 else offline_commands }}"
+  vars:
+    online_commands:
+      - firewall-cmd --permanent --list-forward-ports
+      - firewall-cmd --list-forward-ports
+    offline_commands:
+      - firewall-offline-cmd --list-forward-ports
+  register: forwards
+  changed_when: false
+
+- name: Assert only the new forward is left for 514/udp
+  ansible.builtin.assert:
+    that:
+      - item.stdout_lines | select('search', '^port=514:proto=udp:') | list | length == 1
+      - "'port=514:proto=udp:toport=514:toaddr=192.0.2.20' in item.stdout_lines"
+  loop: "{{ forwards.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+
+- name: Firewalld port forward test cleanup
+  ansible.posix.firewalld:
+    port_forward:
+      - port: 514
+        proto: udp
+        toport: 514
+        toaddr: 192.0.2.20
+    permanent: true
+    immediate: true
+    offline: true
+    state: disabled
