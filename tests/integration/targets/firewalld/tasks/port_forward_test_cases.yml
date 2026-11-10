@@ -72,6 +72,7 @@
         toaddr: 192.0.2.10
     permanent: true
     immediate: true
+    offline: true
     state: enabled
 
 - name: Firewalld port forward test with a new address for the same port and protocol
@@ -83,6 +84,7 @@
         toaddr: 192.0.2.20
     permanent: true
     immediate: true
+    offline: true
     state: enabled
   register: result
 
@@ -100,6 +102,7 @@
         toaddr: 192.0.2.20
     permanent: true
     immediate: true
+    offline: true
     state: enabled
   register: result
 
@@ -108,11 +111,21 @@
     that:
       - result is not changed
 
-- name: Read the permanent and runtime forwards
-  ansible.builtin.command: "firewall-cmd {{ item }} --list-forward-ports"
-  loop:
-    - "--permanent"
-    - ""
+- name: Check whether firewalld is running
+  ansible.builtin.command: firewall-cmd --state
+  register: firewalld_state
+  changed_when: false
+  failed_when: false
+
+- name: Read the permanent and runtime forwards (firewall-offline-cmd when firewalld is stopped)
+  ansible.builtin.command: "{{ item }}"
+  loop: "{{ online_commands if firewalld_state.rc == 0 else offline_commands }}"
+  vars:
+    online_commands:
+      - firewall-cmd --permanent --list-forward-ports
+      - firewall-cmd --list-forward-ports
+    offline_commands:
+      - firewall-offline-cmd --list-forward-ports
   register: forwards
   changed_when: false
 
@@ -123,7 +136,7 @@
       - "'port=514:proto=udp:toport=514:toaddr=192.0.2.20' in item.stdout_lines"
   loop: "{{ forwards.results }}"
   loop_control:
-    label: "{{ item.item | default('runtime', true) }}"
+    label: "{{ item.item }}"
 
 - name: Firewalld port forward test cleanup
   ansible.posix.firewalld:
@@ -134,4 +147,5 @@
         toaddr: 192.0.2.20
     permanent: true
     immediate: true
+    offline: true
     state: disabled
