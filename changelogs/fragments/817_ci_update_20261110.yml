@@ -1,0 +1,7 @@
+---
+trivial:
+  - CI - Add ansible core 2.22 for AZP tests.
+  - CI - Update remote OS for AZP tests.
+  - CI - Remove 2.17 from AZP remote tests.
+  - CI - Fix the replacement logic for AZP test job parameter.
+...
