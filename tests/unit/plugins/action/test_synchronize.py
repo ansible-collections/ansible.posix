@@ -302,3 +302,35 @@ class TestSynchronizeAction(unittest.TestCase):
         except BreakPoint:
             pass
         self.assertEqual(spy_remote_expand_user.call_count, 0)
+
+    @staticmethod
+    def _ssh_option(ssh_executable):
+        def get_option(name):
+            if name == 'ssh_executable':
+                return ssh_executable
+            return 'root'
+        return get_option
+
+    @patch('ansible_collections.ansible.posix.plugins.action.synchronize.connection_loader', FakePluginLoader)
+    def test_basic_uses_ssh_executable(self):
+        # rsync on the controller must use ansible_ssh_executable for --rsh
+        # https://github.com/ansible-collections/ansible.posix/issues/766
+        x = SynchronizeTester()
+        with patch.object(ConnectionMock, 'get_option', side_effect=self._ssh_option('/usr/bin/ssh')):
+            x.runtest(fixturepath=os.path.join(self.fixturedir, 'basic'))
+        self.assertEqual(x.final_module_args['_ssh_executable'], '/usr/bin/ssh')
+
+    @patch('ansible_collections.ansible.posix.plugins.action.synchronize.connection_loader', FakePluginLoader)
+    def test_basic_default_ssh_executable(self):
+        x = SynchronizeTester()
+        with patch.object(ConnectionMock, 'get_option', side_effect=self._ssh_option('ssh')):
+            x.runtest(fixturepath=os.path.join(self.fixturedir, 'basic'))
+        self.assertNotIn('_ssh_executable', x.final_module_args)
+
+    @patch('ansible_collections.ansible.posix.plugins.action.synchronize.connection_loader', FakePluginLoader)
+    def test_delegate_remote_ignores_ssh_executable(self):
+        # rsync runs on the delegate host, where the controller's ssh path may not exist
+        x = SynchronizeTester()
+        with patch.object(ConnectionMock, 'get_option', side_effect=self._ssh_option('/usr/bin/ssh')):
+            x.runtest(fixturepath=os.path.join(self.fixturedir, 'delegate_remote'))
+        self.assertNotIn('_ssh_executable', x.final_module_args)

@@ -297,6 +297,17 @@ class ActionModule(ActionBase):
         # told (via delegate_to) that a different host is the source of the
         # rsync
         if not use_delegate and remote_transport:
+            # rsync runs on the controller, so use the same ssh binary as the
+            # ssh connection plugin (ansible_ssh_executable / ssh_executable)
+            # instead of whatever ssh is first in PATH.
+            if self._remote_transport == 'ssh' and _tmp_args.get('_ssh_executable') is None:
+                try:
+                    ssh_executable = self._connection.get_option('ssh_executable')
+                except KeyError:
+                    ssh_executable = None
+                if ssh_executable and ssh_executable != 'ssh':
+                    _tmp_args['_ssh_executable'] = ssh_executable
+
             # Unlike port, there can be only one shell
             localhost_shell = None
             for host in C.LOCALHOST:

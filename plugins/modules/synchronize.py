@@ -204,6 +204,14 @@ options:
     description: Internal use only. See O(use_ssh_args) for ssh arg settings.
     type: str
     required: false
+  _ssh_executable:
+    description:
+      - Internal use only.
+      - The ssh binary used for the rsync C(--rsh) command. The action plugin sets it from the
+        C(ssh_executable) option of the ssh connection plugin (for example C(ansible_ssh_executable))
+        when rsync runs on the controller.
+    type: str
+    required: false
 
 notes:
    - C(rsync) must be installed on both the local and remote host.
@@ -438,6 +446,7 @@ def main():
             rsync_timeout=dict(type='int', default=0),
             rsync_opts=dict(type='list', default=[], elements='str'),
             _ssh_args=dict(type='str'),
+            _ssh_executable=dict(type='str'),
             use_ssh_args=dict(type='bool', default=False),
             ssh_connection_multiplexing=dict(type='bool', default=False),
             partial=dict(type='bool', default=False),
@@ -481,6 +490,7 @@ def main():
     group = module.params['group']
     rsync_opts = module.params['rsync_opts']
     ssh_args = module.params['_ssh_args']
+    ssh_executable = module.params['_ssh_executable'] or 'ssh'
     ssh_connection_multiplexing = module.params['ssh_connection_multiplexing']
     verify_host = module.params['verify_host']
     link_dest = module.params['link_dest']
@@ -561,7 +571,7 @@ def main():
 
         # if the user has not supplied an --rsh option go ahead and add ours
         if not has_rsh:
-            ssh_cmd = [module.get_bin_path('ssh', required=True)]
+            ssh_cmd = [module.get_bin_path(ssh_executable, required=True)]
             if not ssh_connection_multiplexing:
                 ssh_cmd.extend(['-S', 'none'])
             if private_key is not None:

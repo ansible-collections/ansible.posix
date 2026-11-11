@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - synchronize - use the ssh connection plugin's ``ssh_executable`` (for example ``ansible_ssh_executable``) for the rsync ``--rsh`` command when rsync runs on the controller, instead of always using the first ``ssh`` found in ``PATH`` (https://github.com/ansible-collections/ansible.posix/issues/766).
