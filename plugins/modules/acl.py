@@ -78,6 +78,7 @@ options:
     - This feature uses C(nfs4_setfacl) and C(nfs4_getfacl). The behavior depends on those implementation.
       And currently it only supports C(A) in ACE, so C(D) must be replaced with the appropriate C(A).
     - Permission is set as optimised ACLs by the system. You can check the actual ACLs that has been set using the return value.
+    - O(permissions) is required when O(state=present) or O(state=absent), because C(nfs4_setfacl) matches whole ACEs.
     - More info C(man nfs4_setfacl)
     type: bool
     default: false
@@ -357,6 +358,9 @@ def main():
         default_flag, etype, entity, permissions = split_entry(entry)
         if default_flag is not None:
             default = default_flag
+
+    if use_nfsv4_acls and state in ['present', 'absent'] and not permissions:
+        module.fail_json(msg="'permissions' MUST be set when 'use_nfsv4_acls=true' and 'state=%s'." % state)
 
     if platform.system().lower() == 'freebsd':
         if recursive:
