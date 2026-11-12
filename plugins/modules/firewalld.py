@@ -100,7 +100,9 @@ options:
     description:
       - Enable or disable a setting.
       - 'For ports: Should this port accept (V(enabled)) or reject (V(disabled)) connections.'
-      - The states V(present) and V(absent) can only be used in zone level operations (i.e. when no other parameters but zone and state are set).
+      - The states V(present) and V(absent) can only be used in zone level operations, that is to add or remove the zone given in O(zone),
+        or to set or reset its O(target). Zone level operations must be permanent (O(permanent=true)).
+      - To add or remove a setting of a zone, such as O(interface), O(service) or O(port), use V(enabled) or V(disabled).
     type: str
     required: true
     choices: [ absent, disabled, enabled, present ]
@@ -978,7 +980,8 @@ def main():
         modification = True
     if modification and desired_state in ['absent', 'present'] and target is None:
         module.fail_json(
-            msg='absent and present state can only be used in zone level operations'
+            msg='absent and present state can only be used in zone level operations; '
+                'use enabled or disabled to add or remove settings such as interface, service or port'
         )
 
     if icmp_block is not None:
