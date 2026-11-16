@@ -1,0 +1,5 @@
+bugfixes:
+  - synchronize - report ``changed`` correctly when ``link_dest`` is used. Previously the module
+    reported no change as soon as rsync listed one unchanged file, even if other files were
+    transferred, deleted or had their attributes updated
+    (https://github.com/ansible-collections/ansible.posix/issues/716).
