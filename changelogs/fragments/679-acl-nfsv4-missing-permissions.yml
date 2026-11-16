@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - acl - fail with a clear error instead of a ``TypeError`` traceback when ``use_nfsv4_acls=true`` is used without ``permissions``
+    (https://github.com/ansible-collections/ansible.posix/issues/679).
