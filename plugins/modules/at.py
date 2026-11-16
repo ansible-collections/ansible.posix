@@ -73,14 +73,33 @@ EXAMPLES = r'''
 
 import os
 import platform
+import pwd
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
 
 
+def get_job_cwd(module):
+    """Return a directory to schedule the job from, or None to keep the current one.
+
+    at records the current directory and the job changes into it before it runs.
+    AnsibleModule switches to its own temporary directory when the original one
+    is not readable (for example with become_user), and that directory is removed
+    when the module exits, so the job would fail.
+    """
+    cwd = os.getcwd()
+    tmpdir = module.tmpdir
+    if cwd != tmpdir and not cwd.startswith(tmpdir + os.sep):
+        return None
+    home = pwd.getpwuid(os.geteuid()).pw_dir
+    if os.access(home, os.R_OK | os.X_OK):
+        return home
+    return '/'
+
+
 def add_job(module, result, at_cmd, count, units, command, script_file):
     at_command = "%s -f %s now + %s %s" % (at_cmd, script_file, count, units)
-    rc, out, err = module.run_command(at_command, check_rc=True)
+    rc, out, err = module.run_command(at_command, check_rc=True, cwd=get_job_cwd(module))
     if command:
         os.unlink(script_file)
     result['changed'] = True
