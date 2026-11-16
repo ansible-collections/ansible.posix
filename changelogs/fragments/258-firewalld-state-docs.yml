@@ -1,0 +1,5 @@
+---
+minor_changes:
+  - firewalld - document that ``enabled`` and ``disabled`` are the states to add or remove
+    zone settings such as ``interface``, ``service`` or ``port``, and say so in the error message
+    when ``present`` or ``absent`` is used with them (https://github.com/ansible-collections/ansible.posix/issues/258).
