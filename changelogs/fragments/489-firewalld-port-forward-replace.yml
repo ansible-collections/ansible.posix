@@ -1,0 +1,5 @@
+---
+bugfixes:
+  - firewalld - when ``state=enabled``, ``port_forward`` now replaces an existing forward for the same port and protocol
+    that points to a different ``toport`` or ``toaddr``, instead of adding a second forward for the same port
+    (https://github.com/ansible-collections/ansible.posix/issues/489).
