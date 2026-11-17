@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - ansible.posix.authorized_key - avoid adding trailing whitespace when serializing keys without comments (https://github.com/ansible-collections/ansible.posix/issues/750).
