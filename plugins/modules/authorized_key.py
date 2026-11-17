@@ -81,6 +81,13 @@ options:
       - Follow path symlink instead of replacing it.
     type: bool
     default: false
+  file_comment:
+    description:
+      - Put a comment at the top of the file.
+      - Ensures that lines always start with a #-sign.
+      - Replacing the comment only works properly with exclusive=True.
+    type: str
+    default: None
 author: Ansible Core Team
 '''
 
@@ -152,6 +159,13 @@ EXAMPLES = r'''
     user: ubuntu
     state: present
     key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
+
+- name: Add a comment for other users.
+  ansible.posix.authorized_key:
+    user: root
+    state: present
+    key: "{{ lookup('file', 'authorized_keys' }}"
+    file_comment: "This file is managed by Ansible.\nAll changes are temporary!"
 '''
 
 RETURN = r'''
@@ -532,7 +546,7 @@ def writefile(module, filename, content):
     module.atomic_move(tmp_path, filename)
 
 
-def serialize(keys):
+def serialize(keys, file_comment):
     lines = []
     new_keys = keys.values()
     # order the new_keys by their original ordering, via the rank item in the tuple
@@ -564,6 +578,10 @@ def serialize(keys):
         except Exception:
             key_line = key
         lines.append(key_line)
+
+    if file_comment:
+        lines.insert(0, file_comment)
+
     return ''.join(lines)
 
 
@@ -581,7 +599,14 @@ def enforce_state(module, params):
     exclusive = params.get("exclusive", False)
     comment = params.get("comment", None)
     follow = params.get('follow', False)
+    file_comment = params.get('file_comment', None)
     error_msg = "Error getting key from: %s"
+
+    # Make sure every line has a "#" sign at the beginning
+    file_comment = "\n".join(
+        line if line.startswith("#") else "# " + line
+            for line in file_comment.splitlines()
+    ) + "\n"
 
     # if the key is a url or file, request it and use it as key source
     if key.startswith("http"):
@@ -618,6 +643,13 @@ def enforce_state(module, params):
     params["keyfile"] = keyfile(module, user, do_write, path, manage_dir, follow)
     existing_content = readfile(module, params["keyfile"])
     existing_keys = parsekeys(module, existing_content)
+
+    # Check if the file should be commented
+    if all([
+        file_comment != None,
+        existing_content[:len(file_comment)] != file_comment,
+    ]):
+        do_write = True
 
     # Add a place holder for keys that should exist in the state=present and
     # exclusive=true case
@@ -690,7 +722,7 @@ def enforce_state(module, params):
 
     if do_write:
         filename = keyfile(module, user, do_write, path, manage_dir, follow)
-        new_content = serialize(existing_keys)
+        new_content = serialize(existing_keys, file_comment)
 
         diff = None
         if module._diff:
@@ -727,6 +759,7 @@ def main():
             comment=dict(type='str'),
             validate_certs=dict(type='bool', default=True),
             follow=dict(type='bool', default=False),
+            file_comment=dict(type='str', default=False),
         ),
         supports_check_mode=True,
     )
