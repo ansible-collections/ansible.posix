@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - ansible.posix.authorized_key - strip whitespace from key_options so trailing/leading spaces do not break idempotency (https://github.com/ansible-collections/ansible.posix/issues/327).
