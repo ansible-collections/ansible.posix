@@ -28,6 +28,11 @@ options:
       - Name of a port or port range to add/remove to/from firewalld.
       - Must be in the form PORT/PROTOCOL or PORT-PORT/PROTOCOL for port ranges.
     type: str
+  source_port:
+    description:
+      - Name of a source port or port range to add/remove to/from firewalld.
+      - Must be in the form PORT/PROTOCOL or PORT-PORT/PROTOCOL for port ranges.
+    type: str
   port_forward:
     description:
       - Port and protocol to forward using firewalld.
@@ -182,6 +187,13 @@ EXAMPLES = r'''
 - name: Permit traffic in default zone on port 161-162/ucp
   ansible.posix.firewalld:
     port: 161-162/udp
+    permanent: true
+    state: enabled
+
+- name: Permit traffic in home zone from port 20561/udp
+  ansible.posix.firewalld:
+    source_port: 20561/udp
+    zone: home
     permanent: true
     state: enabled
 
@@ -552,6 +564,43 @@ class PortTransaction(FirewallTransaction):
         self.update_fw_settings(fw_zone, fw_settings)
 
 
+class SourcePortTransaction(FirewallTransaction):
+    """
+    SourcePortTransaction
+    """
+
+    def __init__(self, module, action_args=None, zone=None, desired_state=None, permanent=False, immediate=False):
+        super(SourcePortTransaction, self).__init__(
+            module, action_args=action_args, desired_state=desired_state, zone=zone, permanent=permanent, immediate=immediate
+        )
+
+    def get_enabled_immediate(self, port, protocol, timeout):
+        if self.fw_offline:
+            dummy, fw_settings = self.get_fw_zone_settings()
+            return fw_settings.querySourcePort(port=port, protocol=protocol)
+        return self.fw.querySourcePort(zone=self.zone, port=port, protocol=protocol)
+
+    def get_enabled_permanent(self, port, protocol, timeout):
+        dummy, fw_settings = self.get_fw_zone_settings()
+        return fw_settings.querySourcePort(port=port, protocol=protocol)
+
+    def set_enabled_immediate(self, port, protocol, timeout):
+        self.fw.addSourcePort(zone=self.zone, port=port, protocol=protocol, timeout=timeout)
+
+    def set_enabled_permanent(self, port, protocol, timeout):
+        fw_zone, fw_settings = self.get_fw_zone_settings()
+        fw_settings.addSourcePort(port=port, protocol=protocol)
+        self.update_fw_settings(fw_zone, fw_settings)
+
+    def set_disabled_immediate(self, port, protocol, timeout):
+        self.fw.removeSourcePort(zone=self.zone, port=port, protocol=protocol)
+
+    def set_disabled_permanent(self, port, protocol, timeout):
+        fw_zone, fw_settings = self.get_fw_zone_settings()
+        fw_settings.removeSourcePort(port=port, protocol=protocol)
+        self.update_fw_settings(fw_zone, fw_settings)
+
+
 class InterfaceTransaction(FirewallTransaction):
     """
     InterfaceTransaction
@@ -879,6 +928,7 @@ def main():
             service=dict(type='str'),
             protocol=dict(type='str'),
             port=dict(type='str'),
+            source_port=dict(type='str'),
             port_forward=dict(type='list', elements='dict'),
             rich_rule=dict(type='str'),
             zone=dict(type='str'),
@@ -900,8 +950,8 @@ def main():
             source=('permanent',),
         ),
         mutually_exclusive=[
-            ['icmp_block', 'icmp_block_inversion', 'service', 'protocol', 'port', 'port_forward', 'rich_rule',
-             'interface', 'forward', 'masquerade', 'source', 'target']
+            ['icmp_block', 'icmp_block_inversion', 'service', 'protocol', 'port', 'source_port', 'port_forward',
+             'rich_rule', 'interface', 'forward', 'masquerade', 'source', 'target']
         ],
     )
 
@@ -957,6 +1007,17 @@ def main():
     else:
         port_protocol = None
 
+    source_port = None
+    if module.params['source_port'] is not None:
+        if '/' in module.params['source_port']:
+            source_port, source_port_protocol = module.params['source_port'].strip().split('/')
+        else:
+            source_port_protocol = None
+        if not source_port_protocol:
+            module.fail_json(msg='improper source_port format (missing protocol?)')
+    else:
+        source_port_protocol = None
+
     port_forward_toaddr = ''
     port_forward = None
     if module.params['port_forward'] is not None:
@@ -973,7 +1034,7 @@ def main():
             port_forward_toaddr = port_forward['toaddr']
 
     modification = False
-    if any([icmp_block, icmp_block_inversion, service, protocol, port, port_forward, rich_rule,
+    if any([icmp_block, icmp_block_inversion, service, protocol, port, source_port, port_forward, rich_rule,
             interface, forward, masquerade, source, target]):
         modification = True
     if modification and desired_state in ['absent', 'present'] and target is None:
@@ -1076,6 +1137,26 @@ def main():
             msgs.append(
                 "Changed port %s to %s" % (
                     "%s/%s" % (port, port_protocol), desired_state
+                )
+            )
+
+    if source_port is not None:
+
+        transaction = SourcePortTransaction(
+            module,
+            action_args=(source_port, source_port_protocol, timeout),
+            zone=zone,
+            desired_state=desired_state,
+            permanent=permanent,
+            immediate=immediate,
+        )
+
+        changed, transaction_msgs = transaction.run()
+        msgs = msgs + transaction_msgs
+        if changed is True:
+            msgs.append(
+                "Changed source_port %s to %s" % (
+                    "%s/%s" % (source_port, source_port_protocol), desired_state
                 )
             )
 

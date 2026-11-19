@@ -21,6 +21,10 @@
 - name: Include port test cases for firewalld module
   ansible.builtin.include_tasks: port_test_cases.yml
 
+# firewalld source_port operation test cases
+- name: Include source_port test cases for firewalld module
+  ansible.builtin.include_tasks: source_port_test_cases.yml
+
 # firewalld source operation test cases
 - name: Include source test cases for firewalld module
   ansible.builtin.include_tasks: source_test_cases.yml
