@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - mount - strip leading and trailing whitespace from ``path`` so a value such as ``" /test"`` is mounted at ``/test`` instead of a relative directory whose name is a space (https://github.com/ansible-collections/ansible.posix/issues/659).
