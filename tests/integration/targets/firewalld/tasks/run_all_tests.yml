@@ -29,6 +29,10 @@
 - name: Include zone test cases for firewalld module
   ansible.builtin.include_tasks: zone_test_cases.yml
 
+# firewalld policy object test cases
+- name: Include policy test cases for firewalld module
+  ansible.builtin.include_tasks: policy_test_cases.yml
+
 # firewalld zone target operation test cases
 - name: Include zone target test cases for firewalld module
   ansible.builtin.include_tasks: zone_target_test_cases.yml
